@@ -64,25 +64,12 @@ public class InternalComponentsMapper {
         }
 
         try {
-            final DocumentBuilder documentBuilder = getDocumentBuilder();
-            Document attributesDocument = documentBuilder.parse(new InputSource(new StringReader(eomFile.getAttributes())));
-            Document eomFileDocument = documentBuilder.parse(new ByteArrayInputStream(eomFile.getValue()));
-            String rawBody = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
-
-            ParsedEomFile parsedEomFile = new ParsedEomFile(uuid, eomFileDocument, rawBody,
-                    attributesDocument, eomFile.getWebUrl());
+            ParsedEomFile parsedEomFile = parseEomFile(eomFile, uuid);
 
             return transformEomFileToInternalContent(parsedEomFile, transactionId, lastModified);
         } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException | IOException e) {
             throw new TransformationException(e);
         }
-    }
-
-    private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
-        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-        return documentBuilderFactory.newDocumentBuilder();
     }
 
     private InternalComponents transformEomFileToInternalContent(ParsedEomFile eomFile, String transactionId, Date lastModified)
@@ -130,6 +117,23 @@ public class InternalComponentsMapper {
             topperImageId = imageFileRef.substring(imageFileRef.lastIndexOf("uuid=") + "uuid=".length());
         }
         return topperImageId;
+    }
+
+    private ParsedEomFile parseEomFile(EomFile eomFile, UUID uuid) throws ParserConfigurationException, SAXException, IOException, TransformerException, XPathExpressionException {
+        final DocumentBuilder documentBuilder = getDocumentBuilder();
+        Document attributesDocument = documentBuilder.parse(new InputSource(new StringReader(eomFile.getAttributes())));
+        Document eomFileDocument = documentBuilder.parse(new ByteArrayInputStream(eomFile.getValue()));
+        String rawBody = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
+
+        return new ParsedEomFile(uuid, eomFileDocument, rawBody,
+                attributesDocument, eomFile.getWebUrl());
+    }
+
+    private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+        return documentBuilderFactory.newDocumentBuilder();
     }
 
     private String retrieveField(XPath xpath, String expression, Document eomFileDocument) throws TransformerException, XPathExpressionException {
