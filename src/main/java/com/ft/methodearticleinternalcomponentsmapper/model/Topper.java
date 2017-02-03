@@ -12,11 +12,11 @@ public class Topper {
     private String standfirst;
     private List<Image> images;
 
-    public Topper(@JsonProperty("theme")String theme,
-                  @JsonProperty("bgColor")String bgColor,
-                  @JsonProperty("image")List<Image> images,
-                  @JsonProperty("headline")String headline,
-                  @JsonProperty("standfirst")String standfirst) {
+    public Topper(@JsonProperty("theme") String theme,
+                  @JsonProperty("bgColor") String bgColor,
+                  @JsonProperty("image") List<Image> images,
+                  @JsonProperty("headline") String headline,
+                  @JsonProperty("standfirst") String standfirst) {
         this.theme = theme;
         this.bgColor = bgColor;
         this.headline = headline;

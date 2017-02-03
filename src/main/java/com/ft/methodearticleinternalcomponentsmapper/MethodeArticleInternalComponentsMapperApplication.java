@@ -128,7 +128,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
     }
 
     private void registerHealthChecks(Environment environment,
-            List<AdvancedHealthCheck> advancedHealthChecks) {
+                                      List<AdvancedHealthCheck> advancedHealthChecks) {
 
         HealthCheckRegistry healthChecks = environment.healthChecks();
         for (AdvancedHealthCheck hc : advancedHealthChecks) {
@@ -137,7 +137,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
     }
 
     private List<AdvancedHealthCheck> buildClientHealthChecks(Client methodeArticleMapperClient,
-            EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
+                                                              EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
 
         List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
         healthchecks.add(new RemoteServiceHealthCheck(

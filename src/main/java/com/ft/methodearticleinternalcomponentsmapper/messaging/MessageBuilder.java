@@ -87,9 +87,9 @@ public class MessageBuilder {
                 @JsonProperty("payload")
                         InternalComponents payload,
                 @JsonProperty("contentUri")
-                String contentUri,
+                        String contentUri,
                 @JsonProperty("lastModified")
-                String lastModified) {
+                        String lastModified) {
             this.contentUri = contentUri;
             this.payload = payload;
             this.lastModified = lastModified;
