@@ -1,4 +1,4 @@
-package com.ft.methodearticleinternalcomponentsmapper.methode;
+package com.ft.methodearticleinternalcomponentsmapper.model;
 
 public enum EomFileType {
 
