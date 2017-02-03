@@ -5,8 +5,7 @@ Methode Article Internal Components Mapper is a Dropwizard application which con
 This application depends on the following micro-services:
 
 * kafka-proxy;
-* document store API;
-* concordance API.
+* methode-article-mapper.
 
 ## Running
 
@@ -20,6 +19,12 @@ Transformation can be triggered through a POST message containing a Methode arti
 In case the required transformation is triggered to provide an article preview, you need to set a `preview` query parameter in the URL with `true` as value: 
 e.g., http://localhost:11070/map?preview=true 
 This `preview` setting will not trigger an exception in case of empty article body.
+
+For backwards compatibility reasons, there is also an alias for the above endpoint: `/content-transform/{id}`.
+ 
+### Internals
+
+For article validation the service leverages on methode article mapper's `/map` endpoint. 
 
 ### Healthcheck
 
