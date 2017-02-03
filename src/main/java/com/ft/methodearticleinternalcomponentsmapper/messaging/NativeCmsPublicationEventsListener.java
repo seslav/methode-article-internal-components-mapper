@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ft.message.consumer.MessageListener;
 import com.ft.messaging.standards.message.v1.Message;
 import com.ft.messaging.standards.message.v1.SystemId;
-import com.ft.methodearticleinternalcomponentsmapper.model.EomFileType;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleInternalComponentsMapperException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 
@@ -79,8 +78,7 @@ public class NativeCmsPublicationEventsListener implements MessageListener {
     }
 
     private boolean isValidType(String type) {
-        return (EomFileType.EOMCompoundStory.getTypeName().equals(type)) ||
-                (EomFileType.EOMStory.getTypeName().equals((type)));
+        return "EOM::CompoundStory".equals(type);
     }
     
     private boolean isValidSource(String attributes) {

@@ -76,7 +76,7 @@ public class NativeCmsPublicationEventsListenerTest {
         msg.setMessageBody(
                 objectMapper.writeValueAsString(
                         new EomFile.Builder()
-                                .withType("foobaz")
+                                .withType("EOM::Story")
                                 .withAttributes(ATTRIBUTES_WITH_FT_SOURCE)
                                 .build()
                 )
@@ -110,7 +110,7 @@ public class NativeCmsPublicationEventsListenerTest {
     @Test (expected = MethodeArticleInternalComponentsMapperException.class)
     public void thatServiceExceptionIsThrownIfIOExceptionIsThrownDuringPreMapping() throws Exception {
         EomFile mockEomFile = mock(EomFile.class);
-        when(mockEomFile.getType()).thenReturn("EOM::Story");
+        when(mockEomFile.getType()).thenReturn("EOM::CompoundStory");
         when(mockEomFile.getAttributes()).thenReturn(ATTRIBUTES_WITH_FT_SOURCE);
         
         Message mockMsg = mock(Message.class);
@@ -139,25 +139,6 @@ public class NativeCmsPublicationEventsListenerTest {
                 objectMapper.writeValueAsString(
                         new EomFile.Builder()
                                 .withType("EOM::CompoundStory")
-                                .withAttributes(ATTRIBUTES_WITH_FT_SOURCE)
-                                .build()
-                )
-        );
-
-        listener.onMessage(msg, TX_ID);
-
-        verify(mapper).mapInternalComponents(Matchers.any(), eq(TX_ID), Matchers.any());
-    }
-
-    @Test
-    public void thatMessageIsMappedIfCorrectSystemIDAndContentTypeIsSimpleStory() throws Exception {
-        Message msg = new Message();
-        msg.setOriginSystemId(SystemId.systemIdFromCode(SYSTEM_CODE));
-        msg.setMessageTimestamp(new Date());
-        msg.setMessageBody(
-                objectMapper.writeValueAsString(
-                        new EomFile.Builder()
-                                .withType("EOM::Story")
                                 .withAttributes(ATTRIBUTES_WITH_FT_SOURCE)
                                 .build()
                 )
