@@ -2,6 +2,7 @@ package com.ft.methodearticleinternalcomponentsmapper.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.ft.api.util.transactionid.TransactionIdUtils;
+import com.ft.content.model.Content;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
@@ -15,6 +16,7 @@ import java.util.Date;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
@@ -31,6 +33,18 @@ public class MapResource {
 
     public MapResource(InternalComponentsMapper internalComponentsMapper) {
         this.internalComponentsMapper = internalComponentsMapper;
+    }
+    
+    @POST
+    @Timed
+    @Path("/content-transform/{id}")
+    @QueryParam("preview")
+    @Produces(MediaType.APPLICATION_JSON + CHARSET_UTF_8)
+    public final InternalComponents contentTransform(@PathParam("id") String id,
+                                          @QueryParam("preview") boolean preview,
+                                          EomFile eomFile,
+                                          @Context HttpHeaders httpHeaders) {
+        return map(preview, eomFile, httpHeaders);
     }
 
     @POST
