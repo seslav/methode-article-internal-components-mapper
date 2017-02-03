@@ -2,38 +2,20 @@
 <!DOCTYPE doc SYSTEM "/SysConfig/Rules/ftpsi.dtd">
 <doc>
     <lead>
-{{#mainImageUuid}}
-        <lead-images id="U2701877253086gfF">
-            <web-master width="2048" height="1152" id="U2701877253086TGC"
-                        fileref="/FT/Graphics/Online/Master_2048x1152/dummy.jpg?uuid={{mainImageUuid}}"/>
-            <web-skybox-picture/>
-            <web-alt-picture/>
-            <web-popup-preview width="167" height="96"/>
-            <web-popup/>
-        </lead-images>
-{{/mainImageUuid}}
-        <lead-headline>
-            <headline>
-                <ln>
-                    And sacked chimney-sweep pumps boss full of mayonnaise.
-                </ln>
-            </headline>
-        </lead-headline>
-{{#promoTitle}}
-        <web-index-headline><ln>{{promoTitle}}</ln>
-        </web-index-headline>
-{{/promoTitle}}
-{{#standfirst}}
-        <web-stand-first><p>{{standfirst}}</p>
-        </web-stand-first>
-{{/standfirst}}
+        <lead-components>
+            <topper bgcolor="{{bgColor}}" theme="{{theme}}">
+                <topper-headline>
+                    <ln>{{headline}}</ln>
+                </topper-headline>
+                <topper-standfirst>
+                    <p>{{standfirst}}</p>
+                </topper-standfirst>
+                <topper-images>
+                    <topper-image-square width="73" height="73" fileref="/FT/Graphics/Online/Z_Undefined/Standing/Colin-Hill_sq.jpg?uuid={{squareImageUUID}}" xtransform=" scale(0.0279479 0.0279479)" tmx="2612 2612 73 73" />
+                    <topper-image-standard width="129" height="73" fileref="/FT/Graphics/Online/Master_2048x1152/2017/01/MAS_Colin-Hill.jpg?uuid={{standardImageUUID}}" xtransform=" scale(0.0633681 0.0633681)" tmx="2048 1152 129 73" />
+                    <topper-image-wide width="219" height="73" fileref="/FT/Graphics/Online/Z_Undefined/Standing/Colin-Hill_Landscape.jpg?uuid={{wideImageUUID}}" xtransform=" scale(0.0471576 0.0471576)" tmx="4645 1548 219 73" />
+                </topper-images>
+            </topper>
+        </lead-components>
     </lead>
-    <story>
-        <text>
-{{#byline}}<byline>{{byline}}</byline>{{/byline}}
-            <body>
-                <p>random text for now</p>
-            </body>
-        </text>
-    </story>
 </doc>

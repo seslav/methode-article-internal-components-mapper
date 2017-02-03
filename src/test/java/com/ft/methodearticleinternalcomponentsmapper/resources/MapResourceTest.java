@@ -1,6 +1,7 @@
 package com.ft.methodearticleinternalcomponentsmapper.resources;
 
 import com.ft.api.util.transactionid.TransactionIdUtils;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
@@ -8,7 +9,6 @@ import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComp
 
 import org.apache.http.HttpStatus;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.WebApplicationException;
@@ -94,6 +94,20 @@ public class MapResourceTest {
             assertThat(wace.getResponse().getStatus(), equalTo(HttpStatus.SC_UNPROCESSABLE_ENTITY));
         }
     }
+
+    @Test
+    public void shouldThrow422ExceptionWhenStoryHasNoInternalComponents() {
+
+        when(internalComponentsMapper.map(eq(eomFile), eq(TRANSACTION_ID), any(), anyBoolean())).
+                thenThrow(new MethodeArticleHasNoInternalComponentsException(uuid));
+        try {
+            mapResource.map(false, eomFile, httpHeaders);
+            fail("No exception was thrown, but expected one.");
+        } catch (WebApplicationException wace) {
+            assertThat(wace.getResponse().getStatus(), equalTo(HttpStatus.SC_UNPROCESSABLE_ENTITY));
+        }
+    }
+
 
     @Test
     public void contentTransformShouldThrow404ExceptionWhenContentIsMarkedAsDeletedInMethode() {

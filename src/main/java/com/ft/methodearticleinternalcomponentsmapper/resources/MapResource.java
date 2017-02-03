@@ -2,9 +2,9 @@ package com.ft.methodearticleinternalcomponentsmapper.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.ft.api.util.transactionid.TransactionIdUtils;
-import com.ft.content.model.Content;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
@@ -60,8 +60,7 @@ public class MapResource {
             return internalComponentsMapper.map(eomFile, transactionId, new Date(), preview);
         } catch (MethodeArticleMarkedDeletedException e) {
             throw new WebApplicationException(HttpStatus.SC_NOT_FOUND);
-
-        } catch (MethodeArticleNotEligibleForPublishException e) {
+        } catch (MethodeArticleNotEligibleForPublishException | MethodeArticleHasNoInternalComponentsException e) {
             throw new WebApplicationException(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         }
     }
