@@ -148,7 +148,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 "/__health",
                 "methode-article-mapper",
                 1,
-                "Articles will not be annotated with company tearsheet information.",
+                "Internal components will not be published",
                 "https://dewey.ft.com/up-mam.html")
         );
         return healthchecks;
