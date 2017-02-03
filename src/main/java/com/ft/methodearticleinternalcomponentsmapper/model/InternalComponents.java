@@ -1,9 +1,12 @@
 package com.ft.methodearticleinternalcomponentsmapper.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Date;
 import java.util.UUID;
+
+import javax.validation.constraints.NotNull;
 
 public class InternalComponents {
     private Topper topper;
@@ -30,6 +33,12 @@ public class InternalComponents {
         return uuid;
     }
 
+    @NotNull
+    @JsonFormat(
+            shape = JsonFormat.Shape.STRING,
+            pattern = "yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'",
+            timezone = "UTC"
+    )
     public Date getLastModified() {
         return lastModified;
     }
