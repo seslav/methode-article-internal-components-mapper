@@ -1,6 +1,5 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
-import com.ft.common.FileUtils;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
@@ -90,8 +89,8 @@ public class InternalComponentsMapperTest {
         assertThat(actual.getTopper().getImages().get(2).getId(), equalTo(wideImageUUID));
     }
 
-    @Test (expected = MethodeArticleHasNoInternalComponentsException.class)
-    public void ethatValidArticleWithoutInternalComponentsThrowsException() throws Exception {
+    @Test(expected = MethodeArticleHasNoInternalComponentsException.class)
+    public void thatValidArticleWithoutInternalComponentsThrowsException() throws Exception {
         eomFile = new EomFile.Builder()
                 .withUuid(UUID)
                 .withType("EOM::CompoundStory")
@@ -104,7 +103,7 @@ public class InternalComponentsMapperTest {
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
-    @Test (expected = MethodeArticleMarkedDeletedException.class)
+    @Test(expected = MethodeArticleMarkedDeletedException.class)
     public void thatArticleMarkedAsDeletedThrowsException() throws Exception {
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
                 .thenReturn(PublishingStatus.DELETED);
@@ -112,7 +111,7 @@ public class InternalComponentsMapperTest {
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
-    @Test (expected = MethodeArticleNotEligibleForPublishException.class)
+    @Test(expected = MethodeArticleNotEligibleForPublishException.class)
     public void thatArticleIneligibleForPublishThrowsException() throws Exception {
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
                 .thenReturn(PublishingStatus.INELIGIBLE);
@@ -122,7 +121,13 @@ public class InternalComponentsMapperTest {
 
     private static String readFile(final String path) {
         try {
-            return new String(Files.readAllBytes(Paths.get(FileUtils.class.getClassLoader().getResource(path).toURI())), "UTF-8");
+            return new String(Files.readAllBytes(Paths.get(
+                    InternalComponentsMapperTest.class
+                            .getClassLoader()
+                            .getResource(path)
+                            .toURI())),
+                    "UTF-8"
+            );
         } catch (IOException | URISyntaxException ex) {
             throw new RuntimeException(ex);
         }
