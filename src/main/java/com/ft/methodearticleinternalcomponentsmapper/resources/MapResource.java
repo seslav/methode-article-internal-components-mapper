@@ -64,6 +64,8 @@ public class MapResource {
             throw new WebApplicationException(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         }
     }
+
+
 }
 
 
