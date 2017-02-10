@@ -7,18 +7,18 @@ import java.util.List;
 
 public class Topper {
     private String theme;
-    private String bgColor;
+    private String backgroundColour;
     private String headline;
     private String standfirst;
     private List<Image> images;
 
-    public Topper(@JsonProperty("theme") String theme,
-                  @JsonProperty("bgColor") String bgColor,
-                  @JsonProperty("image") List<Image> images,
-                  @JsonProperty("headline") String headline,
-                  @JsonProperty("standfirst") String standfirst) {
+    public Topper(@JsonProperty("theme")String theme,
+                  @JsonProperty("backgroundColour")String backgroundColour,
+                  @JsonProperty("image")List<Image> images,
+                  @JsonProperty("headline")String headline,
+                  @JsonProperty("standfirst")String standfirst) {
         this.theme = theme;
-        this.bgColor = bgColor;
+        this.backgroundColour = backgroundColour;
         this.headline = headline;
         this.standfirst = standfirst;
         this.images = images;
@@ -28,8 +28,8 @@ public class Topper {
         return theme;
     }
 
-    public String getBgColor() {
-        return bgColor;
+    public String getBackgroundColour() {
+        return backgroundColour;
     }
 
     public String getHeadline() {
