@@ -2,13 +2,15 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.google.common.base.Strings;
 
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
+import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
+import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
@@ -54,58 +56,99 @@ public class InternalComponentsMapper {
         }
 
         try {
-            Document eomFileDocument = getEomFileDocument(eomFile);
+            final XPath xpath = XPathFactory.newInstance().newXPath();
+            final Document eomFileDocument = getEomFileDocument(eomFile);
+
+            final Design design = extractDesign(xpath, eomFileDocument);
+            final TableOfContents tableOfContents = extractTableOfContents(xpath, eomFileDocument);
+            final List<Image> leadImages = extractImages(xpath, eomFileDocument, "/doc/lead/lead-image-set/lead-image-");
+            final Topper topper = extractTopper(xpath, eomFileDocument, leadImages);
+
+            if (design == null && tableOfContents == null && leadImages.isEmpty() && topper == null) {
+                LOGGER.info("Article {} does not have any internal components.", uuid);
+                throw new MethodeArticleHasNoInternalComponentsException(uuid);
+            }
 
             return InternalComponents.builder()
                     .withUuid(uuid)
                     .withPublishReference(transactionId)
                     .withLastModified(lastModified)
-                    .withTopper(extractTopper(eomFileDocument, uuid))
+                    .withDesign(design)
+                    .withTableOfContents(tableOfContents)
+                    .withTopper(topper)
+                    .withLeadImages(leadImages)
                     .build();
         } catch (ParserConfigurationException | SAXException | XPathExpressionException | IOException e) {
             throw new TransformationException(e);
         }
     }
 
-    private Topper extractTopper(Document eomFileDoc, UUID uuid) throws XPathExpressionException {
-        final XPath xpath = XPathFactory.newInstance().newXPath();
+    private Design extractDesign(XPath xPath, Document eomFileDoc) throws XPathExpressionException {
+        final String theme = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@design-theme", eomFileDoc)).trim();
 
-        String topperBasePath = "/doc/lead/lead-components/topper";
-        if (topperIsMissing(eomFileDoc, xpath, topperBasePath)) {
-            LOGGER.info("Article {} does not have a topper element", uuid);
-            throw new MethodeArticleHasNoInternalComponentsException(uuid);
+        if (Strings.isNullOrEmpty(theme)) {
+            return null;
         }
-        String topperTheme = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@theme", eomFileDoc)).trim();
-        String topperBackgroundColour = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@bgcolor", eomFileDoc)).trim();
-        String topperHeadline = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-headline", eomFileDoc)).trim();
-        String topperStandfirst = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-standfirst", eomFileDoc)).trim();
 
-        return new Topper(topperTheme, topperBackgroundColour, buildImages(xpath, eomFileDoc, topperBasePath), topperHeadline, topperStandfirst);
+        return new Design(theme);
     }
 
+    private TableOfContents extractTableOfContents(XPath xPath, Document eomFileDoc) throws XPathExpressionException {
+        final String sequence = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@sequence", eomFileDoc)).trim();
+        final String labelType = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@label", eomFileDoc)).trim();
 
-    private boolean topperIsMissing(Document eomFileDoc, XPath xpath, String topperBasePath) throws XPathExpressionException {
-        // if the theme attribute is present, the topper is valid
-        return Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@theme", eomFileDoc)).trim().isEmpty();
+        if (Strings.isNullOrEmpty(sequence) && Strings.isNullOrEmpty(labelType)) {
+            return null;
+        }
+
+        return new TableOfContents(sequence, labelType);
     }
 
-    private List<Image> buildImages(XPath xpath, Document doc, String topperBasePath) throws XPathExpressionException {
+    private Topper extractTopper(XPath xpath, Document eomFileDoc, final List<Image> leadImages) throws XPathExpressionException {
+        String topperBasePath = "/doc/lead/lead-components/topper";
+
+        String layout = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@layout", eomFileDoc)).trim();
+        String theme = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@theme", eomFileDoc)).trim();  //TODO deprecate
+
+        //a topper is valid only if the theme attribute is present. Since layout is the new value for theme, we need to check both
+        if (Strings.isNullOrEmpty(layout) && Strings.isNullOrEmpty(theme)) {
+            return null;
+        }
+
+        String headline = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-headline", eomFileDoc)).trim();
+        String standfirst = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-standfirst", eomFileDoc)).trim();
+
+        String backgroundColour = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@background-colour", eomFileDoc)).trim();
+        String bgcolor = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@bgcolor", eomFileDoc)).trim(); //TODO deprecate
+
+        List<Image> topperImages = extractImages(xpath, eomFileDoc, topperBasePath + "/topper-images/topper-image-"); //TODO deprecate
+
+        return new Topper(
+                headline,
+                standfirst,
+                Strings.isNullOrEmpty(bgcolor) ? backgroundColour : bgcolor,
+                layout,
+                Strings.isNullOrEmpty(theme) ? layout : theme,
+                topperImages.isEmpty() ? leadImages : topperImages);
+    }
+
+    private List<Image> extractImages(XPath xpath, Document doc, String basePath) throws XPathExpressionException {
         String[] labels = new String[]{"square", "standard", "wide"};
         List<Image> images = new ArrayList<>();
 
-        for (String l : labels) {
-            String imgBasePath = topperBasePath + "/topper-images/topper-image-" + l;
-            String id = getTopperImageId(xpath, doc, imgBasePath);
+        for (String label : labels) {
+            String id = getImageId(xpath, doc, basePath + label);
             if (Strings.isNullOrEmpty(id)) {
                 continue;
             }
-            images.add(new Image(id, l));
+            images.add(new Image(id, label));
         }
 
         return images;
     }
 
-    private String getTopperImageId(XPath xpath, Document doc, String topperImgBasePath) throws XPathExpressionException {
+
+    private String getImageId(XPath xpath, Document doc, String topperImgBasePath) throws XPathExpressionException {
         String topperImageId = null;
         String imageFileRef = Strings.nullToEmpty(xpath.evaluate(topperImgBasePath + "/@fileref", doc)).trim();
         if (imageFileRef.contains("uuid=")) {
