@@ -58,18 +58,6 @@ public class MapResourceTest {
     }
 
     @Test
-    public void thatContentTransformPreviewProcessedOk(){
-        mapResource.contentTransform(uuid.toString(), true, eomFile, httpHeaders);
-        verify(internalComponentsMapper, times(1)).map(eq(eomFile), eq(TRANSACTION_ID), any(), eq(true));
-    }
-
-    @Test
-    public void thatContentTransformPublicationProcessedOk(){
-        mapResource.contentTransform(uuid.toString(), true, eomFile, httpHeaders);
-        verify(internalComponentsMapper, times(1)).map(eq(eomFile), eq(TRANSACTION_ID), any(), eq(true));
-    }
-
-    @Test
     public void shouldThrow404ExceptionWhenContentIsMarkedAsDeletedInMethode() {
 
         when(internalComponentsMapper.map(eq(eomFile), eq(TRANSACTION_ID), any(), anyBoolean()))
@@ -105,33 +93,6 @@ public class MapResourceTest {
             fail("No exception was thrown, but expected one.");
         } catch (WebApplicationException wace) {
             assertThat(wace.getResponse().getStatus(), equalTo(HttpStatus.SC_NOT_FOUND));
-        }
-    }
-
-
-    @Test
-    public void contentTransformShouldThrow404ExceptionWhenContentIsMarkedAsDeletedInMethode() {
-
-        when(internalComponentsMapper.map(eq(eomFile), eq(TRANSACTION_ID), any(), anyBoolean()))
-                .thenThrow(new MethodeArticleMarkedDeletedException(uuid));
-        try {
-            mapResource.contentTransform(uuid.toString(), false, eomFile, httpHeaders);
-            fail("No exception was thrown, but expected one.");
-        } catch (WebApplicationException wace) {
-            assertThat(wace.getResponse().getStatus(), equalTo(HttpStatus.SC_NOT_FOUND));
-        }
-    }
-
-    @Test
-    public void contentTransformShouldThrow422ExceptionWhenPublicationNotEligibleForPublishing() {
-
-        when(internalComponentsMapper.map(eq(eomFile), eq(TRANSACTION_ID), any(), anyBoolean())).
-                thenThrow(new MethodeArticleNotEligibleForPublishException(uuid));
-        try {
-            mapResource.contentTransform(uuid.toString(), false, eomFile, httpHeaders);
-            fail("No exception was thrown, but expected one.");
-        } catch (WebApplicationException wace) {
-            assertThat(wace.getResponse().getStatus(), equalTo(HttpStatus.SC_UNPROCESSABLE_ENTITY));
         }
     }
 }

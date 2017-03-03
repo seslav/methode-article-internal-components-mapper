@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/Financial-Times/methode-article-internal-components-mapper.svg?style=svg)](https://circleci.com/gh/Financial-Times/methode-article-internal-components-mapper) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/methode-article-internal-components-mapper/badge.svg)](https://coveralls.io/github/Financial-Times/methode-article-internal-components-mapper)
+
 # Methode Article Internal Components Mapper
 Methode Article Internal Components Mapper is a Dropwizard application which consumes Kafka events and maps raw Methode articles to internal content components.
 
