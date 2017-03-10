@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/Financial-Times/methode-article-internal-components-mapper.svg?style=svg)](https://circleci.com/gh/Financial-Times/methode-article-internal-components-mapper) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/methode-article-internal-components-mapper/badge.svg)](https://coveralls.io/github/Financial-Times/methode-article-internal-components-mapper)
+
 # Methode Article Internal Components Mapper
 Methode Article Internal Components Mapper is a Dropwizard application which consumes Kafka events and maps raw Methode articles to internal content components.
 
@@ -17,7 +19,7 @@ This application depends on the following micro-services:
 
 Transformation can be triggered through a POST message containing a Methode article to http://localhost:11070/map
 In case the required transformation is triggered to provide an article preview, you need to set a `preview` query parameter in the URL with `true` as value: 
-e.g., http://localhost:11070/map?preview=true 
+e.g., http://localhost:11070/map?preview=true
 This `preview` setting will not trigger an exception in case of empty article body.
 
 For backwards compatibility reasons, there is also an alias for the above endpoint: `/content-transform/{id}`.
