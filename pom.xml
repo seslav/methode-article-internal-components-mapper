@@ -36,6 +36,7 @@
         <cucumber.version>1.1.5</cucumber.version>
         <xmlunit.version>1.5</xmlunit.version>
         <wiremock.version>1.40</wiremock.version>
+        <coveralls.version>4.3.0</coveralls.version>
     </properties>
 
     <repositories>
@@ -220,10 +221,10 @@
             <version>0.1.32.3</version>
             <scope>test</scope>
             <exclusions>
-              <exclusion>
-                <groupId>com.github.Financial-Times</groupId>
-                <artifactId>methode-api-model</artifactId>
-              </exclusion>
+                <exclusion>
+                    <groupId>com.github.Financial-Times</groupId>
+                    <artifactId>methode-api-model</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -268,85 +269,93 @@
                 <executions>
                     <execution>
                         <id>default-test</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>utf-8-encoding-test</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <includes>
-                                    <include>com/ft/methodearticlemapper/transformation/encoding/**/*.java</include>
-                                </includes>
-                                <argLine>-Dfile.encoding=UTF-8</argLine>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>us-ascii-encoding-test</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <includes>
-                                    <include>com/ft/methodearticlemapper/transformation/encoding/**/*.java</include>
-                                </includes>
-                                <argLine>-Dfile.encoding=US-ASCII</argLine>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>iso-8859-1-encoding-test</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <includes>
-                                    <include>com/ft/methodearticlemapper/transformation/encoding/**/*.java</include>
-                                </includes>
-                                <systemProperties>
-                                    <property>
-                                        <name>log4j.configuration</name>
-                                        <value>log4j-test.xml</value>
-                                    </property>
-                                </systemProperties>
-                                <argLine>-Dfile.encoding=ISO-8859-1</argLine>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>cp1252-encoding-test</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <includes>
-                                    <include>com/ft/methodearticlemapper/transformation/encoding/**/*.java</include>
-                                </includes>
-                                <systemProperties>
-                                    <property>
-                                        <name>log4j.configuration</name>
-                                        <value>log4j-test.xml</value>
-                                    </property>
-                                </systemProperties>
-                                <argLine>-Dfile.encoding=Cp1252</argLine>
-                            </configuration>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <systemProperties>
-                            <property>
-                                <name>log4j.configuration</name>
-                                <value>log4j-test.xml</value>
-                            </property>
-                        </systemProperties>
-                    </configuration>
-                </plugin>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>utf-8-encoding-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>
+                                    com/ft/methodearticlemapper/transformation/encoding/**/*.java
+                                </include>
+                            </includes>
+                            <argLine>-Dfile.encoding=UTF-8</argLine>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>us-ascii-encoding-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>
+                                    com/ft/methodearticlemapper/transformation/encoding/**/*.java
+                                </include>
+                            </includes>
+                            <argLine>-Dfile.encoding=US-ASCII</argLine>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>iso-8859-1-encoding-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>
+                                    com/ft/methodearticlemapper/transformation/encoding/**/*.java
+                                </include>
+                            </includes>
+                            <systemProperties>
+                                <property>
+                                    <name>log4j.configuration</name>
+                                    <value>log4j-test.xml</value>
+                                </property>
+                            </systemProperties>
+                            <argLine>-Dfile.encoding=ISO-8859-1</argLine>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cp1252-encoding-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>
+                                    com/ft/methodearticlemapper/transformation/encoding/**/*.java
+                                </include>
+                            </includes>
+                            <systemProperties>
+                                <property>
+                                    <name>log4j.configuration</name>
+                                    <value>log4j-test.xml</value>
+                                </property>
+                            </systemProperties>
+                            <argLine>-Dfile.encoding=Cp1252</argLine>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>log4j.configuration</name>
+                            <value>log4j-test.xml</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -366,6 +375,11 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>${coveralls.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -419,10 +433,12 @@
                         <configuration>
                             <transformers>
                                 <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.ft.methodearticleinternalcomponentsmapper.MethodeArticleInternalComponentsMapperApplication</mainClass>
+                                    <mainClass>
+                                        com.ft.methodearticleinternalcomponentsmapper.MethodeArticleInternalComponentsMapperApplication
+                                    </mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -499,11 +515,6 @@
                         </manifest>
                     </archive>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <version>4.3.0</version>
             </plugin>
         </plugins>
     </build>
