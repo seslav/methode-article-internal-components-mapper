@@ -105,31 +105,25 @@ public class InternalComponentsMapper {
     }
 
     private Topper extractTopper(XPath xpath, Document eomFileDoc, final List<Image> leadImages) throws XPathExpressionException {
-        String topperBasePath = "/doc/lead/lead-components/topper";
+        final String topperBasePath = "/doc/lead/lead-components/topper";
 
-        String layout = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@layout", eomFileDoc)).trim();
-        String theme = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@theme", eomFileDoc)).trim();  //TODO deprecate
+        final String layout = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@layout", eomFileDoc)).trim();
 
         //a topper is valid only if the theme attribute is present. Since layout is the new value for theme, we need to check both
-        if (Strings.isNullOrEmpty(layout) && Strings.isNullOrEmpty(theme)) {
+        if (Strings.isNullOrEmpty(layout)) {
             return null;
         }
 
-        String headline = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-headline", eomFileDoc)).trim();
-        String standfirst = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-standfirst", eomFileDoc)).trim();
+        final String headline = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-headline", eomFileDoc)).trim();
+        final String standfirst = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/topper-standfirst", eomFileDoc)).trim();
 
-        String backgroundColour = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@background-colour", eomFileDoc)).trim();
-        String bgcolor = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@bgcolor", eomFileDoc)).trim(); //TODO deprecate
-
-        List<Image> topperImages = extractImages(xpath, eomFileDoc, topperBasePath + "/topper-images/topper-image-"); //TODO deprecate
+        final String backgroundColour = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@background-colour", eomFileDoc)).trim();
 
         return new Topper(
                 headline,
                 standfirst,
-                Strings.isNullOrEmpty(bgcolor) ? backgroundColour : bgcolor,
-                layout,
-                Strings.isNullOrEmpty(theme) ? layout : theme,
-                topperImages.isEmpty() ? leadImages : topperImages);
+                backgroundColour,
+                layout);
     }
 
     private List<Image> extractImages(XPath xpath, Document doc, String basePath) throws XPathExpressionException {

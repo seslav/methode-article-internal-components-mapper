@@ -37,28 +37,35 @@ You can find an example of a transformed article below.
 
 ```
 {
-  "topper": {
-    "theme": "full-bleed-image-left",
-    "backgroundColour": "slate",
-    "headline": "This is the topper headline Lorem ipsum do",
-    "standfirst": "This is the topper standfirst",
-    "images": [
-      {
-        "id": "9aa35da4-df1b-11e6-bd9b-bb10c5678253",
-        "type": "square"
-      },
-      {
-        "id": "ae19a456-df1b-11e6-bd9b-bb10c5678253",
-        "type": "standard"
-      },
-      {
-        "id": "939f3f1e-df1b-11e6-bd9b-bb10c5678253",
-        "type": "wide"
-      }
-    ]
+  "design": {
+    "theme": "basic"
   },
-  "uuid": "5c12d14c-e898-11e6-bbc7-0a523b37d01c",
-  "lastModified": 1486038495897,
-  "publishReference": "tid_7gccmallzk"
+  "tableOfContents": {
+    "sequence": "none",
+    "labelType": "none"
+  },
+  "topper": {
+    "headline": "Topper headline",
+    "standfirst": "Topper standfirst",
+    "backgroundColour": "auto",
+    "layout": "split-text-left"
+  },
+  "leadImages": [
+    {
+      "id": "9aa35da4-df1b-11e6-bd9b-bb10c5678253",
+      "type": "square"
+    },
+    {
+      "id": "ae19a456-df1b-11e6-bd9b-bb10c5678253",
+      "type": "standard"
+    },
+    {
+      "id": "939f3f1e-df1b-11e6-bd9b-bb10c5678253",
+      "type": "wide"
+    }
+  ],
+  "uuid": "e7f2eed0-ef92-11e6-abbc-ee7d9c5b3b90",
+  "lastModified": "2017-03-16T13:51:52.976Z",
+  "publishReference": "tid_xhwijstdot"
 }
 ```

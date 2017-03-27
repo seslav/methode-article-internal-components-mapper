@@ -70,16 +70,14 @@ public class InternalComponentsMapperTest {
     @Test
     public void thatValidArticleWithTopperIsMappedCorrectly() throws Exception {
         String backgroundColour = "fooBackground";
-        String theme = "barColor";
+        String layout = "barColor";
         String headline = "foobar headline";
         String standfirst = "foobar standfirst";
-        String squareImageUUID = UUID.randomUUID().toString();
-        String wideImageUUID = UUID.randomUUID().toString();
-        String standardImageUUID = UUID.randomUUID().toString();
+
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, theme, headline, standfirst, squareImageUUID, standardImageUUID, wideImageUUID))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, headline, standfirst))
                 .build();
 
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
@@ -92,25 +90,20 @@ public class InternalComponentsMapperTest {
         assertThat(actual.getPublishReference(), equalTo(TX_ID));
 
         assertThat(actual.getTopper().getBackgroundColour(), equalTo(backgroundColour));
-        assertThat(actual.getTopper().getTheme(), equalTo(theme));
+        assertThat(actual.getTopper().getLayout(), equalTo(layout));
         assertThat(actual.getTopper().getStandfirst(), equalTo(standfirst));
         assertThat(actual.getTopper().getHeadline(), equalTo(headline));
-        assertThat(actual.getTopper().getImages().get(0).getId(), equalTo(squareImageUUID));
-        assertThat(actual.getTopper().getImages().get(1).getId(), equalTo(standardImageUUID));
-        assertThat(actual.getTopper().getImages().get(2).getId(), equalTo(wideImageUUID));
     }
 
     @Test
     public void thatValidArticleWithTopperButEmptyStandfirstAndHeadlineIsMappedCorrectly() throws Exception {
         String backgroundColour = "fooBackground";
-        String theme = "barColor";
-        String squareImageUUID = UUID.randomUUID().toString();
-        String wideImageUUID = UUID.randomUUID().toString();
-        String standardImageUUID = UUID.randomUUID().toString();
+        String layout = "barColor";
+
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, theme, "", "", squareImageUUID, standardImageUUID, wideImageUUID))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
                 .build();
 
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
@@ -123,12 +116,9 @@ public class InternalComponentsMapperTest {
         assertThat(actual.getPublishReference(), equalTo(TX_ID));
 
         assertThat(actual.getTopper().getBackgroundColour(), equalTo(backgroundColour));
-        assertThat(actual.getTopper().getTheme(), equalTo(theme));
+        assertThat(actual.getTopper().getLayout(), equalTo(layout));
         assertThat(actual.getTopper().getStandfirst(), equalTo(""));
         assertThat(actual.getTopper().getHeadline(), equalTo(""));
-        assertThat(actual.getTopper().getImages().get(0).getId(), equalTo(squareImageUUID));
-        assertThat(actual.getTopper().getImages().get(1).getId(), equalTo(standardImageUUID));
-        assertThat(actual.getTopper().getImages().get(2).getId(), equalTo(wideImageUUID));
     }
 
     @Test(expected = MethodeArticleHasNoInternalComponentsException.class)
@@ -275,19 +265,18 @@ public class InternalComponentsMapperTest {
     }
 
     private byte[] buildTopperOnlyEomFileValue(
-            String backgroundColour, String theme, String headline, String standfirst,
-            String squareImg, String standardImg, String wideImg) {
+            String backgroundColour,
+            String layout,
+            String headline,
+            String standfirst) {
 
         Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_WITH_TOPPER);
 
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("backgroundColour", backgroundColour);
-        attributes.put("theme", theme);
+        attributes.put("layout", layout);
         attributes.put("headline", headline);
         attributes.put("standfirst", standfirst);
-        attributes.put("squareImageUUID", squareImg);
-        attributes.put("standardImageUUID", standardImg);
-        attributes.put("wideImageUUID", wideImg);
 
         return mustache.execute(attributes).getBytes(UTF_8);
     }
