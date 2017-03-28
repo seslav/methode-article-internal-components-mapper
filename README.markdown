@@ -2,6 +2,7 @@
 
 # Methode Article Internal Components Mapper
 Methode Article Internal Components Mapper is a Dropwizard application which consumes Kafka events and maps raw Methode articles to internal content components.
+The transformed content components are put back to Kafka.
 
 ## Introduction
 This application depends on the following micro-services:
@@ -15,20 +16,29 @@ This application depends on the following micro-services:
 
 ## Endpoints
 
+The transformation which takes place at each valid Kafka message can also be triggered by the `/map` endpoint.   
+
+### API
+
+The internal components model is documented by the description of this non-public `/map` API.
+
+For Blueprint style documentation, see [here](api.md). 
+
+API spec validation happens by `dredd`. It's linked with circleci, but to run it locally just type `dredd` in the project's top-level directory. 
+
 ### Posting content to be mapped
 
 Transformation can be triggered through a POST message containing a Methode article to http://localhost:11070/map
 In case the required transformation is triggered to provide an article preview, you need to set a `preview` query parameter in the URL with `true` as value: 
 e.g., http://localhost:11070/map?preview=true
-This `preview` setting will not trigger an exception in case of empty article body.
-
-### Internals
-
-For article validation the service leverages on methode article mapper's `/map` endpoint. 
 
 ### Healthcheck
 
 A GET request to http://localhost:11071/healthcheck or http://localhost:11070/__health
+
+## Internals
+
+For article validation the service leverages on methode article mapper's `/map` endpoint.
 
 ## Example of transformation output 
 You can find an example of a transformed article below. 
