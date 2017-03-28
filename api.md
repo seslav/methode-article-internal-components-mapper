@@ -5,11 +5,10 @@ FORMAT: 1A
 Transforms the 'internal' components of raw Methode articles into UPP format.  
 
 
-
 # Internal Components [/map?{preview}]
 
 + Parameters
-    + preview: `preview=false` (boolean, optional) - whether the transformation is for preview
+    + preview: `preview=false` (boolean, optional) - true, if the transformation is for preview
         + Default: `preview=false`
     
 + Model    
@@ -141,7 +140,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
             }
 
 
-## POST
+## Example resources [POST]
 
 * Request content-package (application/json)
     + Body
