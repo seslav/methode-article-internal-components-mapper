@@ -22,8 +22,6 @@ In case the required transformation is triggered to provide an article preview, 
 e.g., http://localhost:11070/map?preview=true
 This `preview` setting will not trigger an exception in case of empty article body.
 
-For backwards compatibility reasons, there is also an alias for the above endpoint: `/content-transform/{id}`.
- 
 ### Internals
 
 For article validation the service leverages on methode article mapper's `/map` endpoint. 
