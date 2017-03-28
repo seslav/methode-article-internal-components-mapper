@@ -11,7 +11,7 @@ This application depends on the following micro-services:
 
 ## Running
 
-`java -jar target/methode-article-internal-components-mapper-service-1.0-SNAPSHOT.jar server methode-article-internal-components-mapper.yaml`
+`java -jar target/methode-article-internal-components-mapper-1.0.0.jar server methode-article-internal-components-mapper.yaml`
 
 ## Endpoints
 
