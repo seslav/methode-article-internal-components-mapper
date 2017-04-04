@@ -15,6 +15,9 @@
         </lead-image-set>
         <lead-components>
             <content-package design-theme="{{designTheme}}" sequence="{{sequence}}" label="{{labelType}}">
+                {{#contentPackageNext}}
+                <content-package-next>{{contentPackageNext}}</content-package-next>
+                {{/contentPackageNext}}
             </content-package>
             <topper background-colour="{{backgroundColour}}" layout="{{layout}}">
                 <topper-headline>
