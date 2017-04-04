@@ -32,9 +32,13 @@ Transformation can be triggered through a POST message containing a Methode arti
 In case the required transformation is triggered to provide an article preview, you need to set a `preview` query parameter in the URL with `true` as value: 
 e.g., http://localhost:11070/map?preview=true
 
-### Healthcheck
+### Healthcheck and good-to-go
 
 A GET request to http://localhost:11071/healthcheck or http://localhost:11070/__health
+
+A GET request to http://localhost:11071/__gtg
+
+Health and gtg are based on methode-article-mapper's health endpoint, and kafka topics' availabilities for reading and writing.
 
 ## Internals
 
