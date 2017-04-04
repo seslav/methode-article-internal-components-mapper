@@ -18,10 +18,12 @@ import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,7 +32,14 @@ import java.util.UUID;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
@@ -62,9 +71,14 @@ public class InternalComponentsMapper {
             final Design design = extractDesign(xpath, eomFileDocument);
             final TableOfContents tableOfContents = extractTableOfContents(xpath, eomFileDocument);
             final List<Image> leadImages = extractImages(xpath, eomFileDocument, "/doc/lead/lead-image-set/lead-image-");
-            final Topper topper = extractTopper(xpath, eomFileDocument, leadImages);
+            final Topper topper = extractTopper(xpath, eomFileDocument);
+            final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
 
-            if (design == null && tableOfContents == null && leadImages.isEmpty() && topper == null) {
+            if (design == null
+                    && tableOfContents == null
+                    && leadImages.isEmpty()
+                    && topper == null
+                    && unpublishedContentDescription == null) {
                 LOGGER.info("Article {} does not have any internal components.", uuid);
                 throw new MethodeArticleHasNoInternalComponentsException(uuid);
             }
@@ -77,13 +91,14 @@ public class InternalComponentsMapper {
                     .withTableOfContents(tableOfContents)
                     .withTopper(topper)
                     .withLeadImages(leadImages)
+                    .withUnpublishedContentDescription(unpublishedContentDescription)
                     .build();
-        } catch (ParserConfigurationException | SAXException | XPathExpressionException | IOException e) {
+        } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException | IOException e) {
             throw new TransformationException(e);
         }
     }
 
-    private Design extractDesign(XPath xPath, Document eomFileDoc) throws XPathExpressionException {
+    private Design extractDesign(final XPath xPath, final Document eomFileDoc) throws XPathExpressionException {
         final String theme = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@design-theme", eomFileDoc)).trim();
 
         if (Strings.isNullOrEmpty(theme)) {
@@ -93,7 +108,7 @@ public class InternalComponentsMapper {
         return new Design(theme);
     }
 
-    private TableOfContents extractTableOfContents(XPath xPath, Document eomFileDoc) throws XPathExpressionException {
+    private TableOfContents extractTableOfContents(final XPath xPath, final Document eomFileDoc) throws XPathExpressionException {
         final String sequence = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@sequence", eomFileDoc)).trim();
         final String labelType = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@label", eomFileDoc)).trim();
 
@@ -104,7 +119,7 @@ public class InternalComponentsMapper {
         return new TableOfContents(sequence, labelType);
     }
 
-    private Topper extractTopper(XPath xpath, Document eomFileDoc, final List<Image> leadImages) throws XPathExpressionException {
+    private Topper extractTopper(final XPath xpath, final Document eomFileDoc) throws XPathExpressionException {
         final String topperBasePath = "/doc/lead/lead-components/topper";
 
         final String layout = Strings.nullToEmpty(xpath.evaluate(topperBasePath + "/@layout", eomFileDoc)).trim();
@@ -126,6 +141,21 @@ public class InternalComponentsMapper {
                 layout);
     }
 
+    private String extractUnpublishedContentDescription(final XPath xpath, final Document eomFileDoc) throws XPathExpressionException, TransformerException {
+        final Node contentPackageNextNode = (Node) xpath.evaluate("/doc/lead/lead-components/content-package/content-package-next", eomFileDoc, XPathConstants.NODE);
+        if (contentPackageNextNode == null) {
+            return null;
+        }
+
+        final String contentPackageNext = convertNodeToString(contentPackageNextNode.getFirstChild());
+        if (Strings.isNullOrEmpty(contentPackageNext)) {
+            return null;
+        }
+
+        final String unpublishedContentDescription = contentPackageNext.trim();
+        return Strings.isNullOrEmpty(unpublishedContentDescription) ? null : unpublishedContentDescription;
+    }
+
     private List<Image> extractImages(XPath xpath, Document doc, String basePath) throws XPathExpressionException {
         String[] labels = new String[]{"square", "standard", "wide"};
         List<Image> images = new ArrayList<>();
@@ -141,7 +171,6 @@ public class InternalComponentsMapper {
         return images;
     }
 
-
     private String getImageId(XPath xpath, Document doc, String topperImgBasePath) throws XPathExpressionException {
         String topperImageId = null;
         String imageFileRef = Strings.nullToEmpty(xpath.evaluate(topperImgBasePath + "/@fileref", doc)).trim();
@@ -149,6 +178,14 @@ public class InternalComponentsMapper {
             topperImageId = imageFileRef.substring(imageFileRef.lastIndexOf("uuid=") + "uuid=".length());
         }
         return topperImageId;
+    }
+
+    private String convertNodeToString(final Node node) throws TransformerException {
+        final StringWriter writer = new StringWriter();
+        final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.transform(new DOMSource(node), new StreamResult(writer));
+        return writer.toString();
     }
 
     private Document getEomFileDocument(EomFile eomFile) throws ParserConfigurationException, SAXException, IOException {
