@@ -76,6 +76,7 @@ You can find an example of a transformed article below.
       "type": "wide"
     }
   ],
+  "unpublishedContentDescription": "<p>Content package coming next text</p>",
   "uuid": "e7f2eed0-ef92-11e6-abbc-ee7d9c5b3b90",
   "lastModified": "2017-03-16T13:51:52.976Z",
   "publishReference": "tid_xhwijstdot"
