@@ -127,6 +127,9 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                         ],
                         "type": "object"
                     },
+                    "unpublishedContentDescription": {
+                        "type": "string"
+                    }
                     "uuid": {
                         "type": "string"
                     }
@@ -170,6 +173,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                     "id": "c3773006-f9b1-11e6-9516-2d969e0d3b65", 
                     "type": "wide"
                 }],
+                "unpublishedContentDescription": "<p><?EM-dummyText [Content package coming next]?>\n</p>",
                 "uuid": "8b4d2118-0e51-11e7-a88c-50ba212dce4d",
                 "lastModified": "2017-03-24T17:53:34.875Z",
                 "publishReference": "tid_bwlvqcyebd"
@@ -206,6 +210,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                         "type": "wide"
                     }
                 ],
+                "unpublishedContentDescription": null,
                 "uuid": "5fd4a5b8-12c7-11e7-9469-afea892e4de3",
                 "lastModified": "2017-03-28T10:44:09.439Z",
                 "publishReference": "tid_dohr8nvttl"
