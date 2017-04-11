@@ -46,6 +46,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                         "type": "wide"
                     }
                 ],
+                "unpublishedContentDescription": "<p>Content package coming next text</p>",
                 "uuid": "2260867c-12cf-11e7-9469-afea892e4de3",
                 "lastModified": "2017-03-28T11:17:07.063Z",
                 "publishReference": "tid_tiu5klesma"
