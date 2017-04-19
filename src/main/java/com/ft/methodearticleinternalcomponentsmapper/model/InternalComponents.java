@@ -11,26 +11,30 @@ import javax.validation.constraints.NotNull;
 
 public class InternalComponents {
 
-    private Design design;
-    private TableOfContents tableOfContents;
-    private Topper topper;
-    private List<Image> leadImages;
+    private final Design design;
+    private final TableOfContents tableOfContents;
+    private final Topper topper;
+    private final List<Image> leadImages;
+    private final String unpublishedContentDescription;
 
-    private String uuid;
-    private Date lastModified;
-    private String publishReference;
+    private final String uuid;
+    private final Date lastModified;
+    private final String publishReference;
 
-    public InternalComponents(@JsonProperty("design") Design design,
-                              @JsonProperty("tableOfContents") TableOfContents tableOfContents,
-                              @JsonProperty("topper") Topper topper,
-                              @JsonProperty("leadImages") List<Image> leadImages,
-                              @JsonProperty("uuid") String uuid,
-                              @JsonProperty("lastModified") Date lastModified,
-                              @JsonProperty("publishReference") String publishReference) {
+    public InternalComponents(@JsonProperty("design") final Design design,
+                              @JsonProperty("tableOfContents") final TableOfContents tableOfContents,
+                              @JsonProperty("topper") final Topper topper,
+                              @JsonProperty("leadImages") final List<Image> leadImages,
+                              @JsonProperty("unpublishedContentDescription") final String unpublishedContentDescription,
+                              @JsonProperty("uuid") final String uuid,
+                              @JsonProperty("lastModified") final Date lastModified,
+                              @JsonProperty("publishReference") final String publishReference) {
         this.design = design;
         this.tableOfContents = tableOfContents;
         this.topper = topper;
         this.leadImages = leadImages;
+        this.unpublishedContentDescription = unpublishedContentDescription;
+
         this.uuid = uuid;
         this.lastModified = lastModified;
         this.publishReference = publishReference;
@@ -50,6 +54,10 @@ public class InternalComponents {
 
     public List<Image> getLeadImages() {
         return leadImages;
+    }
+
+    public String getUnpublishedContentDescription() {
+        return unpublishedContentDescription;
     }
 
     public String getUuid() {
@@ -79,6 +87,7 @@ public class InternalComponents {
         private TableOfContents tableOfContents;
         private Topper topper;
         private List<Image> leadImages;
+        private String unpublishedContentDescription;
 
         private String uuid;
         private String publishReference;
@@ -107,6 +116,11 @@ public class InternalComponents {
             return this;
         }
 
+        public InternalComponents.Builder withUnpublishedContentDescription(String unpublishedContentDescription) {
+            this.unpublishedContentDescription = unpublishedContentDescription;
+            return this;
+        }
+
         public InternalComponents.Builder withUuid(UUID uuid) {
             this.uuid = uuid.toString();
             return this;
@@ -128,6 +142,7 @@ public class InternalComponents {
                     tableOfContents,
                     topper,
                     leadImages,
+                    unpublishedContentDescription,
                     uuid,
                     lastModified,
                     publishReference);
