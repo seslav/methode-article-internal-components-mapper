@@ -4,6 +4,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.ft.api.jaxrs.errors.RuntimeExceptionMapper;
 import com.ft.api.util.buildinfo.BuildInfoResource;
 import com.ft.api.util.transactionid.TransactionIdFilter;
+import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
 import com.ft.jerseyhttpwrapper.ResilientClientBuilder;
 import com.ft.jerseyhttpwrapper.config.EndpointConfiguration;
 import com.ft.jerseyhttpwrapper.continuation.ExponentialBackoffContinuationPolicy;
@@ -81,10 +82,10 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .host(mamEndpointConfiguration.getHost())
                 .build();
 
-        MethodeArticleValidator mamValidator =
-                new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper");
-
-        InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(mamValidator);
+        InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
+            new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
+            new Html5SelfClosingTagBodyProcessor()
+        );
 
         ConsumerConfiguration consumerConfig = configuration.getConsumerConfiguration();
         MessageProducingInternalComponentsMapper msgProducingListMapper =
