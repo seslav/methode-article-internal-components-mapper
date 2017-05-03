@@ -1,5 +1,6 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
+import com.ft.bodyprocessing.BodyProcessor;
 import com.google.common.base.Strings;
 
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
@@ -49,8 +50,12 @@ public class InternalComponentsMapper {
 
     private MethodeArticleValidator methodeArticleValidator;
 
-    public InternalComponentsMapper(MethodeArticleValidator methodeArticleValidator) {
+    private BodyProcessor htmlFieldProcessor;
+
+    public InternalComponentsMapper(final MethodeArticleValidator methodeArticleValidator,
+                                    final BodyProcessor htmlFieldProcessor) {
         this.methodeArticleValidator = methodeArticleValidator;
+        this.htmlFieldProcessor = htmlFieldProcessor;
     }
 
     public InternalComponents map(EomFile eomFile, String transactionId, Date lastModified, boolean preview) {
@@ -147,7 +152,7 @@ public class InternalComponentsMapper {
             return null;
         }
 
-        final String contentPackageNext = convertNodeToString(contentPackageNextNode.getFirstChild());
+        final String contentPackageNext = getNodeAsHTML5String(contentPackageNextNode.getFirstChild());
         if (Strings.isNullOrEmpty(contentPackageNext)) {
             return null;
         }
@@ -178,6 +183,11 @@ public class InternalComponentsMapper {
             topperImageId = imageFileRef.substring(imageFileRef.lastIndexOf("uuid=") + "uuid=".length());
         }
         return topperImageId;
+    }
+
+    private String getNodeAsHTML5String(final Node node) throws TransformerException {
+        String nodeAsString = convertNodeToString(node);
+        return htmlFieldProcessor.process(nodeAsString, null);
     }
 
     private String convertNodeToString(final Node node) throws TransformerException {
