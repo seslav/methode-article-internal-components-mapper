@@ -1,5 +1,6 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
+import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
@@ -19,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -58,6 +60,9 @@ public class InternalComponentsMapperTest {
 
     @Mock
     private MethodeArticleValidator methodeArticleValidator;
+
+    @Spy
+    private Html5SelfClosingTagBodyProcessor bodyProcessor;
 
     @InjectMocks
     private InternalComponentsMapper internalComponentsMapper;
@@ -301,6 +306,17 @@ public class InternalComponentsMapperTest {
     }
 
     @Test
+    public void testDummyContentPackageNextIsNullUpcomingDesc() throws Exception {
+        eomFile = buildEomFileWithContentPackageNext("<?EM-dummyText ... coming next ... ?>");
+
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
+                .thenReturn(PublishingStatus.VALID);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
+    }
+
+    @Test
     public void testUnformattedContentPackageNextIsTrimmed() throws Exception {
         final String unformattedContentPackageNext = " This is a unformatted description of the upcoming content ";
         eomFile = buildEomFileWithContentPackageNext(unformattedContentPackageNext);
@@ -325,7 +341,7 @@ public class InternalComponentsMapperTest {
     }
 
     @Test(expected = MethodeArticleHasNoInternalComponentsException.class)
-    public void testEverytinghEmptyLeadsToException() throws Exception {
+    public void testEverythingEmptyLeadsToException() throws Exception {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
