@@ -2,11 +2,9 @@ package com.ft.methodearticleinternalcomponentsmapper.messaging;
 
 import com.ft.messagequeueproducer.MessageProducer;
 import com.ft.messaging.standards.message.v1.Message;
-import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +35,7 @@ public class MessageProducingInternalComponentsMapper {
             message = messageBuilder.buildMessage(
                     internalComponentsMapper.map(methodeContent, transactionId, messageTimestamp, false)
             );
-        } catch (MethodeArticleMarkedDeletedException | MethodeArticleHasNoInternalComponentsException e) {
+        } catch (MethodeArticleMarkedDeletedException e) {
             LOGGER.info("Internal components of article {} are missing. " +
                             "Message with deleted internal components event is created.",
                     methodeContent.getUuid());

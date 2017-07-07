@@ -5,6 +5,8 @@ import com.ft.api.jaxrs.errors.RuntimeExceptionMapper;
 import com.ft.api.util.buildinfo.BuildInfoResource;
 import com.ft.api.util.transactionid.TransactionIdFilter;
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
+import com.ft.bodyprocessing.richcontent.VideoMatcher;
+import com.ft.jerseyhttpwrapper.ResilientClient;
 import com.ft.jerseyhttpwrapper.ResilientClientBuilder;
 import com.ft.jerseyhttpwrapper.config.EndpointConfiguration;
 import com.ft.jerseyhttpwrapper.continuation.ExponentialBackoffContinuationPolicy;
@@ -12,17 +14,15 @@ import com.ft.message.consumer.MessageListener;
 import com.ft.message.consumer.MessageQueueConsumerInitializer;
 import com.ft.messagequeueproducer.MessageProducer;
 import com.ft.messagequeueproducer.QueueProxyProducer;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.ConnectionConfiguration;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.ConsumerConfiguration;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleInternalComponentsMapperConfiguration;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleMapperConfiguration;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.ProducerConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.*;
 import com.ft.methodearticleinternalcomponentsmapper.health.CanConnectToMessageQueueProducerProxyHealthcheck;
 import com.ft.methodearticleinternalcomponentsmapper.health.RemoteServiceHealthCheck;
 import com.ft.methodearticleinternalcomponentsmapper.messaging.MessageBuilder;
 import com.ft.methodearticleinternalcomponentsmapper.messaging.MessageProducingInternalComponentsMapper;
 import com.ft.methodearticleinternalcomponentsmapper.messaging.NativeCmsPublicationEventsListener;
 import com.ft.methodearticleinternalcomponentsmapper.resources.MapResource;
+import com.ft.methodearticleinternalcomponentsmapper.transformation.BodyProcessingFieldTransformerFactory;
+import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.platform.dropwizard.AdvancedHealthCheck;
@@ -82,7 +82,25 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .host(mamEndpointConfiguration.getHost())
                 .build();
 
+        DocumentStoreApiConfiguration documentStoreApiConfiguration = configuration.getDocumentStoreApiConfiguration();
+        ResilientClient documentStoreApiClient = (ResilientClient) configureResilientClient(environment, documentStoreApiConfiguration.getEndpointConfiguration(), documentStoreApiConfiguration.getConnectionConfig());
+        EndpointConfiguration documentStoreApiEndpointConfiguration = documentStoreApiConfiguration.getEndpointConfiguration();
+        UriBuilder documentStoreApiBuilder = UriBuilder.fromPath(documentStoreApiEndpointConfiguration.getPath()).scheme("http").host(documentStoreApiEndpointConfiguration.getHost()).port(documentStoreApiEndpointConfiguration.getPort());
+        URI documentStoreUri = documentStoreApiBuilder.build();
+
+        ConcordanceApiConfiguration concordanceApiConfiguration = configuration.getConcordanceApiConfiguration();
+        Client concordanceApiClient = configureResilientClient(environment, concordanceApiConfiguration.getEndpointConfiguration(), concordanceApiConfiguration.getConnectionConfiguration());
+        EndpointConfiguration concordanceApiEndpointConfiguration = concordanceApiConfiguration.getEndpointConfiguration();
+        UriBuilder concordanceApiBuilder = UriBuilder.fromPath(concordanceApiEndpointConfiguration.getPath()).scheme("http").host(concordanceApiEndpointConfiguration.getHost()).port(concordanceApiEndpointConfiguration.getPort());
+        URI concordanceUri = concordanceApiBuilder.build();
+
         InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
+            new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri,
+                    new VideoMatcher(configuration.getVideoSiteConfig()),
+                    new InteractiveGraphicsMatcher(configuration.getInteractiveGraphicsWhitelist()),
+                    concordanceApiClient,
+                    concordanceUri
+            ).newInstance(),
             new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
             new Html5SelfClosingTagBodyProcessor()
         );

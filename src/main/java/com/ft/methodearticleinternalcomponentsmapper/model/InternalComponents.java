@@ -16,6 +16,7 @@ public class InternalComponents {
     private final Topper topper;
     private final List<Image> leadImages;
     private final String unpublishedContentDescription;
+    private final String body;
 
     private final String uuid;
     private final Date lastModified;
@@ -26,6 +27,7 @@ public class InternalComponents {
                               @JsonProperty("topper") final Topper topper,
                               @JsonProperty("leadImages") final List<Image> leadImages,
                               @JsonProperty("unpublishedContentDescription") final String unpublishedContentDescription,
+                              @JsonProperty("body") final String body,
                               @JsonProperty("uuid") final String uuid,
                               @JsonProperty("lastModified") final Date lastModified,
                               @JsonProperty("publishReference") final String publishReference) {
@@ -34,6 +36,7 @@ public class InternalComponents {
         this.topper = topper;
         this.leadImages = leadImages;
         this.unpublishedContentDescription = unpublishedContentDescription;
+        this.body = body;
 
         this.uuid = uuid;
         this.lastModified = lastModified;
@@ -58,6 +61,10 @@ public class InternalComponents {
 
     public String getUnpublishedContentDescription() {
         return unpublishedContentDescription;
+    }
+
+    public String getBody() {
+        return body;
     }
 
     public String getUuid() {
@@ -88,6 +95,7 @@ public class InternalComponents {
         private Topper topper;
         private List<Image> leadImages;
         private String unpublishedContentDescription;
+        private String body;
 
         private String uuid;
         private String publishReference;
@@ -121,6 +129,11 @@ public class InternalComponents {
             return this;
         }
 
+        public InternalComponents.Builder withXMLBody(String body) {
+            this.body = body;
+            return this;
+        }
+
         public InternalComponents.Builder withUuid(UUID uuid) {
             this.uuid = uuid.toString();
             return this;
@@ -143,6 +156,7 @@ public class InternalComponents {
                     topper,
                     leadImages,
                     unpublishedContentDescription,
+                    body,
                     uuid,
                     lastModified,
                     publishReference);
