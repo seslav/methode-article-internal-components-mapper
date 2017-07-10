@@ -10,9 +10,8 @@ import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleVa
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -36,16 +35,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.ft.uuidutils.DeriveUUID.Salts.IMAGE_SET;
 
 public class InternalComponentsMapper {
-
-    private static Logger LOGGER = LoggerFactory.getLogger(InternalComponentsMapper.class);
 
     enum TransformationMode {
         PUBLISH,
@@ -54,6 +48,7 @@ public class InternalComponentsMapper {
 
     interface Type {
         String CONTENT_PACKAGE = "ContentPackage";
+        String ARTICLE = "Article";
     }
 
     private MethodeArticleValidator methodeArticleValidator;
@@ -140,29 +135,30 @@ public class InternalComponentsMapper {
         Document valueDocument = getDocumentBuilder().parse(new ByteArrayInputStream(value));
         final String type = determineType(xpath, attributesDocument);
 
-        final String transformedBody = transformField(sourceBodyXML, bodyTransformer, transactionId);
-        final String validatedBody = validateBody(mode, type, transformedBody, uuid);
+        final String transformedBody = transformField(sourceBodyXML, bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
+        final String validatedTransformedBody = validateBody(mode, type, transformedBody, uuid);
+        final String postProcessedTransformedBody = putMainImageReferenceInBodyXml(xpath, attributesDocument, generateMainImageUuid(xpath, valueDocument), validatedTransformedBody);
 
-        final String mainImage = generateMainImageUuid(xpath, valueDocument);
-        final String postProcessedBody = putMainImageReferenceInBodyXml(xpath, attributesDocument, mainImage, validatedBody);
-
-        return postProcessedBody;
+        return postProcessedTransformedBody;
     }
 
-    private String determineType(final XPath xpath,
-                                 final Document attributesDocument) throws XPathExpressionException {
+    private String determineType(final XPath xpath, final Document attributesDocument) throws XPathExpressionException, TransformerException {
         final String isContentPackage = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/isContentPackage", attributesDocument);
         if (Boolean.TRUE.toString().equalsIgnoreCase(isContentPackage)) {
             return Type.CONTENT_PACKAGE;
         }
 
-        return null;
+        return Type.ARTICLE;
     }
 
-    private String transformField(String originalFieldAsString, FieldTransformer transformer, String transactionId) {
+    private String transformField(final String originalFieldAsString,
+                                  final FieldTransformer transformer,
+                                  final String transactionId,
+                                  final Map.Entry<String, Object>... contextData) {
+
         String transformedField = "";
         if (!Strings.isNullOrEmpty(originalFieldAsString)) {
-            transformedField = transformer.transform(originalFieldAsString, transactionId);
+            transformedField = transformer.transform(originalFieldAsString, transactionId, contextData);
         }
         return transformedField;
     }
@@ -171,71 +167,71 @@ public class InternalComponentsMapper {
                                 final String type,
                                 final String transformedBody,
                                 final UUID uuid) {
-        if (!Strings.isNullOrEmpty(transformedBody) && !Strings.isNullOrEmpty(unwrapBody(transformedBody))) {
-            return transformedBody;
-        }
+      if (!Strings.isNullOrEmpty(transformedBody) && !Strings.isNullOrEmpty(unwrapBody(transformedBody))) {
+        return transformedBody;
+      }
 
-        if (TransformationMode.PREVIEW.equals(mode)) {
-            return EMPTY_VALIDATED_BODY;
-        }
+      if (TransformationMode.PREVIEW.equals(mode)) {
+        return EMPTY_VALIDATED_BODY;
+      }
 
-        if (Type.CONTENT_PACKAGE.equals(type)) {
-            return EMPTY_VALIDATED_BODY;
-        }
+      if (Type.CONTENT_PACKAGE.equals(type)) {
+        return EMPTY_VALIDATED_BODY;
+      }
 
-        throw new UntransformableMethodeContentException(uuid.toString(), "Not a valid Methode article for publication - transformed article body is blank");
+      throw new UntransformableMethodeContentException(uuid.toString(), "Not a valid Methode article for publication - transformed article body is blank");
     }
 
     private String unwrapBody(String wrappedBody) {
-        if (!(wrappedBody.startsWith(START_BODY) && wrappedBody.endsWith(END_BODY))) {
-            throw new IllegalArgumentException("can't unwrap a string that is not a wrapped body");
-        }
+      if (!(wrappedBody.startsWith(START_BODY) && wrappedBody.endsWith(END_BODY))) {
+        throw new IllegalArgumentException("can't unwrap a string that is not a wrapped body");
+      }
 
-        int index = wrappedBody.indexOf('>', START_BODY.length()) + 1;
-        return wrappedBody.substring(index, wrappedBody.length() - END_BODY.length()).trim();
+      int index = wrappedBody.indexOf('>', START_BODY.length()) + 1;
+      return wrappedBody.substring(index, wrappedBody.length() - END_BODY.length()).trim();
     }
 
     private String generateMainImageUuid(XPath xpath, Document eomFileDocument) throws XPathExpressionException {
-        final String imageUuid = StringUtils.substringAfter(xpath.evaluate("/doc/lead/lead-images/web-master/@fileref", eomFileDocument), "uuid=");
-        if (!Strings.isNullOrEmpty(imageUuid)) {
-            return DeriveUUID.with(IMAGE_SET).from(UUID.fromString(imageUuid)).toString();
-        }
-        return null;
+      final String imageUuid = StringUtils.substringAfter(xpath.evaluate("/doc/lead/lead-images/web-master/@fileref", eomFileDocument), "uuid=");
+      if (!Strings.isNullOrEmpty(imageUuid)) {
+        return DeriveUUID.with(IMAGE_SET).from(UUID.fromString(imageUuid)).toString();
+      }
+      return null;
     }
 
     private String putMainImageReferenceInBodyXml(XPath xpath, Document attributesDocument, String mainImage, String body) throws XPathExpressionException,
             TransformerException, ParserConfigurationException, SAXException, IOException {
 
-        if (mainImage != null) {
+      if (mainImage != null) {
 
-            InputSource inputSource = new InputSource();
-            inputSource.setCharacterStream(new StringReader(body));
+        InputSource inputSource = new InputSource();
+        inputSource.setCharacterStream(new StringReader(body));
 
-            Element bodyNode = getDocumentBuilder()
-                    .parse(inputSource)
-                    .getDocumentElement();
-            final String flag = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage", attributesDocument);
-            if (!NO_PICTURE_FLAG.equalsIgnoreCase(flag)) {
-                return putMainImageReferenceInBodyNode(bodyNode, mainImage);
-            }
+        Element bodyNode = getDocumentBuilder()
+                .parse(inputSource)
+                .getDocumentElement();
+        final String flag = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage", attributesDocument);
+        if (!NO_PICTURE_FLAG.equalsIgnoreCase(flag)) {
+          return putMainImageReferenceInBodyNode(bodyNode, mainImage);
         }
-        return body;
+      }
+      return body;
     }
 
     private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
-        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+      final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+      documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
-        return documentBuilderFactory.newDocumentBuilder();
+      return documentBuilderFactory.newDocumentBuilder();
     }
 
     private String putMainImageReferenceInBodyNode(Node bodyNode, String mainImage) throws TransformerException {
-        Element newElement = bodyNode.getOwnerDocument().createElement("content");
-        newElement.setAttribute("id", mainImage);
-        newElement.setAttribute("type", IMAGE_SET_TYPE);
-        newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
-        bodyNode.insertBefore(newElement, bodyNode.getFirstChild());
-        return getNodeAsHTML5String(bodyNode);
+      Element newElement = bodyNode.getOwnerDocument().createElement("content");
+      newElement.setAttribute("id", mainImage);
+      newElement.setAttribute("type", IMAGE_SET_TYPE);
+      newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
+      bodyNode.insertBefore(newElement, bodyNode.getFirstChild());
+      return getNodeAsHTML5String(bodyNode);
     }
 
     private Design extractDesign(final XPath xPath, final Document eomFileDoc) throws XPathExpressionException {
