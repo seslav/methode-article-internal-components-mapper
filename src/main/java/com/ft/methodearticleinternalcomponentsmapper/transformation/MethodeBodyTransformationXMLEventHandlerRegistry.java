@@ -18,7 +18,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
         registerEntityReferenceEventHandler(new PlainTextHtmlEntityReferenceEventHandler());
         // want to be sure to keep the wrapping node
         registerStartAndEndElementEventHandler(new RetainXMLEventHandler(), "body", "concept");
-        
+
         //rich content
         InlineImageXmlEventHandler inlineImageXmlEventHandler = new InlineImageXmlEventHandler();
         registerStartAndEndElementEventHandler(new PullQuoteEventHandler(new PullQuoteXMLParser(new StAXTransformingBodyProcessor(this), inlineImageXmlEventHandler)), "web-pull-quote");
@@ -41,12 +41,12 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
         registerStartAndEndElementEventHandler(new RetainWithSpecificAttributesXMLEventHandler("src", "alt", "width", "height"), "img");
 
         //timelines
-        registerStartAndEndElementEventHandler(new RetainXMLEventHandler(), 
+        registerStartAndEndElementEventHandler(new RetainXMLEventHandler(),
                 "timeline", "timeline-header", "timeline-credits",
                 "timeline-sources", "timeline-byline", "timeline-item", "timeline-date", "timeline-title",
                 "timeline-body"
                 );
-        
+
         
         // strip html5 tags whose bodies we don't want
         registerStartElementEventHandler(new StripElementAndContentsXMLEventHandler(),
@@ -74,6 +74,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
 
         registerStartAndEndElementEventHandler(new SimpleTransformTagXmlEventHandler("h3", "class", "ft-subhead"), "subhead");
         registerStartAndEndElementEventHandler(new SimpleTransformBlockElementEventHandler(new StAXTransformingBodyProcessor(this), "ft-timeline"), "timeline");
+        registerStartAndEndElementEventHandler(new ReplaceElementXMLEventHandler("div", "class"), "layout", "layout_slot");
 
         registerStartAndEndElementEventHandler(new ImageSetXmlEventHandler(),"image-set");
         registerStartAndEndElementEventHandler(new InlineImageXmlEventHandler(),"web-inline-picture");
