@@ -47,7 +47,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
                 "timeline-body"
                 );
 
-        
+
         // strip html5 tags whose bodies we don't want
         registerStartElementEventHandler(new StripElementAndContentsXMLEventHandler(),
                 "applet", "audio", "base", "basefont", "button", "canvas", "caption", "col",
@@ -74,7 +74,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
 
         registerStartAndEndElementEventHandler(new SimpleTransformTagXmlEventHandler("h3", "class", "ft-subhead"), "subhead");
         registerStartAndEndElementEventHandler(new SimpleTransformBlockElementEventHandler(new StAXTransformingBodyProcessor(this), "ft-timeline"), "timeline");
-        registerStartAndEndElementEventHandler(new ReplaceElementXMLEventHandler("div", "class"), "layout", "layout_slot");
+        registerStartAndEndElementEventHandler(new ReplaceElementXMLEventHandler("div", "class"), "layout-set", "layout", "layout_slot");
 
         registerStartAndEndElementEventHandler(new ImageSetXmlEventHandler(),"image-set");
         registerStartAndEndElementEventHandler(new InlineImageXmlEventHandler(),"web-inline-picture");
