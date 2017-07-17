@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public class InternalComponents {
 
@@ -133,8 +132,8 @@ public class InternalComponents {
             return this;
         }
 
-        public InternalComponents.Builder withUuid(UUID uuid) {
-            this.uuid = uuid.toString();
+        public InternalComponents.Builder withUuid(String uuid) {
+            this.uuid = uuid;
             return this;
         }
 
@@ -146,6 +145,18 @@ public class InternalComponents {
         public InternalComponents.Builder withLastModified(Date lastModified) {
             this.lastModified = lastModified;
             return this;
+        }
+
+        public InternalComponents.Builder withValuesFrom(InternalComponents content) {
+            return this.withDesign(content.getDesign())
+                    .withTableOfContents(content.getTableOfContents())
+                    .withTopper(content.getTopper())
+                    .withLeadImages(content.getLeadImages())
+                    .withUnpublishedContentDescription(content.getUnpublishedContentDescription())
+                    .withXMLBody(content.getBodyXML())
+                    .withUuid(content.getUuid())
+                    .withPublishReference(content.getPublishReference())
+                    .withLastModified(content.getLastModified());
         }
 
         public InternalComponents build() {

@@ -3,9 +3,15 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingBodyException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.UntransformableMethodeContentException;
-import com.ft.methodearticleinternalcomponentsmapper.model.*;
+import com.ft.methodearticleinternalcomponentsmapper.model.Design;
+import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
+import com.ft.methodearticleinternalcomponentsmapper.model.Image;
+import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
+import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
+import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
@@ -35,7 +41,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.ft.uuidutils.DeriveUUID.Salts.IMAGE_SET;
 
@@ -93,10 +103,15 @@ public class InternalComponentsMapper {
             final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
 
             String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
+
+            if (Strings.isNullOrEmpty(sourceBodyXML)) {
+                throw new MethodeMissingBodyException(uuid);
+            }
+
             final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
 
             return InternalComponents.builder()
-                    .withUuid(uuid)
+                    .withUuid(uuid.toString())
                     .withPublishReference(transactionId)
                     .withLastModified(lastModified)
                     .withDesign(design)
@@ -167,71 +182,71 @@ public class InternalComponentsMapper {
                                 final String type,
                                 final String transformedBody,
                                 final UUID uuid) {
-      if (!Strings.isNullOrEmpty(transformedBody) && !Strings.isNullOrEmpty(unwrapBody(transformedBody))) {
-        return transformedBody;
-      }
+        if (!Strings.isNullOrEmpty(transformedBody) && !Strings.isNullOrEmpty(unwrapBody(transformedBody))) {
+            return transformedBody;
+        }
 
-      if (TransformationMode.PREVIEW.equals(mode)) {
-        return EMPTY_VALIDATED_BODY;
-      }
+        if (TransformationMode.PREVIEW.equals(mode)) {
+            return EMPTY_VALIDATED_BODY;
+        }
 
-      if (Type.CONTENT_PACKAGE.equals(type)) {
-        return EMPTY_VALIDATED_BODY;
-      }
+        if (Type.CONTENT_PACKAGE.equals(type)) {
+            return EMPTY_VALIDATED_BODY;
+        }
 
-      throw new UntransformableMethodeContentException(uuid.toString(), "Not a valid Methode article for publication - transformed article body is blank");
+        throw new UntransformableMethodeContentException(uuid.toString(), "Not a valid Methode article for publication - transformed article body is blank");
     }
 
     private String unwrapBody(String wrappedBody) {
-      if (!(wrappedBody.startsWith(START_BODY) && wrappedBody.endsWith(END_BODY))) {
-        throw new IllegalArgumentException("can't unwrap a string that is not a wrapped body");
-      }
+        if (!(wrappedBody.startsWith(START_BODY) && wrappedBody.endsWith(END_BODY))) {
+            throw new IllegalArgumentException("can't unwrap a string that is not a wrapped body");
+        }
 
-      int index = wrappedBody.indexOf('>', START_BODY.length()) + 1;
-      return wrappedBody.substring(index, wrappedBody.length() - END_BODY.length()).trim();
+        int index = wrappedBody.indexOf('>', START_BODY.length()) + 1;
+        return wrappedBody.substring(index, wrappedBody.length() - END_BODY.length()).trim();
     }
 
     private String generateMainImageUuid(XPath xpath, Document eomFileDocument) throws XPathExpressionException {
-      final String imageUuid = StringUtils.substringAfter(xpath.evaluate("/doc/lead/lead-images/web-master/@fileref", eomFileDocument), "uuid=");
-      if (!Strings.isNullOrEmpty(imageUuid)) {
-        return DeriveUUID.with(IMAGE_SET).from(UUID.fromString(imageUuid)).toString();
-      }
-      return null;
+        final String imageUuid = StringUtils.substringAfter(xpath.evaluate("/doc/lead/lead-images/web-master/@fileref", eomFileDocument), "uuid=");
+        if (!Strings.isNullOrEmpty(imageUuid)) {
+            return DeriveUUID.with(IMAGE_SET).from(UUID.fromString(imageUuid)).toString();
+        }
+        return null;
     }
 
     private String putMainImageReferenceInBodyXml(XPath xpath, Document attributesDocument, String mainImage, String body) throws XPathExpressionException,
             TransformerException, ParserConfigurationException, SAXException, IOException {
 
-      if (mainImage != null) {
+        if (mainImage != null) {
 
-        InputSource inputSource = new InputSource();
-        inputSource.setCharacterStream(new StringReader(body));
+            InputSource inputSource = new InputSource();
+            inputSource.setCharacterStream(new StringReader(body));
 
-        Element bodyNode = getDocumentBuilder()
-                .parse(inputSource)
-                .getDocumentElement();
-        final String flag = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage", attributesDocument);
-        if (!NO_PICTURE_FLAG.equalsIgnoreCase(flag)) {
-          return putMainImageReferenceInBodyNode(bodyNode, mainImage);
+            Element bodyNode = getDocumentBuilder()
+                    .parse(inputSource)
+                    .getDocumentElement();
+            final String flag = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage", attributesDocument);
+            if (!NO_PICTURE_FLAG.equalsIgnoreCase(flag)) {
+                return putMainImageReferenceInBodyNode(bodyNode, mainImage);
+            }
         }
-      }
-      return body;
+        return body;
     }
 
     private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
-      final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-      documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
-      return documentBuilderFactory.newDocumentBuilder();
+        return documentBuilderFactory.newDocumentBuilder();
     }
 
     private String putMainImageReferenceInBodyNode(Node bodyNode, String mainImage) throws TransformerException {
-      Element newElement = bodyNode.getOwnerDocument().createElement("content");
-      newElement.setAttribute("id", mainImage);
-      newElement.setAttribute("type", IMAGE_SET_TYPE);
-      newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
-      bodyNode.insertBefore(newElement, bodyNode.getFirstChild());
-      return getNodeAsHTML5String(bodyNode);
+        Element newElement = bodyNode.getOwnerDocument().createElement("content");
+        newElement.setAttribute("id", mainImage);
+        newElement.setAttribute("type", IMAGE_SET_TYPE);
+        newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
+        bodyNode.insertBefore(newElement, bodyNode.getFirstChild());
+        return getNodeAsHTML5String(bodyNode);
     }
 
     private Design extractDesign(final XPath xPath, final Document eomFileDoc) throws XPathExpressionException {

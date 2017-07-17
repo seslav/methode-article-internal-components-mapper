@@ -19,7 +19,7 @@ public class StripByPredefinedAttributesAndValuesEventHandler extends BaseXMLEve
     private final ElementNameAndAttributeValueMatcher matcher;
     private final List<String> attributeValuesList;
 
-    protected StripByPredefinedAttributesAndValuesEventHandler(final XMLEventHandler fallbackEventHandler, final ElementNameAndAttributeValueMatcher matcher, List<String> attributeValuesList) {
+    public StripByPredefinedAttributesAndValuesEventHandler(final XMLEventHandler fallbackEventHandler, final ElementNameAndAttributeValueMatcher matcher, List<String> attributeValuesList) {
         checkArgument(fallbackEventHandler != null, "fallbackEventHandler cannot be null");
         checkArgument(matcher != null, "matcher cannot be null");
         checkArgument(attributeValuesList != null, "attributeValuesList cannot be null");

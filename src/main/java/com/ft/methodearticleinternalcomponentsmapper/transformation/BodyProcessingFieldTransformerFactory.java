@@ -27,50 +27,57 @@ import static java.util.Arrays.asList;
 
 public class BodyProcessingFieldTransformerFactory implements FieldTransformerFactory {
 
-	private ResilientClient documentStoreApiClient;
-	private URI documentStoreUri;
+    private ResilientClient documentStoreApiClient;
+    private URI documentStoreUri;
     private VideoMatcher videoMatcher;
     private InteractiveGraphicsMatcher interactiveGraphicsMatcher;
-    private final Map<String,XPathHandler> xpathHandlers;
-    
+    private final Map<String, XPathHandler> xpathHandlers;
+    private final Map<String, String> contentTypeTemplates;
+    private final String apiHost;
 
-	public BodyProcessingFieldTransformerFactory(final ResilientClient documentStoreApiClient,
-            final URI uri,
-            final VideoMatcher videoMatcher,
-            final InteractiveGraphicsMatcher interactiveGraphicsMatcher, Client concordanceApiClient, URI concordanceApiUri) {
-		this.documentStoreApiClient = documentStoreApiClient;
+    public BodyProcessingFieldTransformerFactory(final ResilientClient documentStoreApiClient,
+                                                 final URI uri,
+                                                 final VideoMatcher videoMatcher,
+                                                 final InteractiveGraphicsMatcher interactiveGraphicsMatcher,
+                                                 final Map<String, String> contentTypeTemplates,
+                                                 final String apiHost,
+                                                 Client concordanceApiClient,
+                                                 URI concordanceApiUri) {
+        this.documentStoreApiClient = documentStoreApiClient;
         this.documentStoreUri = uri;
         this.videoMatcher = videoMatcher;
         this.interactiveGraphicsMatcher = interactiveGraphicsMatcher;
-        xpathHandlers = ImmutableMap.of( "//company", new TearSheetLinksTransformer(concordanceApiClient, concordanceApiUri));
-        
-	}
+        this.contentTypeTemplates = contentTypeTemplates;
+        this.apiHost = apiHost;
+        xpathHandlers = ImmutableMap.of("//company", new TearSheetLinksTransformer(concordanceApiClient, concordanceApiUri));
+    }
 
     @Override
     public FieldTransformer newInstance() {
         BodyProcessorChain bodyProcessorChain = new BodyProcessorChain(bodyProcessors());
         return new BodyProcessingFieldTransformer(bodyProcessorChain);
     }
-    
+
     private List<BodyProcessor> bodyProcessors() {
-        return asList(        		
-        	    stripByAttributesAndValuesBodyProcessor(),        	          
+        return asList(
+                stripByAttributesAndValuesBodyProcessor(),
                 new RegexRemoverBodyProcessor("(<p[^/>]*>\\s*</p>)|(<p/>)|(<p\\s[^/>]*/>)"),
                 new DOMTransformingBodyProcessor(xpathHandlers),
                 stAXTransformingBodyProcessor(),
+                ftTagsLinksRewriteBodyProcessor(),
                 new RegexRemoverBodyProcessor("(<p>)(\\s|(<br/>))*(</p>)"),
                 new RegexReplacerBodyProcessor("</p>(\\r?\\n)+<p>", "</p>" + System.lineSeparator() + "<p>"),
                 new RegexReplacerBodyProcessor("</p> +<p>", "</p><p>"),
                 new MethodeLinksBodyProcessor(documentStoreApiClient, documentStoreUri),
                 new ModularXsltBodyProcessor(xslts()),
-                new Html5SelfClosingTagBodyProcessor()      
+                new Html5SelfClosingTagBodyProcessor()
         );
     }
 
     private XsltFile[] xslts() {
         try {
             String related = loadResource("xslt/related.xslt");
-            return new XsltFile[] { new XsltFile("related", related) };
+            return new XsltFile[]{new XsltFile("related", related)};
         } catch (IOException e) {
             throw new BodyProcessingException(e);
         }
@@ -82,11 +89,15 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
 
     private BodyProcessor stAXTransformingBodyProcessor() {
         return new StAXTransformingBodyProcessor(
-            new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher)
+                new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher)
         );
     }
 
     private BodyProcessor stripByAttributesAndValuesBodyProcessor() {
         return new StAXTransformingBodyProcessor(new StripByPredefinedAttributesAndValuesEventHandlerRegistry());
+    }
+
+    private BodyProcessor ftTagsLinksRewriteBodyProcessor() {
+        return new StAXTransformingBodyProcessor(new ModelBodyFTTagsLinkRewriteXmlEventHandlerRegistry(contentTypeTemplates, apiHost));
     }
 }

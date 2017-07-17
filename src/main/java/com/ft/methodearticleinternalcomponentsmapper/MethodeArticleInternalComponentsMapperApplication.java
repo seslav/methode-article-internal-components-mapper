@@ -14,7 +14,13 @@ import com.ft.message.consumer.MessageListener;
 import com.ft.message.consumer.MessageQueueConsumerInitializer;
 import com.ft.messagequeueproducer.MessageProducer;
 import com.ft.messagequeueproducer.QueueProxyProducer;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.*;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.ConcordanceApiConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.ConnectionConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.ConsumerConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.DocumentStoreApiConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleInternalComponentsMapperConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleMapperConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.ProducerConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.health.CanConnectToMessageQueueProducerProxyHealthcheck;
 import com.ft.methodearticleinternalcomponentsmapper.health.RemoteServiceHealthCheck;
 import com.ft.methodearticleinternalcomponentsmapper.messaging.MessageBuilder;
@@ -30,19 +36,17 @@ import com.ft.platform.dropwizard.AdvancedHealthCheckBundle;
 import com.ft.platform.dropwizard.DefaultGoodToGoChecker;
 import com.ft.platform.dropwizard.GoodToGoBundle;
 import com.sun.jersey.api.client.Client;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-
-import javax.servlet.DispatcherType;
-import javax.ws.rs.core.UriBuilder;
-
 import io.dropwizard.Application;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+
+import javax.servlet.DispatcherType;
+import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 public class MethodeArticleInternalComponentsMapperApplication extends Application<MethodeArticleInternalComponentsMapperConfiguration> {
 
@@ -95,14 +99,16 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         URI concordanceUri = concordanceApiBuilder.build();
 
         InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
-            new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri,
-                    new VideoMatcher(configuration.getVideoSiteConfig()),
-                    new InteractiveGraphicsMatcher(configuration.getInteractiveGraphicsWhitelist()),
-                    concordanceApiClient,
-                    concordanceUri
-            ).newInstance(),
-            new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
-            new Html5SelfClosingTagBodyProcessor()
+                new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri,
+                        new VideoMatcher(configuration.getVideoSiteConfig()),
+                        new InteractiveGraphicsMatcher(configuration.getInteractiveGraphicsWhitelist()),
+                        configuration.getContentTypeTemplates(),
+                        configuration.getApiHost(),
+                        concordanceApiClient,
+                        concordanceUri
+                ).newInstance(),
+                new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
+                new Html5SelfClosingTagBodyProcessor()
         );
 
         ConsumerConfiguration consumerConfig = configuration.getConsumerConfiguration();

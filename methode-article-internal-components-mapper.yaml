@@ -143,3 +143,12 @@ concordanceApi:
     connectionConfiguration:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
+
+contentTypeTemplates:
+  http://www.ft.com/ontology/content/Article: /content/{{id}}
+  http://www.ft.com/ontology/content/ImageSet: /content/{{id}}
+  http://www.ft.com/ontology/content/MediaResource: /content/{{id}}
+  http://www.ft.com/ontology/content/Video: /content/{{id}}
+  http://www.ft.com/ontology/company/PublicCompany: /organisations/{{id}}
+
+apiHost: "api.ft.com"

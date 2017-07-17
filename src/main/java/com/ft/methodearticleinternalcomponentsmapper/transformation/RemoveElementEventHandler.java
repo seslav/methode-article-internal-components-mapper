@@ -13,29 +13,29 @@ import javax.xml.stream.events.StartElement;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class RemoveElementEventHandler extends BaseXMLEventHandler {
-	private final XMLEventHandler fallbackEventHandler;
-	private final StartElementMatcher matcher;
+    private final XMLEventHandler fallbackEventHandler;
+    private final StartElementMatcher matcher;
 
-	protected RemoveElementEventHandler(final XMLEventHandler fallbackEventHandler, final StartElementMatcher matcher) {
-		checkArgument(fallbackEventHandler != null, "fallbackEventHandler cannot be null");
-		checkArgument(matcher != null, "matcher cannot be null");
-		this.fallbackEventHandler = fallbackEventHandler;
-		this.matcher = matcher;
-	}
+    public RemoveElementEventHandler(final XMLEventHandler fallbackEventHandler, final StartElementMatcher matcher) {
+        checkArgument(fallbackEventHandler != null, "fallbackEventHandler cannot be null");
+        checkArgument(matcher != null, "matcher cannot be null");
+        this.fallbackEventHandler = fallbackEventHandler;
+        this.matcher = matcher;
+    }
 
-	@Override
-	public void handleStartElementEvent(final StartElement event, final XMLEventReader xmlEventReader, final BodyWriter eventWriter,
-			final BodyProcessingContext bodyProcessingContext) throws XMLStreamException {
-		if(!matcher.matches(event)) {
-			fallbackEventHandler.handleStartElementEvent(event, xmlEventReader, eventWriter, bodyProcessingContext);
-		} else {
-			final String nameToMatch = event.getName().getLocalPart();
-			skipUntilMatchingEndTag(nameToMatch, xmlEventReader);
-		}
-	}
+    @Override
+    public void handleStartElementEvent(final StartElement event, final XMLEventReader xmlEventReader, final BodyWriter eventWriter,
+                                        final BodyProcessingContext bodyProcessingContext) throws XMLStreamException {
+        if (!matcher.matches(event)) {
+            fallbackEventHandler.handleStartElementEvent(event, xmlEventReader, eventWriter, bodyProcessingContext);
+        } else {
+            final String nameToMatch = event.getName().getLocalPart();
+            skipUntilMatchingEndTag(nameToMatch, xmlEventReader);
+        }
+    }
 
-	@Override // Only called where the start tag used the fallback event handler
-	public void handleEndElementEvent(final EndElement event, final XMLEventReader xmlEventReader, final BodyWriter eventWriter) throws XMLStreamException {
-		fallbackEventHandler.handleEndElementEvent(event, xmlEventReader, eventWriter);
-	}
+    @Override // Only called where the start tag used the fallback event handler
+    public void handleEndElementEvent(final EndElement event, final XMLEventReader xmlEventReader, final BodyWriter eventWriter) throws XMLStreamException {
+        fallbackEventHandler.handleEndElementEvent(event, xmlEventReader, eventWriter);
+    }
 }

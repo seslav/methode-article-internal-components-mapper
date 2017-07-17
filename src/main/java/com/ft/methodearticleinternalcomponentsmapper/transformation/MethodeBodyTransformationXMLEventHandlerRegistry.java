@@ -2,7 +2,16 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.richcontent.VideoMatcher;
 import com.ft.bodyprocessing.xml.StAXTransformingBodyProcessor;
-import com.ft.bodyprocessing.xml.eventhandlers.*;
+import com.ft.bodyprocessing.xml.eventhandlers.LinkTagXMLEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.PlainTextHtmlEntityReferenceEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.RetainWithSpecificAttributesXMLEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.RetainWithoutAttributesXMLEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.RetainXMLEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.SimpleTransformBlockElementEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.SimpleTransformTagXmlEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.StripElementAndContentsXMLEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.StripXMLEventHandler;
+import com.ft.bodyprocessing.xml.eventhandlers.XMLEventHandlerRegistry;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.events.Attribute;
@@ -11,11 +20,12 @@ import javax.xml.stream.events.StartElement;
 public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHandlerRegistry {
 
     public MethodeBodyTransformationXMLEventHandlerRegistry(final VideoMatcher videoMatcher,
-            final InteractiveGraphicsMatcher interactiveGraphicsMatcher) {
+                                                            final InteractiveGraphicsMatcher interactiveGraphicsMatcher) {
         //default is to skip events but leave content - anything not configured below will be handled via this
         registerDefaultEventHandler(new StripXMLEventHandler());
         registerCharactersEventHandler(new RetainXMLEventHandler());
         registerEntityReferenceEventHandler(new PlainTextHtmlEntityReferenceEventHandler());
+
         // want to be sure to keep the wrapping node
         registerStartAndEndElementEventHandler(new RetainXMLEventHandler(), "body", "concept");
 
@@ -45,7 +55,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
                 "timeline", "timeline-header", "timeline-credits",
                 "timeline-sources", "timeline-byline", "timeline-item", "timeline-date", "timeline-title",
                 "timeline-body"
-                );
+        );
 
 
         // strip html5 tags whose bodies we don't want
@@ -74,11 +84,11 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
 
         registerStartAndEndElementEventHandler(new SimpleTransformTagXmlEventHandler("h3", "class", "ft-subhead"), "subhead");
         registerStartAndEndElementEventHandler(new SimpleTransformBlockElementEventHandler(new StAXTransformingBodyProcessor(this), "ft-timeline"), "timeline");
-        registerStartAndEndElementEventHandler(new ReplaceElementXMLEventHandler("div", "class"), "layout-set", "layout", "layout_slot");
+        registerStartAndEndElementEventHandler(new ReplaceElementXMLEventHandler("div", "class"), "layout-set", "layout", "layout-slot");
 
-        registerStartAndEndElementEventHandler(new ImageSetXmlEventHandler(),"image-set");
-        registerStartAndEndElementEventHandler(new InlineImageXmlEventHandler(),"web-inline-picture");
-        registerStartAndEndElementEventHandler(new WrappedHandlerXmlEventHandler(new InlineImageXmlEventHandler()),"timeline-image");
+        registerStartAndEndElementEventHandler(new ImageSetXmlEventHandler(), "image-set");
+        registerStartAndEndElementEventHandler(new InlineImageXmlEventHandler(), "web-inline-picture");
+        registerStartAndEndElementEventHandler(new WrappedHandlerXmlEventHandler(new InlineImageXmlEventHandler()), "timeline-image");
         registerStartAndEndElementEventHandler(new SimpleTransformTagXmlEventHandler("strong"), "b");
         registerStartAndEndElementEventHandler(new SimpleTransformTagXmlEventHandler("em"), "i");
         registerStartAndEndElementEventHandler(new RetainWithoutAttributesXMLEventHandler(),
@@ -91,7 +101,6 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
         // For these elements if the attribute is missing use the fallback handler
         registerStartAndEndElementEventHandler(new SlideshowEventHandler(new SlideshowXMLParser(), new LinkTagXMLEventHandler("title", "alt"), caselessMatcher("type", "slideshow")), "a");
         registerEndElementEventHandler(new LinkTagXMLEventHandler(), "a");
-
     }
 
     public static StartElementMatcher caselessMatcher(final String attributeName, final String attributeValue) {
