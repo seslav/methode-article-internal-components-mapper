@@ -47,7 +47,7 @@ public class MessageProducingInternalComponentsMapperTest {
     public void thatMessageIsCreatedFromMappedArticle() {
         Date lastModified = new Date();
         InternalComponents mappedArticle = new InternalComponents.Builder()
-                .withUuid(UUID.randomUUID())
+                .withUuid(UUID.randomUUID().toString())
                 .build();
         when(mapper.map(any(), eq("tid"), eq(lastModified), anyBoolean())).thenReturn(mappedArticle);
 
