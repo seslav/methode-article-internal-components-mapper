@@ -1203,6 +1203,111 @@ public class BodyProcessingFieldTransformerFactoryTest {
     }
 
     @Test
+    public void shouldTransformLayoutToDiv() {
+        String contentWithNotes = "<body><layout data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><p>Content</p></layout></body>";
+        String transformedContent = "<body><div class=\"layout\" data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><p>Content</p></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutWithoutContentToDiv() {
+        String contentWithNotes = "<body><layout data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"></layout></body>";
+        String transformedContent = "<body><div class=\"layout\" data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutSlotToDiv() {
+        String contentWithNotes = "<body><layout-slot><p>Content</p></layout-slot><p>Content</p><layout-slot><p>Content</p></layout-slot></body>";
+        String transformedContent = "<body><div class=\"layout-slot\"><p>Content</p></div><p>Content</p><div class=\"layout-slot\"><p>Content</p></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutSlotWithoutContentToDiv() {
+        String contentWithNotes = "<body><layout-slot></layout-slot><layout-slot></layout-slot></body>";
+        String transformedContent = "<body><div class=\"layout-slot\"/><div class=\"layout-slot\"/></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutWithLayoutSlotsWithoutContentToDiv() {
+        String contentWithNotes = "<body><layout data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><layout-slot></layout-slot><layout-slot></layout-slot></layout></body>";
+        String transformedContent = "<body><div class=\"layout\" data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><div class=\"layout-slot\"/><div class=\"layout-slot\"/></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutWithLayoutSlotsWithContentToDiv() {
+        String contentWithNotes = "<body><p>Content</p><layout data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><layout-slot><p>Content</p></layout-slot><layout-slot><p>Content</p></layout-slot></layout></body>";
+        String transformedContent = "<body><p>Content</p><div class=\"layout\" data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><div class=\"layout-slot\"><p>Content</p></div><div class=\"layout-slot\"><p>Content</p></div></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutSetToDiv() {
+        String contentWithNotes = "<body><layout-set></layout-set></body>";
+        String transformedContent = "<body><div class=\"layout-set\"></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutSetWithLayoutAndLayoutSlotToDiv() {
+        String contentWithNotes = "<body><layout-set><layout data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><layout-slot><p>Content</p></layout-slot></layout></layout-set></body>";
+        String transformedContent = "<body><div class=\"layout-set\"><div class=\"layout\" data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><div class=\"layout-slot\"><p>Content</p></div></div></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutSetWithLayoutAndLayoutSlotWithoutContentToDiv() {
+        String contentWithNotes = "<body><layout-set><layout data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><layout-slot></layout-slot></layout></layout-set></body>";
+        String transformedContent = "<body><div class=\"layout-set\"><div class=\"layout\" data-layout-name=\"tbd\" data-layout-width=\"full-bleed\"><div class=\"layout-slot\"></div></div></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutComponentWithInlineImage() {
+        String contentWithNotes = "<body><layout><layout-slot data-slot-width=\"tbd\">" +
+                "<web-inline-picture fileref=\"/FT/Graphics/Online/Table_square/2015/08/southwark%20crown%20court_20150803163439.jpg?uuid=8924d91e-39fd-11e5-bbd1-b37bc06f590c\" tmx=\"120 120 120 120\"/>" +
+                "</layout-slot><layout-slot>" +
+                "<h3>Header text</h3>" +
+                "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed feugiat turpis at massa tristique sagittis. </p>" +
+                "</layout-slot></layout></body>";
+        String transformedContent = "<body><div class=\"layout\"><div class=\"layout-slot\" data-slot-width=\"tbd\">" +
+                "<ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/8924d91e-39fd-11e5-25b7-24e11a1bf245\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content>" +
+                "</div><div class=\"layout-slot\">" +
+                "<h3>Header text</h3>" +
+                "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed feugiat turpis at massa tristique sagittis. </p>" +
+                "</div></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformLayoutComponentWithTextListItems() {
+        String contentWithNotes = "<body><layout><layout-slot data-slot-width=\"tbd\">" +
+                "<ul>" +
+                "<li>List item</li>" +
+                "<li>List item</li>" +
+                "<li>List item</li>" +
+                "</ul>" +
+                "</layout-slot><layout-slot>" +
+                "<h3>Header text</h3>" +
+                "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed feugiat turpis at massa tristique sagittis. </p>" +
+                "</layout-slot></layout></body>";
+        String transformedContent = "<body><div class=\"layout\"><div class=\"layout-slot\" data-slot-width=\"tbd\">" +
+                "<ul>" +
+                "<li>List item</li>" +
+                "<li>List item</li>" +
+                "<li>List item</li>" +
+                "</ul>" +
+                "</div><div class=\"layout-slot\">" +
+                "<h3>Header text</h3>" +
+                "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed feugiat turpis at massa tristique sagittis. </p>" +
+                "</div></div></body>";
+        checkTransformation(contentWithNotes, transformedContent);
+    }
+
+    @Test
     public void shouldUseArticleUuidAndImageSetId() throws Exception {
         final String bodyWithImageSets = readFromFile("body/embedded_image_set_body.xml");
         final String articleUuid = UUID.randomUUID().toString();
