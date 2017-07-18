@@ -495,5 +495,14 @@
                 <a/>
             </li>
         </ul>
-    </recommended>
+</recommended>
+<layout data-layout-name="name" data-layout-width="body">
+    <layout_slot>
+        <h2>some heading</h2>
+        <p>Content</p>
+    </layout_slot>
+    <layout_slot>
+        <p>100 million billion trillion</p>
+    </layout_slot>
+</layout>
 </body>
