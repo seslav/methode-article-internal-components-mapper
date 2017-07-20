@@ -95,7 +95,7 @@ public class MethodeLinksBodyProcessorTest {
 
         String body = "<body><a href=\"http://www.ft.com/cms/s/" + uuid + ".html\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
-        assertThat(processedBody, is(identicalXmlTo("<body><content id=\"" + uuid + "\" title=\"Some absurd text here\" type=\"" + MethodeLinksBodyProcessor.ARTICLE_TYPE + "\"> Link Text</content></body>")));
+        assertThat(processedBody, is(identicalXmlTo("<body><ft-content id=\"" + uuid + "\" title=\"Some absurd text here\" type=\"" + MethodeLinksBodyProcessor.ARTICLE_TYPE + "\"> Link Text</ft-content></body>")));
     }
 
     @Test

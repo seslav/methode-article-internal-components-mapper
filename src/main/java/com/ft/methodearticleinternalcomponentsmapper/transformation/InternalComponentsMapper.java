@@ -3,7 +3,6 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingBodyException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.UntransformableMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper.Type.CONTENT_PACKAGE;
 import static com.ft.uuidutils.DeriveUUID.Salts.IMAGE_SET;
 
 public class InternalComponentsMapper {
@@ -104,10 +104,6 @@ public class InternalComponentsMapper {
 
             String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
 
-            if (Strings.isNullOrEmpty(sourceBodyXML)) {
-                throw new MethodeMissingBodyException(uuid);
-            }
-
             final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
 
             return InternalComponents.builder()
@@ -160,7 +156,7 @@ public class InternalComponentsMapper {
     private String determineType(final XPath xpath, final Document attributesDocument) throws XPathExpressionException, TransformerException {
         final String isContentPackage = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/isContentPackage", attributesDocument);
         if (Boolean.TRUE.toString().equalsIgnoreCase(isContentPackage)) {
-            return Type.CONTENT_PACKAGE;
+            return CONTENT_PACKAGE;
         }
 
         return Type.ARTICLE;
@@ -190,7 +186,7 @@ public class InternalComponentsMapper {
             return EMPTY_VALIDATED_BODY;
         }
 
-        if (Type.CONTENT_PACKAGE.equals(type)) {
+        if (CONTENT_PACKAGE.equals(type)) {
             return EMPTY_VALIDATED_BODY;
         }
 
@@ -214,10 +210,10 @@ public class InternalComponentsMapper {
         return null;
     }
 
-    private String putMainImageReferenceInBodyXml(XPath xpath, Document attributesDocument, String mainImage, String body) throws XPathExpressionException,
+    private String putMainImageReferenceInBodyXml(XPath xpath, Document attributesDocument, String mainImageUUID, String body) throws XPathExpressionException,
             TransformerException, ParserConfigurationException, SAXException, IOException {
 
-        if (mainImage != null) {
+        if (mainImageUUID != null) {
 
             InputSource inputSource = new InputSource();
             inputSource.setCharacterStream(new StringReader(body));
@@ -227,7 +223,7 @@ public class InternalComponentsMapper {
                     .getDocumentElement();
             final String flag = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage", attributesDocument);
             if (!NO_PICTURE_FLAG.equalsIgnoreCase(flag)) {
-                return putMainImageReferenceInBodyNode(bodyNode, mainImage);
+                return putMainImageReferenceInBodyNode(bodyNode, mainImageUUID);
             }
         }
         return body;
@@ -240,9 +236,9 @@ public class InternalComponentsMapper {
         return documentBuilderFactory.newDocumentBuilder();
     }
 
-    private String putMainImageReferenceInBodyNode(Node bodyNode, String mainImage) throws TransformerException {
-        Element newElement = bodyNode.getOwnerDocument().createElement("content");
-        newElement.setAttribute("id", mainImage);
+    private String putMainImageReferenceInBodyNode(Node bodyNode, String mainImageUUID) throws TransformerException {
+        Element newElement = bodyNode.getOwnerDocument().createElement("ft-content");
+        newElement.setAttribute("url", "http://api.ft.com/content/" + mainImageUUID);
         newElement.setAttribute("type", IMAGE_SET_TYPE);
         newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
         bodyNode.insertBefore(newElement, bodyNode.getFirstChild());

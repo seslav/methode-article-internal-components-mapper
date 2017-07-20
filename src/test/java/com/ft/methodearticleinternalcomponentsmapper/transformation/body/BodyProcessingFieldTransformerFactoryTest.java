@@ -11,6 +11,7 @@ import com.ft.methodearticleinternalcomponentsmapper.transformation.FieldTransfo
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.uuidutils.GenerateV3UUID;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.sun.jersey.api.client.Client;
@@ -26,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -33,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.ft.methodetesting.xml.XmlMatcher.identicalXmlTo;
@@ -40,9 +43,11 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isIn;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -138,28 +143,28 @@ public class BodyProcessingFieldTransformerFactoryTest {
         when(webResourceNotFound.header(anyString(), anyString())).thenReturn(builderNotFound);
     }
 
-//    // This is our thorough test of a complicated article that can be created in Methode. Has all the special characters and components. Do not remove!
-//    @Test
-//    public void kitchenSinkArticleShouldBeTransformedAccordingToRules() {
-//        // content used as links in the kitchen sink
-//        Set<URI> setOfAssetIds = ImmutableSet.of(UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET1_UUID).build(),
-//                UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET2_UUID).build(),
-//                UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET3_UUID).build(),
-//                UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET4_UUID).build());
-//
-//        when(documentStoreApiClient.resource(argThat(isIn(setOfAssetIds)))).thenReturn(webResource);
-//        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-//        when(builder.header(anyString(), anyString())).thenReturn(builder);
-//        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
-//        when(clientResponse.getStatus()).thenReturn(200);
-//        when(clientResponse.getEntityInputStream()).thenReturn(inputStream);
-//
-//        String originalBody = readFromFile("body/kitchen_sink_article_body.xml");
-//
-//        String expectedTransformedBody = readFromFile("body/expected_transformed_kitchen_sink_article_body.xml");
-//
-//        checkTransformation(originalBody, expectedTransformedBody);
-//    }
+    // This is our thorough test of a complicated article that can be created in Methode. Has all the special characters and components. Do not remove!
+    @Test
+    public void kitchenSinkArticleShouldBeTransformedAccordingToRules() {
+        // content used as links in the kitchen sink
+        Set<URI> setOfAssetIds = ImmutableSet.of(UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET1_UUID).build(),
+                UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET2_UUID).build(),
+                UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET3_UUID).build(),
+                UriBuilder.fromUri(documentStoreUri).path(KITCHEN_SINK_ASSET4_UUID).build());
+
+        when(documentStoreApiClient.resource(argThat(isIn(setOfAssetIds)))).thenReturn(webResource);
+        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
+        when(builder.header(anyString(), anyString())).thenReturn(builder);
+        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
+        when(clientResponse.getStatus()).thenReturn(200);
+        when(clientResponse.getEntityInputStream()).thenReturn(inputStream);
+
+        String originalBody = readFromFile("body/kitchen_sink_article_body.xml");
+
+        String expectedTransformedBody = readFromFile("body/expected_transformed_kitchen_sink_article_body.xml");
+
+        checkTransformation(originalBody, expectedTransformedBody);
+    }
 
     @Test
     public void shouldThrowExceptionIfBodyNull() {
@@ -430,82 +435,82 @@ public class BodyProcessingFieldTransformerFactoryTest {
         checkTransformation(bigNumberFromMethode, processedBigNumber);
     }
 
-//    @Test
-//    public void nonClassNumbersComponentIsPromoBoxAndImagePreservedIfPresent() {
-//        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
-//                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
-//                "<promo-title><p><a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
-//                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
-//                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
-//                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro>" +
-//                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
-//                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
-//
-//        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box><promo-title><p>" +
-//                "<a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
-//                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
-//                "<ft-content data-embedded=\"true\" id=\"432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
-//                "<promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro><promo-link>" +
-//                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
-//                "<p>This is the end of the sentence.</p></body>";
-//
-//        checkTransformation(promoBoxFromMethode, processedPromoBox);
-//    }
-//
-//    @Test
-//    public void nonClassNumbersComponentIsPromoBoxAndTitleRemovedIfDummyText() {
-//        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"right\" channel=\"FTcom\"><table width=\"156px\" align=\"right\" cellpadding=\"4px\"><tr><td align=\"left\"><promo-title><p><?EM-dummyText Sidebar title ?>\n" +
-//                "</p>\n" +
-//                "</promo-title>\n" +
-//                "</td>\n" +
-//                "</tr>\n" +
-//                "<tr><td align=\"left\"><promo-headline><p>Labour attacks ministerial role of former HSBC chairman</p>\n" +
-//                "</promo-headline>\n" +
-//                "</td>\n" +
-//                "</tr>\n" +
-//                "<tr><td><web-master xtransform=\"scale(0.1538 0.1538)\" tmx=\"2048 1152 315 177\" width=\"2048\" height=\"1152\" fileref=\"/FT/Graphics/Online/Master_2048x1152/Martin/butterfly-2048x1152.jpg?uuid=17ee1f24-ff46-11e2-9b3b-002128161462\" dtxInsert=\"Web Master\" id=\"U112075852229295\"/>\n" +
-//                "</td>\n" +
-//                "</tr>\n" +
-//                "<tr><td align=\"left\"><promo-intro><p>The revelations about HSBC’s Swiss operations reverberated around Westminster on bold <b>Monday</b>, with Labour claiming the coalition was alerted in 2010 to strikeout <span channel=\"!\">alleged </span>malpractice at the bank and took no action.</p>\n" +
-//                "<p><a dtxInsert=\"Sidebar - right aligned\" href=\"/FT/Content/World%20News/Stories/Live/hsbcpoltix.uk.9.xml?uuid=2f9b640c-b056-11e4-a2cc-00144feab7de\">Continue reading</a>" +
-//                "</p>\n" +
-//                "</promo-intro>\n" +
-//                "</td>\n" +
-//                "</tr>\n" +
-//                "</table>\n" +
-//                "</promo-box>This is the end of the sentence.</p></body>";
-//
-//        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box>" +
-//                "<promo-headline><p>Labour attacks ministerial role of former HSBC chairman</p></promo-headline><promo-image>" +
-//                "<ft-content data-embedded=\"true\" id=\"17ee1f24-ff46-11e2-055d-97bbf262bf2b\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
-//                "<promo-intro><p>The revelations about HSBC’s Swiss operations reverberated around Westminster on bold <strong>Monday</strong>, with Labour claiming the coalition was alerted in 2010 to strikeout malpractice at the bank and took no action.</p>\n" +
-//                "<p><a href=\"http://www.ft.com/cms/s/2f9b640c-b056-11e4-a2cc-00144feab7de.html\">Continue reading</a></p></promo-intro>" +
-//                "</promo-box><p>This is the end of the sentence.</p></body>";
-//
-//        checkTransformation(promoBoxFromMethode, processedPromoBox);
-//    }
-//
-//    @Test
-//    public void nonClassNumbersComponentIsPromoBoxAndBIsConvertedToStrong() {
-//        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
-//                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
-//                "<promo-title><p><a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
-//                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
-//                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
-//                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our <b>annual</b> list of the world’s biggest companies</p></promo-intro>" +
-//                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
-//                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
-//
-//        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box><promo-title><p>" +
-//                "<a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
-//                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
-//                "<ft-content data-embedded=\"true\" id=\"432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
-//                "<promo-intro><p>The risers and fallers in our <strong>annual</strong> list of the world’s biggest companies</p></promo-intro><promo-link>" +
-//                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
-//                "<p>This is the end of the sentence.</p></body>";
-//
-//        checkTransformation(promoBoxFromMethode, processedPromoBox);
-//    }
+    @Test
+    public void nonClassNumbersComponentIsPromoBoxAndImagePreservedIfPresent() {
+        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
+                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
+                "<promo-title><p><a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
+                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
+                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
+                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro>" +
+                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
+                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
+
+        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box><promo-title><p>" +
+                "<a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
+                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
+                "<ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
+                "<promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro><promo-link>" +
+                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
+                "<p>This is the end of the sentence.</p></body>";
+
+        checkTransformation(promoBoxFromMethode, processedPromoBox);
+    }
+
+    @Test
+    public void nonClassNumbersComponentIsPromoBoxAndTitleRemovedIfDummyText() {
+        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"right\" channel=\"FTcom\"><table width=\"156px\" align=\"right\" cellpadding=\"4px\"><tr><td align=\"left\"><promo-title><p><?EM-dummyText Sidebar title ?>\n" +
+                "</p>\n" +
+                "</promo-title>\n" +
+                "</td>\n" +
+                "</tr>\n" +
+                "<tr><td align=\"left\"><promo-headline><p>Labour attacks ministerial role of former HSBC chairman</p>\n" +
+                "</promo-headline>\n" +
+                "</td>\n" +
+                "</tr>\n" +
+                "<tr><td><web-master xtransform=\"scale(0.1538 0.1538)\" tmx=\"2048 1152 315 177\" width=\"2048\" height=\"1152\" fileref=\"/FT/Graphics/Online/Master_2048x1152/Martin/butterfly-2048x1152.jpg?uuid=17ee1f24-ff46-11e2-9b3b-002128161462\" dtxInsert=\"Web Master\" id=\"U112075852229295\"/>\n" +
+                "</td>\n" +
+                "</tr>\n" +
+                "<tr><td align=\"left\"><promo-intro><p>The revelations about HSBC’s Swiss operations reverberated around Westminster on bold <b>Monday</b>, with Labour claiming the coalition was alerted in 2010 to strikeout <span channel=\"!\">alleged </span>malpractice at the bank and took no action.</p>\n" +
+                "<p><a dtxInsert=\"Sidebar - right aligned\" href=\"/FT/Content/World%20News/Stories/Live/hsbcpoltix.uk.9.xml?uuid=2f9b640c-b056-11e4-a2cc-00144feab7de\">Continue reading</a>" +
+                "</p>\n" +
+                "</promo-intro>\n" +
+                "</td>\n" +
+                "</tr>\n" +
+                "</table>\n" +
+                "</promo-box>This is the end of the sentence.</p></body>";
+
+        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box>" +
+                "<promo-headline><p>Labour attacks ministerial role of former HSBC chairman</p></promo-headline><promo-image>" +
+                "<ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/17ee1f24-ff46-11e2-055d-97bbf262bf2b\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
+                "<promo-intro><p>The revelations about HSBC’s Swiss operations reverberated around Westminster on bold <strong>Monday</strong>, with Labour claiming the coalition was alerted in 2010 to strikeout malpractice at the bank and took no action.</p>\n" +
+                "<p><a href=\"http://www.ft.com/cms/s/2f9b640c-b056-11e4-a2cc-00144feab7de.html\">Continue reading</a></p></promo-intro>" +
+                "</promo-box><p>This is the end of the sentence.</p></body>";
+
+        checkTransformation(promoBoxFromMethode, processedPromoBox);
+    }
+
+    @Test
+    public void nonClassNumbersComponentIsPromoBoxAndBIsConvertedToStrong() {
+        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
+                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
+                "<promo-title><p><a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
+                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
+                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
+                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our <b>annual</b> list of the world’s biggest companies</p></promo-intro>" +
+                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
+                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
+
+        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box><promo-title><p>" +
+                "<a href=\"http://www.ft.com/reports/ft-500-2011\" title=\"www.ft.com\">FT 500</a></p></promo-title>" +
+                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
+                "<ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
+                "<promo-intro><p>The risers and fallers in our <strong>annual</strong> list of the world’s biggest companies</p></promo-intro><promo-link>" +
+                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
+                "<p>This is the end of the sentence.</p></body>";
+
+        checkTransformation(promoBoxFromMethode, processedPromoBox);
+    }
 
     @Test
     public void nonClassNumbersComponentIsOmittedIfNoValuesPresent() {
@@ -522,47 +527,46 @@ public class BodyProcessingFieldTransformerFactoryTest {
         checkTransformation(promoBoxFromMethode, processedPromoBox);
     }
 
-//    @Test
-//    public void nonClassNumbersComponentIsPromoBoxEvenWhenTitleEmpty() {
-//        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
-//                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
-//                "<promo-title><p></p></promo-title>" +
-//                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
-//                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
-//                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro>" +
-//                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
-//                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
-//
-//        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box>" +
-//                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
-//                "<ft-content data-embedded=\"true\" id=\"432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
-//                "<promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro><promo-link>" +
-//                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
-//                "<p>This is the end of the sentence.</p></body>";
-//
-//        checkTransformation(promoBoxFromMethode, processedPromoBox);
-//    }
-//
-//
-//    @Test
-//    public void nonClassNumbersComponentIsPromoBoxEvenWhenTitleMissing() {
-//        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
-//                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
-//                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
-//                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
-//                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro>" +
-//                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
-//                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
-//
-//        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box>" +
-//                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
-//                "<ft-content data-embedded=\"true\" id=\"432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
-//                "<promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro><promo-link>" +
-//                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
-//                "<p>This is the end of the sentence.</p></body>";
-//
-//        checkTransformation(promoBoxFromMethode, processedPromoBox);
-//    }
+    @Test
+    public void nonClassNumbersComponentIsPromoBoxEvenWhenTitleEmpty() {
+        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
+                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
+                "<promo-title><p></p></promo-title>" +
+                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
+                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
+                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro>" +
+                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
+                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
+
+        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box>" +
+                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
+                "<ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
+                "<promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro><promo-link>" +
+                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
+                "<p>This is the end of the sentence.</p></body>";
+
+        checkTransformation(promoBoxFromMethode, processedPromoBox);
+    }
+
+    @Test
+    public void nonClassNumbersComponentIsPromoBoxEvenWhenTitleMissing() {
+        String promoBoxFromMethode = "<body><p>This is the beginning of a sentence.<promo-box align=\"left\">" +
+                "<table align=\"left\" cellpadding=\"6px\" width=\"170px\"><tr><td>" +
+                "</td></tr><tr><td><promo-headline><p>Headline</p></promo-headline></td></tr><tr><td>" +
+                "<promo-image uuid=\"432b5632-9e79-11e0-9469-00144feabdc0\" fileref=\"/FT/Graphics/Online/Secondary_%26_Triplet_167x96/2011/06/SEC_ft500.jpg?uuid=432b5632-9e79-11e0-9469-00144feabdc0\"/>" +
+                "</td></tr><tr><td><promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro>" +
+                "</td></tr><tr><td><promo-link><p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/></p></promo-link>" +
+                "</td></tr></table></promo-box>This is the end of the sentence.</p></body>";
+
+        String processedPromoBox = "<body><p>This is the beginning of a sentence.</p><promo-box>" +
+                "<promo-headline><p>Headline</p></promo-headline><promo-image>" +
+                "<ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/432b5632-9e79-11e0-0a0f-978e959e1689\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></promo-image>" +
+                "<promo-intro><p>The risers and fallers in our annual list of the world’s biggest companies</p></promo-intro><promo-link>" +
+                "<p><a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"></a></p></promo-link></promo-box>" +
+                "<p>This is the end of the sentence.</p></body>";
+
+        checkTransformation(promoBoxFromMethode, processedPromoBox);
+    }
 
     @Test
     public void nonClassNumbersComponentIsPromoBoxAndImageNotPreservedIfNotFileRefEmpty() {
@@ -954,60 +958,60 @@ public class BodyProcessingFieldTransformerFactoryTest {
 
     }
 
-//    @Test
-//    public void timelineShouldBeRetained() {
-//        String timelineFromMethode = "<body><p>Intro text</p>" +
-//                "<timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
-//                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
-//                "<timeline-sources>FT Research</timeline-sources>\n" +
-//                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
-//                "<timeline-item>\n<timeline-image fileref=\"/FT/Graphics/Online/Master_2048x1152/Martin/mas_Microsoft-Surface-tablet--566x318.jpg?uuid=213bb10c-71fe-11e2-8104-002128161462\" height=\"1152\" tmx=\"566 318 164 92\" width=\"2048\" xtransform=\" scale(0.2897527 0.2897527)\"></timeline-image>\n" +
-//                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
-//                "<timeline-title>1997</timeline-title>\n" +
-//                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>\n" +
-//                "</timeline></body>";
-//
-//        String processedTimeline = "<body><p>Intro text</p>" +
-//                "<ft-timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
-//                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
-//                "<timeline-sources>FT Research</timeline-sources>\n" +
-//                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
-//                "<timeline-item>\n<timeline-image><ft-content data-embedded=\"true\" id=\"213bb10c-71fe-11e2-1f62-97bbf262bf2b\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></timeline-image>\n" +
-//                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
-//                "<timeline-title>1997</timeline-title>\n" +
-//                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>" +
-//                "</ft-timeline></body>";
-//
-//        checkTransformation(timelineFromMethode, processedTimeline);
-//    }
-//
-//
-//    @Test
-//    public void timelineShouldBeWrittenOutsideOfPtags() {
-//        String timelineFromMethode = "<body><p>Intro text</p><p>" +
-//                "<timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
-//                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
-//                "<timeline-sources>FT Research</timeline-sources>\n" +
-//                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
-//                "<timeline-item>\n<timeline-image fileref=\"/FT/Graphics/Online/Master_2048x1152/Martin/mas_Microsoft-Surface-tablet--566x318.jpg?uuid=213bb10c-71fe-11e2-8104-002128161462\" height=\"1152\" tmx=\"566 318 164 92\" width=\"2048\" xtransform=\" scale(0.2897527 0.2897527)\"></timeline-image>\n" +
-//                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
-//                "<timeline-title>1997</timeline-title>\n" +
-//                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>\n" +
-//                "</timeline></p></body>";
-//
-//        String processedTimeline = "<body><p>Intro text</p>" +
-//                "<ft-timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
-//                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
-//                "<timeline-sources>FT Research</timeline-sources>\n" +
-//                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
-//                "<timeline-item>\n<timeline-image><ft-content data-embedded=\"true\" id=\"213bb10c-71fe-11e2-1f62-97bbf262bf2b\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></timeline-image>\n" +
-//                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
-//                "<timeline-title>1997</timeline-title>\n" +
-//                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>" +
-//                "</ft-timeline></body>";
-//
-//        checkTransformation(timelineFromMethode, processedTimeline);
-//    }
+    @Test
+    public void timelineShouldBeRetained() {
+        String timelineFromMethode = "<body><p>Intro text</p>" +
+                "<timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
+                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
+                "<timeline-sources>FT Research</timeline-sources>\n" +
+                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
+                "<timeline-item>\n<timeline-image fileref=\"/FT/Graphics/Online/Master_2048x1152/Martin/mas_Microsoft-Surface-tablet--566x318.jpg?uuid=213bb10c-71fe-11e2-8104-002128161462\" height=\"1152\" tmx=\"566 318 164 92\" width=\"2048\" xtransform=\" scale(0.2897527 0.2897527)\"></timeline-image>\n" +
+                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
+                "<timeline-title>1997</timeline-title>\n" +
+                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>\n" +
+                "</timeline></body>";
+
+        String processedTimeline = "<body><p>Intro text</p>" +
+                "<ft-timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
+                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
+                "<timeline-sources>FT Research</timeline-sources>\n" +
+                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
+                "<timeline-item>\n<timeline-image><ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/213bb10c-71fe-11e2-1f62-97bbf262bf2b\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></timeline-image>\n" +
+                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
+                "<timeline-title>1997</timeline-title>\n" +
+                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>" +
+                "</ft-timeline></body>";
+
+        checkTransformation(timelineFromMethode, processedTimeline);
+    }
+
+
+    @Test
+    public void timelineShouldBeWrittenOutsideOfPtags() {
+        String timelineFromMethode = "<body><p>Intro text</p><p>" +
+                "<timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
+                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
+                "<timeline-sources>FT Research</timeline-sources>\n" +
+                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
+                "<timeline-item>\n<timeline-image fileref=\"/FT/Graphics/Online/Master_2048x1152/Martin/mas_Microsoft-Surface-tablet--566x318.jpg?uuid=213bb10c-71fe-11e2-8104-002128161462\" height=\"1152\" tmx=\"566 318 164 92\" width=\"2048\" xtransform=\" scale(0.2897527 0.2897527)\"></timeline-image>\n" +
+                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
+                "<timeline-title>1997</timeline-title>\n" +
+                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>\n" +
+                "</timeline></p></body>";
+
+        String processedTimeline = "<body><p>Intro text</p>" +
+                "<ft-timeline><timeline-header>The battle for Simandou</timeline-header>\n" +
+                "<timeline-credits>AFP, Bloomberg, Shawn Curry, Company handouts</timeline-credits>\n" +
+                "<timeline-sources>FT Research</timeline-sources>\n" +
+                "<timeline-byline>Tom Burgis, Callum Locke, Katie Carnie, Steve Bernard</timeline-byline>\n" +
+                "<timeline-item>\n<timeline-image><ft-content data-embedded=\"true\" url=\"http://api.ft.com/content/213bb10c-71fe-11e2-1f62-97bbf262bf2b\" type=\"http://www.ft.com/ontology/content/ImageSet\"></ft-content></timeline-image>\n" +
+                "<timeline-date>1997-01-01 00:00:00</timeline-date>\n" +
+                "<timeline-title>1997</timeline-title>\n" +
+                "<timeline-body><p>Rio Tinto is granted rights to explore the Simandou deposit</p>\n</timeline-body>\n</timeline-item>" +
+                "</ft-timeline></body>";
+
+        checkTransformation(timelineFromMethode, processedTimeline);
+    }
 
     @Test
     public void shouldProcessPodcastsCorrectly() {
@@ -1030,16 +1034,16 @@ public class BodyProcessingFieldTransformerFactoryTest {
         checkTransformation(podcastFromMethode, processedPodcast);
     }
 
-//    @Test
-//    public void brightcove_shouldProcessVideoTagCorrectly() {
-//        String videoTextfromMethode = "<body>" +
-//                "<videoPlayer videoID=\"3920663836001\">" +
-//                "<web-inline-picture id=\"U2113113643377jlC\" width=\"150\" fileref=\"/FT/Graphics/Online/Z_Undefined/FT-video-story.jpg?uuid=91b39ae8-ccff-11e1-92c1-00144feabdc0\" tmx=\"150 100 150 100\"/>\n" +
-//                "</videoPlayer>" +
-//                "</body>";
-//        String processedVideoText = "<body><ft-content id=\"28533356-911a-3352-a3cf-06f688157c58\" data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/Video\"></ft-content></body>";
-//        checkTransformation(videoTextfromMethode, processedVideoText);
-//    }
+    @Test
+    public void brightcove_shouldProcessVideoTagCorrectly() {
+        String videoTextfromMethode = "<body>" +
+                "<videoPlayer videoID=\"3920663836001\">" +
+                "<web-inline-picture id=\"U2113113643377jlC\" width=\"150\" fileref=\"/FT/Graphics/Online/Z_Undefined/FT-video-story.jpg?uuid=91b39ae8-ccff-11e1-92c1-00144feabdc0\" tmx=\"150 100 150 100\"/>\n" +
+                "</videoPlayer>" +
+                "</body>";
+        String processedVideoText = "<body><ft-content url=\"http://api.ft.com/content/28533356-911a-3352-a3cf-06f688157c58\" data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/Video\"></ft-content></body>";
+        checkTransformation(videoTextfromMethode, processedVideoText);
+    }
 
     @Test
     public void brightcove_shouldFallbackWhenVideoTagErrors() {

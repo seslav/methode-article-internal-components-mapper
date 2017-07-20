@@ -31,7 +31,7 @@ public class ContentVideoXmlEventHandlerTest extends BaseXMLEventHandlerTest {
     @Mock
     private BodyProcessingContext mockBodyProcessingContext;
 
-    private static final String VIDEO_LINK_ELEMENT = "content";
+    private static final String VIDEO_LINK_ELEMENT = "ft-content";
     private static final String VIDEO_ID_HOLDER_ATTRIBUTE_NAME = "href";
     private static final String VIDEO_UUID = "e21e5235-5f3f-4a53-bafd-73dbcd0552e0";
     private static final String VIDEO_ID_HOLDER = "/FT/Content/Links/Videos/Video_upload-test.mp4_" + VIDEO_UUID

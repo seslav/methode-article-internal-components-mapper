@@ -8,9 +8,7 @@ package com.ft.methodearticleinternalcomponentsmapper.exception;
  * <li>it has no body text</li>
  * </ul>
  */
-public class UntransformableMethodeContentException
-        extends RuntimeException {
-
+public class UntransformableMethodeContentException extends RuntimeException {
     private final String uuid;
 
     public UntransformableMethodeContentException(String uuid, String reason) {
