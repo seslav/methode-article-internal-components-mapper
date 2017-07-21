@@ -179,7 +179,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                     "type": "wide"
                 }],
                 "unpublishedContentDescription": "<p><?EM-dummyText [Content package coming next]?>\n</p>",
-                "bodyXML": "<body><body>"
+                "bodyXML": "<body><body>",
                 "uuid": "8b4d2118-0e51-11e7-a88c-50ba212dce4d",
                 "lastModified": "2017-03-24T17:53:34.875Z",
                 "publishReference": "tid_bwlvqcyebd"
