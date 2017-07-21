@@ -15,7 +15,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class DataTableXMLParser extends BaseXMLParser<DataTableData> implements XmlParser<DataTableData> {
 
 	private static final String START_ELEMENT_NAME = "table";
-    private static final String DUMMY_SOURCE_TEXT = "EM-dummyText";
 	private StAXTransformingBodyProcessor stAXTransformingBodyProcessor;
 
 	public DataTableXMLParser(StAXTransformingBodyProcessor stAXTransformingBodyProcessor) {

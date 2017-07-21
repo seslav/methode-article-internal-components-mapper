@@ -18,7 +18,9 @@ import javax.xml.stream.events.StartElement;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SlideshowEventHandlerTest extends BaseXMLEventHandlerTest {
@@ -31,30 +33,37 @@ public class SlideshowEventHandlerTest extends BaseXMLEventHandlerTest {
     private static final String SLIDESHOW_URL_TEMPLATE = "http://www.ft.com/cms/s/null.html#slide0";
     private static final String ATTRIBUTE_TYPE = "type";
     private static final String ATTRIBUTE_VALUE = "slideshow";
-	private static final String TITLE_STRING = "Type title";
+    private static final String TITLE_STRING = "Type title";
 
-    @Mock private XMLEventHandler mockFallbackEventHandler;
-    @Mock private XmlParser<SlideshowData> mockXmlParser;
-    @Mock private StartElementMatcher mockElementMatcher;
-    @Mock private XMLEventReader mockXMLEventReader;
-    @Mock private BodyWriter mockBodyWriter;
-    @Mock private BodyProcessingContext mockBodyProcessingContext;
-    @Mock private SlideshowData mockSlideshowData;
+    @Mock
+    private XMLEventHandler mockFallbackEventHandler;
+    @Mock
+    private XmlParser<SlideshowData> mockXmlParser;
+    @Mock
+    private StartElementMatcher mockElementMatcher;
+    @Mock
+    private XMLEventReader mockXMLEventReader;
+    @Mock
+    private BodyWriter mockBodyWriter;
+    @Mock
+    private BodyProcessingContext mockBodyProcessingContext;
+    @Mock
+    private SlideshowData mockSlideshowData;
 
     @Before
-    public void setup(){
+    public void setup() {
         eventHandler = new SlideshowEventHandler(mockXmlParser, mockFallbackEventHandler, mockElementMatcher);
     }
 
     @Test
-     public void shouldUseFallbackHandlerIfMatcherDoesNotMatchStartElement() throws Exception{
+    public void shouldUseFallbackHandlerIfMatcherDoesNotMatchStartElement() throws Exception {
         StartElement startElement = getStartElement(INCORRECT_TAG_NAME);
         eventHandler.handleStartElementEvent(startElement, mockXMLEventReader, mockBodyWriter, mockBodyProcessingContext);
         verify(mockFallbackEventHandler).handleStartElementEvent(startElement, mockXMLEventReader, mockBodyWriter, mockBodyProcessingContext);
     }
 
     @Test
-    public void shouldNotWriteIfIfIfNotAllValidDataIsPresent() throws Exception{
+    public void shouldNotWriteIfIfIfNotAllValidDataIsPresent() throws Exception {
         Map<String, String> attributes = new HashMap<>();
         attributes.put(ATTRIBUTE_TYPE, ATTRIBUTE_VALUE);
         attributes.put(HREF_ATTRIBUTE_NAME, SLIDESHOW_URL_TEMPLATE);
@@ -70,18 +79,18 @@ public class SlideshowEventHandlerTest extends BaseXMLEventHandlerTest {
     }
 
     @Test
-    public void shouldWriteTransformedElementsToWriter() throws Exception{
+    public void shouldWriteTransformedElementsToWriter() throws Exception {
         Map<String, String> attributes = new HashMap<>();
         attributes.put(ATTRIBUTE_TYPE, ATTRIBUTE_VALUE);
-		attributes.put(SlideshowEventHandler.DATA_ASSET_TYPE, SlideshowEventHandler.SLIDESHOW);
-		attributes.put(SlideshowEventHandler.DATA_EMBEDDED, SlideshowEventHandler.YEP);
-		attributes.put(SlideshowEventHandler.TITLE, TITLE_STRING);
+        attributes.put(SlideshowEventHandler.DATA_ASSET_TYPE, SlideshowEventHandler.SLIDESHOW);
+        attributes.put(SlideshowEventHandler.DATA_EMBEDDED, SlideshowEventHandler.YEP);
+        attributes.put(SlideshowEventHandler.TITLE, TITLE_STRING);
         attributes.put(HREF_ATTRIBUTE_NAME, SLIDESHOW_URL_TEMPLATE);
         StartElement startElement = getStartElementWithAttributes(START_ELEMENT_TAG, attributes);
 
         when(mockElementMatcher.matches(startElement)).thenReturn(true);
         when(mockXmlParser.parseElementData(startElement, mockXMLEventReader, mockBodyProcessingContext)).thenReturn(mockSlideshowData);
-		when(mockSlideshowData.getTitle()).thenReturn(TITLE_STRING);
+        when(mockSlideshowData.getTitle()).thenReturn(TITLE_STRING);
         when(mockSlideshowData.isAllRequiredDataPresent()).thenReturn(true);
 
         eventHandler.handleStartElementEvent(startElement, mockXMLEventReader, mockBodyWriter, mockBodyProcessingContext);

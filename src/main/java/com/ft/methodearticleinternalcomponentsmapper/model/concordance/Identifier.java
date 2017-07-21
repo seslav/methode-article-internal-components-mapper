@@ -5,11 +5,6 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Identifier
- *
- * @author Simon.Gibbs
- */
 public class Identifier {
 
     private String authority;
@@ -27,7 +22,7 @@ public class Identifier {
     public String getIdentifierValue() {
         return identifierValue;
     }
-    
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

@@ -21,7 +21,9 @@ import java.util.Map;
 import static java.util.Collections.singletonMap;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PromoBoxEventHandlerTest extends BaseXMLEventHandlerTest {
@@ -31,27 +33,32 @@ public class PromoBoxEventHandlerTest extends BaseXMLEventHandlerTest {
     private PromoBoxEventHandler eventHandler;
 
     private static final String BIG_NUMBER_ELEMENT = "big-number";
-	private static final String PROMO_BOX_ELEMENT = "promo-box";
+    private static final String PROMO_BOX_ELEMENT = "promo-box";
     private static final String HEADLINE_VALUE = "headline";
     private static final String INTRO_VALUE = "intro";
-	private static final String TITLE_VALUE = "title";
-	private static final String LINK_VALUE = "<a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/>";
+    private static final String TITLE_VALUE = "title";
+    private static final String LINK_VALUE = "<a href=\"http://www.ft.com/cms/s/0/0bdf4bb6-6676-11e4-8bf6-00144feabdc0.html\"/>";
     private static final String METHODE_PROMO_BOX_ELEMENT = "promo-box";
     private static final String INCORRECT_ELEMENT = "a";
     public static final String PARAGRAPH_TAG = "p";
 
-    @Mock private XMLEventReader mockXmlEventReader;
-    @Mock private BodyWriter mockBodyWriter;
-    @Mock private BodyProcessingContext mockBodyProcessingContext;
-    @Mock private PromoBoxXMLParser mockPromoBoxXMLParser;
-    @Mock private PromoBoxData mockPromoBoxData;
+    @Mock
+    private XMLEventReader mockXmlEventReader;
+    @Mock
+    private BodyWriter mockBodyWriter;
+    @Mock
+    private BodyProcessingContext mockBodyProcessingContext;
+    @Mock
+    private PromoBoxXMLParser mockPromoBoxXMLParser;
+    @Mock
+    private PromoBoxData mockPromoBoxData;
 
     @Before
     public void setUp() {
         eventHandler = new PromoBoxEventHandler(mockPromoBoxXMLParser);
     }
 
-    @Test(expected=BodyProcessingException.class)
+    @Test(expected = BodyProcessingException.class)
     public void shouldThrowBodyProcessingExceptionIfOpeningTagIsNotPromoBox() throws Exception {
         StartElement startElement = getStartElementWithAttributes(INCORRECT_ELEMENT, attributeClassEqualToNumberComponent());
         eventHandler.handleStartElementEvent(startElement, mockXmlEventReader, mockBodyWriter, mockBodyProcessingContext);
@@ -59,7 +66,7 @@ public class PromoBoxEventHandlerTest extends BaseXMLEventHandlerTest {
 
     @Test
     public void shouldNotTransformContentIfBigNumberAndAllValidDataIsNotPresent() throws Exception {
-		StartElement startElement = getStartElementWithAttributes(METHODE_PROMO_BOX_ELEMENT, attributeClassEqualToNumberComponent());
+        StartElement startElement = getStartElementWithAttributes(METHODE_PROMO_BOX_ELEMENT, attributeClassEqualToNumberComponent());
         when(mockPromoBoxXMLParser.parseElementData(startElement, mockXmlEventReader,
                 mockBodyProcessingContext)).thenReturn(mockPromoBoxData);
         when(mockPromoBoxData.isValidBigNumberData()).thenReturn(false);
@@ -84,11 +91,11 @@ public class PromoBoxEventHandlerTest extends BaseXMLEventHandlerTest {
         verify(mockBodyWriter).writeEndTag(PARAGRAPH_TAG);
     }
 
-	@Test
-	public void shouldWriteTransformedPromoBoxElementsToWriterWithTwoElements() throws Exception {
+    @Test
+    public void shouldWriteTransformedPromoBoxElementsToWriterWithTwoElements() throws Exception {
         shouldWriteTransformedPromoBoxElementsToWriter();
         verify(mockBodyWriter).writeEndTag(PROMO_BOX_ELEMENT);
-	}
+    }
 
     @Test
     public void shouldWriteTransformedPromoBoxElementsToWriterWithTwoElementsOutsideClosedPtags() throws Exception {
@@ -118,18 +125,18 @@ public class PromoBoxEventHandlerTest extends BaseXMLEventHandlerTest {
         verify(mockBodyWriter).writeEndTag(PROMO_BOX_ELEMENT);
     }
 
-	@Test
-	public void shouldWriteTransformedPromoBoxElementsToWriterWithFourElementsOutsideClosedPtags() throws Exception {
+    @Test
+    public void shouldWriteTransformedPromoBoxElementsToWriterWithFourElementsOutsideClosedPtags() throws Exception {
         when(mockBodyWriter.isPTagCurrentlyOpen()).thenReturn(false);
-		when(mockPromoBoxData.getTitle()).thenReturn(TITLE_VALUE);
-		when(mockPromoBoxData.getLink()).thenReturn(LINK_VALUE);
+        when(mockPromoBoxData.getTitle()).thenReturn(TITLE_VALUE);
+        when(mockPromoBoxData.getLink()).thenReturn(LINK_VALUE);
         shouldWriteTransformedPromoBoxElementsToWriter();
         verify(mockBodyWriter, never()).writeEndTag(PARAGRAPH_TAG);
-		verify(mockBodyWriter).writeRaw(mockPromoBoxData.getTitle());
-		verify(mockBodyWriter).writeRaw(mockPromoBoxData.getLink());
-		verify(mockBodyWriter).writeEndTag(PROMO_BOX_ELEMENT);
+        verify(mockBodyWriter).writeRaw(mockPromoBoxData.getTitle());
+        verify(mockBodyWriter).writeRaw(mockPromoBoxData.getLink());
+        verify(mockBodyWriter).writeEndTag(PROMO_BOX_ELEMENT);
         verify(mockBodyWriter, never()).writeStartTag(PARAGRAPH_TAG, noAttributes());
-	}
+    }
 
     @Test
     public void shouldClosePtagsAndWriteTransformedPromoBoxElementsToWriterWithFourElementsOutsideOfPtags() throws Exception {
@@ -180,13 +187,14 @@ public class PromoBoxEventHandlerTest extends BaseXMLEventHandlerTest {
         when(mockPromoBoxData.getClassName()).thenReturn(RELATED_ARTICLE_CLASS);
         shouldWriteTransformedPromoBoxElementsToWriter();
 
-        verify(mockBodyWriter).writeStartTag(PROMO_BOX_ELEMENT, singletonMap(CLASS_ARTICLE,RELATED_ARTICLE_CLASS));
+        verify(mockBodyWriter).writeStartTag(PROMO_BOX_ELEMENT, singletonMap(CLASS_ARTICLE, RELATED_ARTICLE_CLASS));
     }
 
 
     private Map<String, String> noAttributes() {
         return Collections.emptyMap();
     }
+
     private Map<String, String> attributeClassEqualToNumberComponent() {
         Map<String, String> attributeClassEqualToNumberComponent = new HashMap<>();
         attributeClassEqualToNumberComponent.put(PromoBoxEventHandler.PROMO_CLASS_ATTRIBUTE,

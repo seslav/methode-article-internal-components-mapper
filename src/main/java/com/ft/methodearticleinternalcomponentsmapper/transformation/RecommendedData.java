@@ -1,6 +1,8 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
-import java.util.*;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class RecommendedData {
 

@@ -2,9 +2,6 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation.xslt;
 
 import com.google.common.base.Preconditions;
 
-/**
- * @author Simon
- */
 public class XsltFile {
 
     private String name;
@@ -13,13 +10,13 @@ public class XsltFile {
     /**
      * Implements the <a href="http://en.wikipedia.org/wiki/Identity_transform">identity transform</a>
      */
-    public static XsltFile IDENTITY_TRANSFORM = new XsltFile("identity","<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n" +
+    public static XsltFile IDENTITY_TRANSFORM = new XsltFile("identity", "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n" +
             "  <xsl:template match=\"@*|node()\">\n" +
             "    <xsl:copy>\n" +
             "      <xsl:apply-templates select=\"@*|node()\"/>\n" +
             "    </xsl:copy>\n" +
             "  </xsl:template>\n" +
-            "</xsl:stylesheet>" );
+            "</xsl:stylesheet>");
 
 
     public XsltFile(String name, String content) {

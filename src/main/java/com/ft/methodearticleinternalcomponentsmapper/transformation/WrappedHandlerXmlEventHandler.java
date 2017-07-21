@@ -34,8 +34,7 @@ public class WrappedHandlerXmlEventHandler extends BaseXMLEventHandler {
             eventWriter.writeStartTag(eventTag, noAttributes());
             applyWrappedEventHandler(event, xmlEventReader, eventWriter, bodyProcessingContext);
             eventWriter.writeEndTag(eventTag);
-        }
-        catch(IOException ioe){
+        } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
     }
@@ -44,7 +43,7 @@ public class WrappedHandlerXmlEventHandler extends BaseXMLEventHandler {
         return Collections.emptyMap();
     }
 
-    private void applyWrappedEventHandler(StartElement event, XMLEventReader xmlEventReader, BodyWriter eventWriter, BodyProcessingContext bodyProcessingContext) throws XMLStreamException, IOException{
+    private void applyWrappedEventHandler(StartElement event, XMLEventReader xmlEventReader, BodyWriter eventWriter, BodyProcessingContext bodyProcessingContext) throws XMLStreamException, IOException {
         HTML5VoidElementHandlingXMLBodyWriter writer = new HTML5VoidElementHandlingXMLBodyWriter((XMLOutputFactory2) XMLOutputFactory2.newInstance());
         eventHandlerToWrap.handleStartElementEvent(event, xmlEventReader, writer, bodyProcessingContext);
         String imageOutput = writer.asString();

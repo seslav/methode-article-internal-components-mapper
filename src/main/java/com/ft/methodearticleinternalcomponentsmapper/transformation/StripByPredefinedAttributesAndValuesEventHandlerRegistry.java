@@ -42,14 +42,14 @@ public class StripByPredefinedAttributesAndValuesEventHandlerRegistry extends XM
             @Override
             public boolean matchesElementNameAndAttributeValueCriteria(List<String> attributeValueList, StartElement startElement) {
                 final Attribute attribute = startElement.getAttributeByName(new QName(attributeName));
-                if(attribute==null) {
+                if (attribute == null) {
                     return false;
                 }
 
                 final String startElementAttributeValue = attribute.getValue();
                 boolean matchesAttributeValueCriteria = attributeValueMatches;
-                for(String attributeValue : attributesValuesList) {
-                    if(startElementAttributeValue.equals(attributeValue)) {
+                for (String attributeValue : attributesValuesList) {
+                    if (startElementAttributeValue.equals(attributeValue)) {
                         matchesAttributeValueCriteria = !attributeValueMatches;
                         return matchesAttributeValueCriteria;
                     }

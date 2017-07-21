@@ -6,9 +6,6 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
-/**
- * A subset of fields from the data regarding concepts
- */
 @JsonInclude(NON_EMPTY)
 public class ConceptView {
 
@@ -32,7 +29,7 @@ public class ConceptView {
     public String getApiUrl() {
         return apiUrl;
     }
-    
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

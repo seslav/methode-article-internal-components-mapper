@@ -23,7 +23,6 @@ public class PullQuoteXMLParser extends BaseXMLParser<PullQuoteData> implements 
 	private static final String QUOTE_TEXT = "web-pull-quote-text";
 	private static final String PULL_QUOTE = "web-pull-quote";
     private static final String WEB_MASTER = "web-master";
-    private static final String DUMMY_SOURCE_TEXT = "EM-dummyText";
 
 	private StAXTransformingBodyProcessor stAXTransformingBodyProcessor;
     private InlineImageXmlEventHandler inlineImageXmlEventHandler;

@@ -34,7 +34,7 @@ public class StripByPredefinedAttributesAndValuesEventHandler extends BaseXMLEve
 
         final String nameToMatch = event.getName().getLocalPart();
 
-        if(matcher.matchesElementNameAndAttributeValueCriteria(attributeValuesList, event)) {
+        if (matcher.matchesElementNameAndAttributeValueCriteria(attributeValuesList, event)) {
             skipUntilMatchingEndTag(nameToMatch, xmlEventReader);
         } else {
             fallbackEventHandler.handleStartElementEvent(event, xmlEventReader, eventWriter, bodyProcessingContext);

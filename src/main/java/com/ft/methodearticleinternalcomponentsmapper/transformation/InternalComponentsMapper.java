@@ -4,7 +4,7 @@ import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.UntransformableMethodeContentException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
@@ -68,6 +68,7 @@ public class InternalComponentsMapper {
     private static final String NO_PICTURE_FLAG = "No picture";
     private static final String DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED = "data-embedded";
     private static final String IMAGE_SET_TYPE = "http://www.ft.com/ontology/content/ImageSet";
+    private static final String FT_CONTENT_BASE_URL = "http://api.ft.com/content/";
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
 
     private static final String START_BODY = "<body";
@@ -190,7 +191,7 @@ public class InternalComponentsMapper {
             return EMPTY_VALIDATED_BODY;
         }
 
-        throw new UntransformableMethodeContentException(uuid.toString(), "Not a valid Methode article for publication - transformed article body is blank");
+        throw new InvalidMethodeContentException(uuid.toString(), "Not a valid Methode article for publication - transformed article body is blank");
     }
 
     private String unwrapBody(String wrappedBody) {
@@ -238,7 +239,7 @@ public class InternalComponentsMapper {
 
     private String putMainImageReferenceInBodyNode(Node bodyNode, String mainImageUUID) throws TransformerException {
         Element newElement = bodyNode.getOwnerDocument().createElement("ft-content");
-        newElement.setAttribute("url", "http://api.ft.com/content/" + mainImageUUID);
+        newElement.setAttribute("url", FT_CONTENT_BASE_URL + mainImageUUID);
         newElement.setAttribute("type", IMAGE_SET_TYPE);
         newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
         bodyNode.insertBefore(newElement, bodyNode.getFirstChild());

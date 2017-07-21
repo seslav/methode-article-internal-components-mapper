@@ -4,7 +4,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.ft.api.util.transactionid.TransactionIdUtils;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.UntransformableMethodeContentException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
@@ -44,9 +45,11 @@ public class MapResource {
             return internalComponentsMapper.map(eomFile, transactionId, new Date(), preview);
         } catch (MethodeArticleMarkedDeletedException e) {
             throw new WebApplicationException(HttpStatus.SC_NOT_FOUND);
-        } catch (MethodeArticleNotEligibleForPublishException | UntransformableMethodeContentException e) {
+        } catch (MethodeArticleNotEligibleForPublishException | InvalidMethodeContentException e) {
             throw new WebApplicationException(HttpStatus.SC_UNPROCESSABLE_ENTITY);
+        } catch (TransformationException e) {
+            throw new WebApplicationException(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         }
     }
-    
+
 }

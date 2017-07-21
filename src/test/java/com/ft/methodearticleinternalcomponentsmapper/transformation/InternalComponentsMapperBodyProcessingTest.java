@@ -3,7 +3,7 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
 import com.ft.common.FileUtils;
-import com.ft.methodearticleinternalcomponentsmapper.exception.UntransformableMethodeContentException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
@@ -172,28 +172,28 @@ public class InternalComponentsMapperBodyProcessingTest {
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
-    @Test(expected = UntransformableMethodeContentException.class)
+    @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfBodyIsNull() {
         final EomFile eomFile = createEomStoryFile(uuid);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(null);
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
-    @Test(expected = UntransformableMethodeContentException.class)
+    @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfBodyIsEmpty() {
         final EomFile eomFile = createEomStoryFile(uuid);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn("");
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
-    @Test(expected = UntransformableMethodeContentException.class)
+    @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfTransformedBodyIsBlank() {
         final EomFile eomFile = createEomStoryFile(uuid);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn("<body> \n \n \n </body>");
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
-    @Test(expected = UntransformableMethodeContentException.class)
+    @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfTransformedBodyIsEmpty() {
         final EomFile eomFile = createEomStoryFile(uuid);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(EMPTY_BODY);
@@ -300,7 +300,7 @@ public class InternalComponentsMapperBodyProcessingTest {
         assertThat(content.getBodyXML(), equalToIgnoringWhiteSpace(expectedBody));
     }
 
-    @Test(expected = UntransformableMethodeContentException.class)
+    @Test(expected = InvalidMethodeContentException.class)
     public void thatTransformationFailsIfThereIsNoBody() throws Exception {
 
         String value = FileUtils.readFile("article/article_value_with_no_body.xml");

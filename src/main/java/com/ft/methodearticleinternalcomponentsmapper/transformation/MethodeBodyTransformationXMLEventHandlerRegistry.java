@@ -86,7 +86,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
         registerStartAndEndElementEventHandler(new SimpleTransformBlockElementEventHandler(new StAXTransformingBodyProcessor(this), "ft-timeline"), "timeline");
         registerStartAndEndElementEventHandler(new ReplaceElementXMLEventHandler("div", "class"), "layout-set", "layout", "layout-slot");
 
-        registerStartAndEndElementEventHandler(new RecommendedXMLEventHandler(new RecommendedXMLParser()), "recommended");
+        registerStartElementEventHandler(new RecommendedXMLEventHandler(new RecommendedXMLParser()), "recommended");
         registerStartAndEndElementEventHandler(new ImageSetXmlEventHandler(), "image-set");
         registerStartAndEndElementEventHandler(new InlineImageXmlEventHandler(), "web-inline-picture");
         registerStartAndEndElementEventHandler(new WrappedHandlerXmlEventHandler(new InlineImageXmlEventHandler()), "timeline-image");

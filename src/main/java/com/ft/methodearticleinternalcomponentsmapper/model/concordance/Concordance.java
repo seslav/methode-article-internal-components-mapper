@@ -3,11 +3,6 @@ package com.ft.methodearticleinternalcomponentsmapper.model.concordance;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-/**
- * Concordance
- *
- * @author Simon.Gibbs
- */
 public class Concordance {
 
     private ConceptView concept;
@@ -30,7 +25,7 @@ public class Concordance {
     public Identifier getIdentifier() {
         return identifier;
     }
-    
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

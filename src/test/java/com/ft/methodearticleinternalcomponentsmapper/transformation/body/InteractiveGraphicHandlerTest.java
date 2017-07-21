@@ -18,14 +18,20 @@ import java.util.Map;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InteractiveGraphicHandlerTest extends BaseXMLEventHandlerTest {
 
-    @Mock private XMLEventHandler fallbackHandler;
-    @Mock private XMLEventReader mockXmlEventReader;
-    @Mock private BodyProcessingContext mockBodyProcessingContext;
+    @Mock
+    private XMLEventHandler fallbackHandler;
+    @Mock
+    private XMLEventReader mockXmlEventReader;
+    @Mock
+    private BodyProcessingContext mockBodyProcessingContext;
 
     private static final String IFRAME = "iframe";
     private static final String SRC = "src";

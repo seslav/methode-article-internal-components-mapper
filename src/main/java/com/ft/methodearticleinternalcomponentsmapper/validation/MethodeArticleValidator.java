@@ -37,8 +37,7 @@ public class MethodeArticleValidator {
                     .post(ClientResponse.class);
 
             responseStatusCode = clientResponse.getStatus();
-        }
-        finally {
+        } finally {
             if (clientResponse != null) {
                 clientResponse.close();
             }

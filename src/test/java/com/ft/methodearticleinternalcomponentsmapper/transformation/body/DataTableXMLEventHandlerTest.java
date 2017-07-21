@@ -17,19 +17,27 @@ import javax.xml.stream.events.StartElement;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataTableXMLEventHandlerTest extends BaseXMLEventHandlerTest {
 
     private DataTableXMLEventHandler eventHandler;
 
-    @Mock private StripElementAndContentsXMLEventHandler mockFallBackHandler;
-    @Mock private XMLEventReader mockXmlEventReader;
-    @Mock private BodyWriter mockBodyWriter;
-    @Mock private BodyProcessingContext mockBodyProcessingContext;
-    @Mock private DataTableXMLParser mockDataTableXMLParser;
-    @Mock private DataTableData mockDataTableData;
+    @Mock
+    private StripElementAndContentsXMLEventHandler mockFallBackHandler;
+    @Mock
+    private XMLEventReader mockXmlEventReader;
+    @Mock
+    private BodyWriter mockBodyWriter;
+    @Mock
+    private BodyProcessingContext mockBodyProcessingContext;
+    @Mock
+    private DataTableXMLParser mockDataTableXMLParser;
+    @Mock
+    private DataTableData mockDataTableData;
 
     private static final String DATA_TABLE_BODY = "body";
     private static final String DATA_TABLE_ATTRIBUTE_VALUE = "data-table";
@@ -39,12 +47,12 @@ public class DataTableXMLEventHandlerTest extends BaseXMLEventHandlerTest {
     private static final String P_TAG = "p";
 
     @Before
-    public void setup() throws Exception  {
+    public void setup() throws Exception {
         eventHandler = new DataTableXMLEventHandler(mockDataTableXMLParser, mockFallBackHandler);
     }
 
     @Test
-    public void shouldUseFallbackHandlerIfStartElementIsIncorrectType()  throws Exception {
+    public void shouldUseFallbackHandlerIfStartElementIsIncorrectType() throws Exception {
         StartElement startElement = getStartElement(INCORRECT_HTML_ELEMENT_NAME);
         eventHandler.handleStartElementEvent(startElement, mockXmlEventReader, mockBodyWriter, mockBodyProcessingContext);
         verify(mockFallBackHandler).handleStartElementEvent(startElement, mockXmlEventReader, mockBodyWriter, mockBodyProcessingContext);

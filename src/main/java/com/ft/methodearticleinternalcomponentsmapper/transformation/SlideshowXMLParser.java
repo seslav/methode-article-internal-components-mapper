@@ -15,12 +15,12 @@ import java.util.List;
 
 public class SlideshowXMLParser extends BaseXMLParser<SlideshowData> implements XmlParser<SlideshowData> {
 
-	private static final String DEFAULT_ELEMENT_NAME = "a";
+    private static final String DEFAULT_ELEMENT_NAME = "a";
     private static final QName HREF_QNAME = QName.valueOf("href");
     private static final String UUID_KEY = "uuid";
-	private static final QName TITLE_QNAME = QName.valueOf("title");
+    private static final QName TITLE_QNAME = QName.valueOf("title");
 
-	public SlideshowXMLParser() {
+    public SlideshowXMLParser() {
         super(DEFAULT_ELEMENT_NAME);
     }
 
@@ -31,22 +31,22 @@ public class SlideshowXMLParser extends BaseXMLParser<SlideshowData> implements 
 
     @Override
     public void populateBean(SlideshowData dataBean, StartElement nextStartElement, XMLEventReader xmlEventReader,
-							 BodyProcessingContext bodyProcessingContext) throws UnexpectedElementStructureException {
+                             BodyProcessingContext bodyProcessingContext) throws UnexpectedElementStructureException {
         Attribute hrefElement = nextStartElement.getAttributeByName(HREF_QNAME);
         // Ensure the element contains an HREF attribute
-        if(hrefElement != null) {
+        if (hrefElement != null) {
             String[] attributesSides = StringUtils.splitPreserveAllTokens(hrefElement.getValue(), "?");
             // Ensure that the href contains at least 1 query parameter
-            if(attributesSides.length == 2) {
+            if (attributesSides.length == 2) {
                 // Split all query (key/value) parameters found
                 String[] attributes = StringUtils.splitPreserveAllTokens(attributesSides[1], "&");
 
                 // Search for the UUID (key/value) parameter, ignore all others
-                for(String attribute: attributes){
+                for (String attribute : attributes) {
                     String[] keyValue = StringUtils.splitPreserveAllTokens(attribute, "=");
-                    if(UUID_KEY.equalsIgnoreCase(keyValue[0])){
+                    if (UUID_KEY.equalsIgnoreCase(keyValue[0])) {
                         // ensure there's a key AND a value for the UUID before populating the bean with the UUID data
-                        if(keyValue.length == 2){
+                        if (keyValue.length == 2) {
                             dataBean.setUuid(keyValue[1]);
                             dataBean.setQueryParams(exceptForUuid(attributes));
                         }
@@ -55,17 +55,17 @@ public class SlideshowXMLParser extends BaseXMLParser<SlideshowData> implements 
             }
         }
 
-		Attribute titleElement = nextStartElement.getAttributeByName(TITLE_QNAME);
-		if(titleElement != null){
-			dataBean.setTitle(titleElement.getValue());
-		}
+        Attribute titleElement = nextStartElement.getAttributeByName(TITLE_QNAME);
+        if (titleElement != null) {
+            dataBean.setTitle(titleElement.getValue());
+        }
     }
 
     private List<String> exceptForUuid(String[] attributes) {
         List<String> attributesExceptForUuid = new ArrayList<>();
-        for(String attribute: attributes){
+        for (String attribute : attributes) {
             String[] keyValue = StringUtils.splitPreserveAllTokens(attribute, "=");
-            if(!UUID_KEY.equalsIgnoreCase(keyValue[0])){
+            if (!UUID_KEY.equalsIgnoreCase(keyValue[0])) {
                 attributesExceptForUuid.add(attribute);
             }
         }
@@ -79,6 +79,6 @@ public class SlideshowXMLParser extends BaseXMLParser<SlideshowData> implements 
 
     @Override
     public void transformFieldContentToStructuredFormat(SlideshowData dataBean,
-            BodyProcessingContext bodyProcessingContext) {
+                                                        BodyProcessingContext bodyProcessingContext) {
     }
 }

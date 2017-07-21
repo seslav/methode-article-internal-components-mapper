@@ -5,9 +5,9 @@ import org.apache.commons.lang.StringUtils;
 import java.util.List;
 
 public class SlideshowData {
-private String uuid;
+    private String uuid;
     private List<String> queryParams;
-	private String title;
+    private String title;
 
     public String getUuid() {
         return uuid;
@@ -33,11 +33,11 @@ private String uuid;
         return queryParams;
     }
 
-	public String getTitle() {
-		return title;
-	}
+    public String getTitle() {
+        return title;
+    }
 
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public void setTitle(String title) {
+        this.title = title;
+    }
 }

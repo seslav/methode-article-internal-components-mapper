@@ -5,11 +5,6 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.util.List;
 
-/**
- * Concordances
- *
- * @author Simon.Gibbs
- */
 public class Concordances {
 
     private List<Concordance> concordances;
@@ -21,7 +16,7 @@ public class Concordances {
     public List<Concordance> getConcordances() {
         return concordances;
     }
-     
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
