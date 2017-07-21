@@ -47,6 +47,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                     }
                 ],
                 "unpublishedContentDescription": "<p>Content package coming next text</p>",
+                "bodyXML": "<body><p>Iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.</p>\n\n<ft-content data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/b1f14cd8-6ad4-11e7-1740-72a7a34381e5\"></ft-content>\n\n<p>Itaque earum rerum hic tenetur a sapiente delectus.</p>\n</body>",
                 "uuid": "2260867c-12cf-11e7-9469-afea892e4de3",
                 "lastModified": "2017-03-28T11:17:07.063Z",
                 "publishReference": "tid_tiu5klesma"
@@ -128,6 +129,9 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                         ],
                         "type": "object"
                     },
+                    "bodyXML": {
+                        "type": "string"
+                    },
                     "unpublishedContentDescription": {
                         "type": "string"
                     }
@@ -175,6 +179,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                     "type": "wide"
                 }],
                 "unpublishedContentDescription": "<p><?EM-dummyText [Content package coming next]?>\n</p>",
+                "bodyXML": "<body><body>"
                 "uuid": "8b4d2118-0e51-11e7-a88c-50ba212dce4d",
                 "lastModified": "2017-03-24T17:53:34.875Z",
                 "publishReference": "tid_bwlvqcyebd"
@@ -212,6 +217,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                     }
                 ],
                 "unpublishedContentDescription": null,
+                "bodyXML": "<body><ft-content data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/7cceb3b6-12c7-11e7-0a0f-3870535ae6aa\"></ft-content><p>h</p>\n</body>",
                 "uuid": "5fd4a5b8-12c7-11e7-9469-afea892e4de3",
                 "lastModified": "2017-03-28T10:44:09.439Z",
                 "publishReference": "tid_dohr8nvttl"
