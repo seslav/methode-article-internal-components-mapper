@@ -456,9 +456,6 @@
 </ul>
 <p><strong title="this is strong">Strong With Title Attribute</strong>
 </p>
-<p><b>-- Self Closing hr Tag --</b>
-</p>
-<hr/>
 <p><b>-- Content Within Unwanted Tags --</b>
 </p>
 <p></p>
@@ -466,6 +463,10 @@
 <script>this is a script</script>
 </p>
 <p></p>
+<hr/>
+<hr attribute="attribute"/>
+<hr></hr>
+<hr attribute="attribute"></hr>
 <recommended>
         <recommended-title>Title</recommended-title>
         <p>Intro</p>
@@ -505,4 +506,17 @@
         <p>100 million billion trillion</p>
     </layout-slot>
 </layout>
+<blockquote>
+    <p>Quoted text <strong>here</strong></p>
+    <cite>Cite text here<a href="https://www.twitter.com/blah">Optional link</a></cite>
+</blockquote>
+<blockquote>
+    <p><?EM-dummyText [Quote]?></p>
+    <p> </p>
+    <p></p>
+    <cite>This blockquote should be stripped</cite>
+</blockquote>
+<blockquote>
+    <cite>This blockquote should be stripped</cite>
+</blockquote>
 </body>
