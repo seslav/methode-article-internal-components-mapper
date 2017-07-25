@@ -1,0 +1,14 @@
+# Default values for methode-article-internal-components-mapper.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+service:
+  name: "" # The name of the service, should be defined in the specific app-configs folder.
+  hasHealthcheck: "true"
+  javaOpts:  "-Xms128m -Xmx128m -XX:+UseG1GC -server"
+replicaCount: 2
+image:
+  repository: coco/methode-article-internal-components-mapper
+  pullPolicy: IfNotPresent
+#resources:
+#  limits:
+#    memory: 256Mi
