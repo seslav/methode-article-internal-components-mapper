@@ -25,7 +25,14 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: JAVA_OPTS
-          value: {{ .Values.service.javaOpts }} 
+          value: {{ .Values.service.javaOpts }}
+        - name: METHODE_ARTICLE_MAPPER_URL
+          value: {{ .Values.service.MAMUrl }}
+        - name: KAFKA_PROXY_URL
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: kafka.proxy.url
         ports:
         - containerPort: 8080
         livenessProbe:
