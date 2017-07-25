@@ -22,14 +22,14 @@ The transformation which takes place at each valid Kafka message can also be tri
 
 The internal components model is documented by the description of this non-public `/map` API.
 
-For Blueprint style documentation, see [here](api.md). 
+For Blueprint style documentation, see [here](api.md).
 
-API spec validation happens by `dredd`. It's linked with circleci, but to run it locally just type `dredd` in the project's top-level directory. 
+API spec validation happens by `dredd`. It's linked with circleci, but to run it locally just type `dredd` in the project's top-level directory.
 
 ### Posting content to be mapped
 
 Transformation can be triggered through a POST message containing a Methode article to http://localhost:11070/map
-In case the required transformation is triggered to provide an article preview, you need to set a `preview` query parameter in the URL with `true` as value: 
+In case the required transformation is triggered to provide an article preview, you need to set a `preview` query parameter in the URL with `true` as value:
 e.g., http://localhost:11070/map?preview=true
 
 ### Healthcheck and good-to-go
@@ -44,8 +44,8 @@ Health and gtg are based on methode-article-mapper's health endpoint, and kafka 
 
 For article validation the service leverages on methode article mapper's `/map` endpoint.
 
-## Example of transformation output 
-You can find an example of a transformed article below. 
+## Example of transformation output
+You can find an example of a transformed article below.
 
 ```
 {
@@ -82,3 +82,5 @@ You can find an example of a transformed article below.
   "publishReference": "tid_xhwijstdot"
 }
 ```
+
+helmed
