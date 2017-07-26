@@ -16,7 +16,7 @@ public class ModelBodyFTTagsLinkRewriteXmlEventHandlerRegistry extends XMLEventH
 
         registerDefaultEventHandler(new RetainXMLEventHandler());
 
-        registerStartAndEndElementEventHandler(new RewriteLinkXMLEventHandler("ft-content", uriBuilder, apiUriGenerator), "content");
+        registerStartAndEndElementEventHandler(new RewriteLinkXMLEventHandler("ft-content", uriBuilder, apiUriGenerator), "ft-content");
         registerStartAndEndElementEventHandler(new RewriteLinkXMLEventHandler("ft-related", uriBuilder, apiUriGenerator), "related");
         registerStartAndEndElementEventHandler(new RewriteLinkXMLEventHandler("ft-concept", uriBuilder, apiUriGenerator), "concept");
     }
