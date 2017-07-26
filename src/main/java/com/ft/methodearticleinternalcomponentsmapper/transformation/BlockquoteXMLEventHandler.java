@@ -1,9 +1,12 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
+import com.ft.bodyprocessing.TransactionIdBodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
 import com.ft.bodyprocessing.xml.eventhandlers.BaseXMLEventHandler;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
@@ -13,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 public class BlockquoteXMLEventHandler extends BaseXMLEventHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BlockquoteXMLEventHandler.class);
 
     private static final String BLOCKQUOTE_TAG = "blockquote";
     private static final String PARAGRAPH_TAG = "p";
@@ -42,6 +47,11 @@ public class BlockquoteXMLEventHandler extends BaseXMLEventHandler {
                 eventWriter.writeEndTag(CITE_TAG);
             }
             eventWriter.writeEndTag(BLOCKQUOTE_TAG);
+        } else {
+            if (bodyProcessingContext instanceof TransactionIdBodyProcessingContext) {
+                TransactionIdBodyProcessingContext ctx = (TransactionIdBodyProcessingContext) bodyProcessingContext;
+                LOGGER.warn("Removing blockquote because it does not have any valid paragraph tags. transactionId {}", ctx.getTransactionId());
+            }
         }
     }
 
