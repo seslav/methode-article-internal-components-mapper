@@ -1,7 +1,6 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
-import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleHasNoInternalComponentsException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
@@ -14,7 +13,6 @@ import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleVa
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,13 +33,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -52,17 +54,22 @@ public class InternalComponentsMapperTest {
 
     private static final String ARTICLE_WITH_ALL_COMPONENTS = readFile("article/article_with_all_components.xml.mustache");
     private static final String ARTICLE_WITH_TOPPER = readFile("article/article_with_topper.xml.mustache");
-    private static final String ARTICLE_WITH_NO_TOPPER = readFile("article/article_with_no_topper.xml");
-    private static final String ARTICLE_WITH_EMPTY_TOPPER = readFile("article/article_with_empty_topper.xml");
+
+    private static final String ARTICLE_ATTRIBUTES = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE ObjectMetadata SYSTEM \"/SysConfig/Classify/FTStories/classify.dtd\"><ObjectMetadata></ObjectMetadata>";
+
+    private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
 
     @Mock
-    EomFile eomFile;
+    private EomFile eomFile;
 
     @Mock
     private MethodeArticleValidator methodeArticleValidator;
 
+    @Mock
+    private FieldTransformer bodyTransformer;
+
     @Spy
-    private Html5SelfClosingTagBodyProcessor bodyProcessor;
+    private Html5SelfClosingTagBodyProcessor bodyProcessor = spy(new Html5SelfClosingTagBodyProcessor());
 
     @InjectMocks
     private InternalComponentsMapper internalComponentsMapper;
@@ -82,11 +89,12 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
+                .withAttributes(ARTICLE_ATTRIBUTES)
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, headline, standfirst))
                 .build();
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
@@ -108,11 +116,12 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
+                .withAttributes(ARTICLE_ATTRIBUTES)
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
                 .build();
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
@@ -124,34 +133,6 @@ public class InternalComponentsMapperTest {
         assertThat(actual.getTopper().getLayout(), equalTo(layout));
         assertThat(actual.getTopper().getStandfirst(), equalTo(""));
         assertThat(actual.getTopper().getHeadline(), equalTo(""));
-    }
-
-    @Test(expected = MethodeArticleHasNoInternalComponentsException.class)
-    public void thatValidArticleWithoutInternalComponentsThrowsException() throws Exception {
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withValue(ARTICLE_WITH_NO_TOPPER.getBytes())
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
-
-        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-    }
-
-    @Test(expected = MethodeArticleHasNoInternalComponentsException.class)
-    public void thatValidArticleWithEmptyInternalComponentsThrowsException() throws Exception {
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withValue(ARTICLE_WITH_EMPTY_TOPPER.getBytes())
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
-
-        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = MethodeArticleMarkedDeletedException.class)
@@ -187,12 +168,13 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
+                .withAttributes(ARTICLE_ATTRIBUTES)
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
                         labelType, backgroundColour, layout, headline, standfirst, contentPackageNext))
                 .build();
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
@@ -239,12 +221,13 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
+                .withAttributes(ARTICLE_ATTRIBUTES)
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
                         labelType, "auto", "", "Topper Headline", "Topper standfirst", null))
                 .build();
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
@@ -276,8 +259,8 @@ public class InternalComponentsMapperTest {
     public void testNullContentPackageNextIsNullUpcomingDesc() throws Exception {
         eomFile = buildEomFileWithContentPackageNext(null);
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
         assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
@@ -287,8 +270,8 @@ public class InternalComponentsMapperTest {
     public void testEmptyContentPackageNextIsNullUpcomingDesc() throws Exception {
         eomFile = buildEomFileWithContentPackageNext("");
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
         assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
@@ -298,8 +281,8 @@ public class InternalComponentsMapperTest {
     public void testBlankContentPackageNextIsNullUpcomingDesc() throws Exception {
         eomFile = buildEomFileWithContentPackageNext("\t \r");
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
         assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
@@ -309,8 +292,8 @@ public class InternalComponentsMapperTest {
     public void testDummyContentPackageNextIsNullUpcomingDesc() throws Exception {
         eomFile = buildEomFileWithContentPackageNext("<?EM-dummyText ... coming next ... ?>");
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
         assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
@@ -321,8 +304,8 @@ public class InternalComponentsMapperTest {
         final String unformattedContentPackageNext = " This is a unformatted description of the upcoming content ";
         eomFile = buildEomFileWithContentPackageNext(unformattedContentPackageNext);
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
         assertThat(actual.getUnpublishedContentDescription(), is(unformattedContentPackageNext.trim()));
@@ -333,24 +316,11 @@ public class InternalComponentsMapperTest {
         final String formattedContentPackageNext = "<p>This is a unformatted <em>description</em> of the upcoming content</p>";
         eomFile = buildEomFileWithContentPackageNext(formattedContentPackageNext);
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
         assertThat(actual.getUnpublishedContentDescription(), is(formattedContentPackageNext.trim()));
-    }
-
-    @Test(expected = MethodeArticleHasNoInternalComponentsException.class)
-    public void testEverythingEmptyLeadsToException() throws Exception {
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withValue(buildEomFileValue("", "", "", "", "", "", "", "", "", "", ""))
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.VALID);
-        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     private byte[] buildTopperOnlyEomFileValue(
@@ -374,6 +344,7 @@ public class InternalComponentsMapperTest {
         return new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
+                .withAttributes(ARTICLE_ATTRIBUTES)
                 .withValue(buildEomFileValue(
                         "squareId",
                         "standardId",
@@ -418,6 +389,20 @@ public class InternalComponentsMapperTest {
         attributes.put("contentPackageNext", contentPackageNext);
 
         return mustache.execute(attributes).getBytes(UTF_8);
+    }
+
+    private InternalComponents createStandardExpectedContent() {
+        return InternalComponents.builder()
+                .withDesign(new Design("theme"))
+                .withTableOfContents(new TableOfContents("sequence", "labelType"))
+                .withTopper(new Topper("headline", "standfirst", "bgColor", "layout"))
+                .withLeadImages(Arrays.asList(new Image("img1", "type1"), new Image("img2", "type1"), new Image("img3", "type2")))
+                .withUnpublishedContentDescription("the next awesome article")
+                .withXMLBody("<body><p>some other random text</p></body>")
+                .withUuid(ARTICLE_UUID)
+                .withPublishReference(TX_ID)
+                .withLastModified(LAST_MODIFIED)
+                .build();
     }
 
     private static String readFile(final String path) {

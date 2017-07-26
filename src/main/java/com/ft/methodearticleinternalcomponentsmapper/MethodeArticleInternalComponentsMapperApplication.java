@@ -5,6 +5,8 @@ import com.ft.api.jaxrs.errors.RuntimeExceptionMapper;
 import com.ft.api.util.buildinfo.BuildInfoResource;
 import com.ft.api.util.transactionid.TransactionIdFilter;
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
+import com.ft.bodyprocessing.richcontent.VideoMatcher;
+import com.ft.jerseyhttpwrapper.ResilientClient;
 import com.ft.jerseyhttpwrapper.ResilientClientBuilder;
 import com.ft.jerseyhttpwrapper.config.EndpointConfiguration;
 import com.ft.jerseyhttpwrapper.continuation.ExponentialBackoffContinuationPolicy;
@@ -12,8 +14,10 @@ import com.ft.message.consumer.MessageListener;
 import com.ft.message.consumer.MessageQueueConsumerInitializer;
 import com.ft.messagequeueproducer.MessageProducer;
 import com.ft.messagequeueproducer.QueueProxyProducer;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.ConcordanceApiConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ConnectionConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ConsumerConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.DocumentStoreApiConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleInternalComponentsMapperConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleMapperConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ProducerConfiguration;
@@ -23,6 +27,8 @@ import com.ft.methodearticleinternalcomponentsmapper.messaging.MessageBuilder;
 import com.ft.methodearticleinternalcomponentsmapper.messaging.MessageProducingInternalComponentsMapper;
 import com.ft.methodearticleinternalcomponentsmapper.messaging.NativeCmsPublicationEventsListener;
 import com.ft.methodearticleinternalcomponentsmapper.resources.MapResource;
+import com.ft.methodearticleinternalcomponentsmapper.transformation.BodyProcessingFieldTransformerFactory;
+import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.platform.dropwizard.AdvancedHealthCheck;
@@ -30,19 +36,17 @@ import com.ft.platform.dropwizard.AdvancedHealthCheckBundle;
 import com.ft.platform.dropwizard.DefaultGoodToGoChecker;
 import com.ft.platform.dropwizard.GoodToGoBundle;
 import com.sun.jersey.api.client.Client;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-
-import javax.servlet.DispatcherType;
-import javax.ws.rs.core.UriBuilder;
-
 import io.dropwizard.Application;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+
+import javax.servlet.DispatcherType;
+import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 public class MethodeArticleInternalComponentsMapperApplication extends Application<MethodeArticleInternalComponentsMapperConfiguration> {
 
@@ -82,9 +86,29 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .host(mamEndpointConfiguration.getHost())
                 .build();
 
+        DocumentStoreApiConfiguration documentStoreApiConfiguration = configuration.getDocumentStoreApiConfiguration();
+        ResilientClient documentStoreApiClient = (ResilientClient) configureResilientClient(environment, documentStoreApiConfiguration.getEndpointConfiguration(), documentStoreApiConfiguration.getConnectionConfig());
+        EndpointConfiguration documentStoreApiEndpointConfiguration = documentStoreApiConfiguration.getEndpointConfiguration();
+        UriBuilder documentStoreApiBuilder = UriBuilder.fromPath(documentStoreApiEndpointConfiguration.getPath()).scheme("http").host(documentStoreApiEndpointConfiguration.getHost()).port(documentStoreApiEndpointConfiguration.getPort());
+        URI documentStoreUri = documentStoreApiBuilder.build();
+
+        ConcordanceApiConfiguration concordanceApiConfiguration = configuration.getConcordanceApiConfiguration();
+        Client concordanceApiClient = configureResilientClient(environment, concordanceApiConfiguration.getEndpointConfiguration(), concordanceApiConfiguration.getConnectionConfiguration());
+        EndpointConfiguration concordanceApiEndpointConfiguration = concordanceApiConfiguration.getEndpointConfiguration();
+        UriBuilder concordanceApiBuilder = UriBuilder.fromPath(concordanceApiEndpointConfiguration.getPath()).scheme("http").host(concordanceApiEndpointConfiguration.getHost()).port(concordanceApiEndpointConfiguration.getPort());
+        URI concordanceUri = concordanceApiBuilder.build();
+
         InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
-            new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
-            new Html5SelfClosingTagBodyProcessor()
+                new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri,
+                        new VideoMatcher(configuration.getVideoSiteConfig()),
+                        new InteractiveGraphicsMatcher(configuration.getInteractiveGraphicsWhitelist()),
+                        configuration.getContentTypeTemplates(),
+                        configuration.getApiHost(),
+                        concordanceApiClient,
+                        concordanceUri
+                ).newInstance(),
+                new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
+                new Html5SelfClosingTagBodyProcessor()
         );
 
         ConsumerConfiguration consumerConfig = configuration.getConsumerConfiguration();
