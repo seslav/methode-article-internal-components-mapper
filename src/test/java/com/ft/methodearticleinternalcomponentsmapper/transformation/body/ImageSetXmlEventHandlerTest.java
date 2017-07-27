@@ -32,7 +32,7 @@ public class ImageSetXmlEventHandlerTest extends BaseXMLEventHandlerTest {
     private static final String ID_ATTRIBUTE = "id";
     private static final String IMAGE_SET_ID = "U11603541372105PPB";
 
-    private static final String FT_CONTENT_TAG = "ft-content";
+    private static final String FT_CONTENT_TAG = "content";
     private static final String GENERATED_UUID = GenerateV3UUID.singleDigested(ARTICLE_UUID + IMAGE_SET_ID).toString();
 
     @Mock
@@ -53,7 +53,7 @@ public class ImageSetXmlEventHandlerTest extends BaseXMLEventHandlerTest {
 
         expectedAttributes = new HashMap<>();
         expectedAttributes.put("type", "http://www.ft.com/ontology/content/ImageSet");
-        expectedAttributes.put("url", "http://api.ft.com/content/" + GENERATED_UUID);
+        expectedAttributes.put("id", GENERATED_UUID);
         expectedAttributes.put("data-embedded", "true");
     }
 
@@ -106,10 +106,10 @@ public class ImageSetXmlEventHandlerTest extends BaseXMLEventHandlerTest {
         final StartElement imageSetStartElementTag = getStartElementWithAttributes(IMAGE_SET_TAG, attributesMap);
 
         eventHandler.handleStartElementEvent(
-            imageSetStartElementTag,
-            mockXmlEventReader,
-            mockEventWriter,
-            new DefaultTransactionIdBodyProcessingContext(TEST_TID));
+                imageSetStartElementTag,
+                mockXmlEventReader,
+                mockEventWriter,
+                new DefaultTransactionIdBodyProcessingContext(TEST_TID));
 
         verifyZeroInteractions(mockEventWriter);
     }
@@ -121,10 +121,10 @@ public class ImageSetXmlEventHandlerTest extends BaseXMLEventHandlerTest {
         final StartElement imageSetStartElementTag = getStartElementWithAttributes(IMAGE_SET_TAG, attributesMap);
 
         eventHandler.handleStartElementEvent(
-            imageSetStartElementTag,
-            mockXmlEventReader,
-            mockEventWriter,
-            new MappedDataBodyProcessingContext(TEST_TID));
+                imageSetStartElementTag,
+                mockXmlEventReader,
+                mockEventWriter,
+                new MappedDataBodyProcessingContext(TEST_TID));
 
         verifyZeroInteractions(mockEventWriter);
     }

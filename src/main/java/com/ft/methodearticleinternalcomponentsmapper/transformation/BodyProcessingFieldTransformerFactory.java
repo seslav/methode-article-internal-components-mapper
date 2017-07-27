@@ -66,11 +66,11 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
                 new DOMTransformingBodyProcessor(xpathHandlers),
                 stAXTransformingBodyProcessor(),
                 new MethodeLinksBodyProcessor(documentStoreApiClient, documentStoreUri),
+                new ModularXsltBodyProcessor(xslts()),
                 ftTagsLinksRewriteBodyProcessor(),
                 new RegexRemoverBodyProcessor("(<p>)(\\s|(<br\\s*/>))*(</p>)"),
                 new RegexReplacerBodyProcessor("</p>(\\r?\\n)+<p>", "</p>" + System.lineSeparator() + "<p>"),
                 new RegexReplacerBodyProcessor("</p> +<p>", "</p><p>"),
-                new ModularXsltBodyProcessor(xslts()),
                 new Html5SelfClosingTagBodyProcessor()
         );
     }

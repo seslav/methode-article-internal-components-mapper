@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
 
 public class MethodeLinksBodyProcessor implements BodyProcessor {
 
-    private static final String CONTENT_TAG = "ft-content";
+    private static final String CONTENT_TAG = "content";
     public static final String ARTICLE_TYPE = "http://www.ft.com/ontology/content/Article";
     private static final String UUID_REGEX = ".*([0-9a-f]{8}\\-[0-9a-f]{4}\\-[0-9a-f]{4}\\-[0-9a-f]{4}\\-[0-9a-f]{12}).*";
     private static final Pattern UUID_REGEX_PATTERN = Pattern.compile(UUID_REGEX);
