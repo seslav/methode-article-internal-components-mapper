@@ -21,7 +21,7 @@ public class ImageSetXmlEventHandler extends BaseXMLEventHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageSetXmlEventHandler.class);
 
     private static final String ID_ATTRIBUTE = "id";
-    private static final String FT_CONTENT_TAG = "ft-content";
+    private static final String FT_CONTENT_TAG = "content";
 
     @Override
     public void handleStartElementEvent(StartElement event, XMLEventReader xmlEventReader, BodyWriter eventWriter,
@@ -34,7 +34,7 @@ public class ImageSetXmlEventHandler extends BaseXMLEventHandler {
 
             HashMap<String, String> attributes = new HashMap<>();
             attributes.put("type", "http://www.ft.com/ontology/content/ImageSet");
-            attributes.put("url", "http://api.ft.com/content/" + generatedUUID);
+            attributes.put("id", generatedUUID);
             attributes.put("data-embedded", "true");
 
             eventWriter.writeStartTag(FT_CONTENT_TAG, attributes);
