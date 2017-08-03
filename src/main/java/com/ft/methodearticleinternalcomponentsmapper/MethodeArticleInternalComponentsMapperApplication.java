@@ -19,7 +19,7 @@ import com.ft.methodearticleinternalcomponentsmapper.configuration.ConnectionCon
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ConsumerConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.DocumentStoreApiConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleInternalComponentsMapperConfiguration;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleMapperConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeMapperConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ProducerConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.health.CanConnectToMessageQueueProducerProxyHealthcheck;
 import com.ft.methodearticleinternalcomponentsmapper.health.RemoteServiceHealthCheck;
@@ -31,6 +31,7 @@ import com.ft.methodearticleinternalcomponentsmapper.transformation.BodyProcessi
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
+import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.platform.dropwizard.AdvancedHealthCheck;
 import com.ft.platform.dropwizard.AdvancedHealthCheckBundle;
 import com.ft.platform.dropwizard.DefaultGoodToGoChecker;
@@ -72,7 +73,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         BuildInfoResource buildInfoResource = new BuildInfoResource();
         environment.jersey().register(buildInfoResource);
 
-        MethodeArticleMapperConfiguration mamConfiguration =
+        MethodeMapperConfiguration mamConfiguration =
                 configuration.getMethodeArticleMapperConfiguration();
         Client mamClient = configureResilientClient(
                 environment,
@@ -84,6 +85,20 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .fromPath(mamEndpointConfiguration.getPath())
                 .scheme("http")
                 .host(mamEndpointConfiguration.getHost())
+                .build();
+
+        MethodeMapperConfiguration mcpmConfiguration =
+                configuration.getMethodeContentPlaceholderMapperConfiguration();
+        Client mcpmClient = configureResilientClient(
+                environment,
+                mcpmConfiguration.getEndpointConfiguration(),
+                mcpmConfiguration.getConnectionConfiguration()
+        );
+        EndpointConfiguration mcpmEndpointConfiguration = mcpmConfiguration.getEndpointConfiguration();
+        URI mcpmUri = UriBuilder
+                .fromPath(mcpmEndpointConfiguration.getPath())
+                .scheme("http")
+                .host(mcpmEndpointConfiguration.getHost())
                 .build();
 
         DocumentStoreApiConfiguration documentStoreApiConfiguration = configuration.getDocumentStoreApiConfiguration();
@@ -108,6 +123,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                         concordanceUri
                 ).newInstance(),
                 new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
+                new MethodeContentPlaceholderValidator(mcpmClient, mcpmUri, "methode-content-placeholder-mapper"),
                 new Html5SelfClosingTagBodyProcessor()
         );
 

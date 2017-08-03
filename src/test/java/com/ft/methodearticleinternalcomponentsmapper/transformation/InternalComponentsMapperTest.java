@@ -10,6 +10,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
+import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
@@ -55,15 +56,34 @@ public class InternalComponentsMapperTest {
     private static final String ARTICLE_WITH_ALL_COMPONENTS = readFile("article/article_with_all_components.xml.mustache");
     private static final String ARTICLE_WITH_TOPPER = readFile("article/article_with_topper.xml.mustache");
 
-    private static final String ARTICLE_ATTRIBUTES = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE ObjectMetadata SYSTEM \"/SysConfig/Classify/FTStories/classify.dtd\"><ObjectMetadata></ObjectMetadata>";
-
     private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
+
+    private static String ATTRIBUTES = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<!DOCTYPE ObjectMetadata SYSTEM \"/SysConfig/Classify/FTStories/classify.dtd\">" +
+            "<ObjectMetadata>" +
+            "    <OutputChannels>" +
+            "        <DIFTcom>" +
+            "            <isContentPackage>{{isContentPackage}}</isContentPackage>" +
+            "            <DIFTcomArticleImage>{{articleImage}}</DIFTcomArticleImage>" +
+            "        </DIFTcom>" +
+            "    </OutputChannels>" +
+            "    <EditorialNotes>" +
+            "        <Sources>" +
+            "           <Source>" +
+            "               <SourceCode>{{sourceCode}}</SourceCode>" +
+            "           </Source>" +
+            "        </Sources>" +
+            "    </EditorialNotes>" +
+            "</ObjectMetadata>";
 
     @Mock
     private EomFile eomFile;
 
     @Mock
     private MethodeArticleValidator methodeArticleValidator;
+
+    @Mock
+    private MethodeContentPlaceholderValidator methodeContentPlaceholderValidator;
 
     @Mock
     private FieldTransformer bodyTransformer;
@@ -77,6 +97,9 @@ public class InternalComponentsMapperTest {
     @Before
     public void setUp() {
         when(eomFile.getUuid()).thenReturn(ARTICLE_UUID);
+        when(eomFile.getAttributes()).thenReturn(ATTRIBUTES
+                .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT));
     }
 
     @Test
@@ -89,7 +112,9 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withAttributes(ARTICLE_ATTRIBUTES)
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, headline, standfirst))
                 .build();
 
@@ -116,7 +141,9 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withAttributes(ARTICLE_ATTRIBUTES)
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
                 .build();
 
@@ -168,7 +195,9 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withAttributes(ARTICLE_ATTRIBUTES)
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
                         labelType, backgroundColour, layout, headline, standfirst, contentPackageNext))
                 .build();
@@ -221,7 +250,9 @@ public class InternalComponentsMapperTest {
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withAttributes(ARTICLE_ATTRIBUTES)
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
                         labelType, "auto", "", "Topper Headline", "Topper standfirst", null))
                 .build();
@@ -323,6 +354,30 @@ public class InternalComponentsMapperTest {
         assertThat(actual.getUnpublishedContentDescription(), is(formattedContentPackageNext.trim()));
     }
 
+    @Test
+    public void thatContentPlaceholderIsTransformed() throws Exception {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID))).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
+
+        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
+        assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
+        assertThat(actual.getPublishReference(), equalTo(TX_ID));
+    }
+
     private byte[] buildTopperOnlyEomFileValue(
             String backgroundColour,
             String layout,
@@ -344,7 +399,9 @@ public class InternalComponentsMapperTest {
         return new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
-                .withAttributes(ARTICLE_ATTRIBUTES)
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(
                         "squareId",
                         "standardId",

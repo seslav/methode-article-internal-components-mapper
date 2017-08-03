@@ -40,6 +40,18 @@ methodeArticleMapper:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
 
+methodeContentPlaceholderMapper:
+    endpointConfiguration:
+        shortName: "methodeContentPlaceholderMapper"
+        path: map
+        jerseyClient:
+            timeout: 2000ms
+        primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
+        secondaryNodes: null
+    connectionConfig:
+        numberOfConnectionAttempts: 3
+        timeoutMultiplier: 1000
+
 consumer:
   jerseyClient:
     connectionTimeout: 2 seconds

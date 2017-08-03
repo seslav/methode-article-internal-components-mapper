@@ -1,10 +1,10 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessor;
+import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
@@ -12,6 +12,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
+import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.base.Strings;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.ft.methodearticleinternalcomponentsmapper.model.EomFile.SOURCE_ATTR_XPATH;
 import static com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper.Type.CONTENT_PACKAGE;
 import static com.ft.uuidutils.DeriveUUID.Salts.IMAGE_SET;
 
@@ -61,7 +63,13 @@ public class InternalComponentsMapper {
         String ARTICLE = "Article";
     }
 
+    interface SourceCode {
+        String FT = "FT";
+        String CONTENT_PLACEHOLDER = "ContentPlaceholder";
+    }
+
     private MethodeArticleValidator methodeArticleValidator;
+    private MethodeContentPlaceholderValidator methodeContentPlaceholderValidator;
     private BodyProcessor htmlFieldProcessor;
     private FieldTransformer bodyTransformer;
 
@@ -77,23 +85,32 @@ public class InternalComponentsMapper {
 
     public InternalComponentsMapper(final FieldTransformer bodyTransformer,
                                     final MethodeArticleValidator methodeArticleValidator,
+                                    final MethodeContentPlaceholderValidator methodeContentPlaceholderValidator,
                                     final BodyProcessor htmlFieldProcessor) {
         this.methodeArticleValidator = methodeArticleValidator;
+        this.methodeContentPlaceholderValidator = methodeContentPlaceholderValidator;
         this.htmlFieldProcessor = htmlFieldProcessor;
         this.bodyTransformer = bodyTransformer;
     }
 
     public InternalComponents map(EomFile eomFile, String transactionId, Date lastModified, boolean preview) {
-        PublishingStatus status = methodeArticleValidator.getPublishingStatus(eomFile, transactionId, preview);
-        UUID uuid = UUID.fromString(eomFile.getUuid());
-        switch (status) {
-            case INELIGIBLE:
-                throw new MethodeArticleNotEligibleForPublishException(uuid);
-            case DELETED:
-                throw new MethodeArticleMarkedDeletedException(uuid);
-        }
-
         try {
+            PublishingStatus status = PublishingStatus.INELIGIBLE;
+            String sourceCode = retrieveSourceCode(eomFile.getAttributes());
+            if (SourceCode.FT.equals(sourceCode)) {
+                status = methodeArticleValidator.getPublishingStatus(eomFile, transactionId, preview);
+            } else if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                status = methodeContentPlaceholderValidator.getPublishingStatus(eomFile, transactionId);
+            }
+
+            UUID uuid = UUID.fromString(eomFile.getUuid());
+            switch (status) {
+                case INELIGIBLE:
+                    throw new MethodeArticleNotEligibleForPublishException(uuid);
+                case DELETED:
+                    throw new MethodeArticleMarkedDeletedException(uuid);
+            }
+
             final XPath xpath = XPathFactory.newInstance().newXPath();
             final Document eomFileDocument = getEomFileDocument(eomFile);
 
@@ -139,6 +156,12 @@ public class InternalComponentsMapper {
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.transform(new DOMSource(node), new StreamResult(writer));
         return writer.toString();
+    }
+
+    private String retrieveSourceCode(String attributes) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(attributes)));
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        return xpath.evaluate(SOURCE_ATTR_XPATH, attributesDocument);
     }
 
     private String transformBody(XPath xpath, String sourceBodyXML, String attributes, byte[] value, String transactionId, UUID uuid, boolean preview) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException, TransformerException {
