@@ -1429,72 +1429,72 @@ public class BodyProcessingFieldTransformerFactoryTest {
 
     @Test
     public void shouldKeepBlockquoteWithValidParagraph() {
-        String originalRecommendedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
+        String originalContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldKeepCiteTagInsideBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveCiteTagOutsideBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p>Quoted text</p></blockquote><cite>Cite text</cite></body>";
+        String originalContent = "<body><blockquote><p>Quoted text</p></blockquote><cite>Cite text</cite></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveBlockquoteWithoutParagraphs() {
-        String originalRecommendedContent = "<body><blockquote><cite>Cite text</cite></blockquote></body>";
+        String originalContent = "<body><blockquote><cite>Cite text</cite></blockquote></body>";
         String transformedContent = "<body/>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveEmptyParagraphFromBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p></p><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p></p><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveDummyTextParagraphFromBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p><?EM-dummyText [Quote]?></p><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p><?EM-dummyText [Quote]?></p><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveWhitespaceParagraphFromBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p> </p><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p> </p><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p><cite>Cite text</cite></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveEmptyCiteFromBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p>Quoted text</p><cite></cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p>Quoted text</p><cite></cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveDummyTextCiteFromBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p>Quoted text</p><cite><?EM-dummyText [Quote]?></cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p>Quoted text</p><cite><?EM-dummyText [Quote]?></cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     @Test
     public void shouldRemoveWhitespaceCiteFromBlockquote() {
-        String originalRecommendedContent = "<body><blockquote><p>Quoted text</p><cite>  </cite></blockquote></body>";
+        String originalContent = "<body><blockquote><p>Quoted text</p><cite>  </cite></blockquote></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
-        checkTransformation(originalRecommendedContent, transformedContent);
+        checkTransformation(originalContent, transformedContent);
     }
 
     private void checkTransformation(String originalBody, String expectedTransformedBody) {
