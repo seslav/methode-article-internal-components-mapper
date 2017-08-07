@@ -29,7 +29,7 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
                                                                @JsonProperty("videoSiteConfig") List<VideoSiteConfiguration> videoSiteConfig,
                                                                @JsonProperty("interactiveGraphicsWhiteList") List<String> interactiveGraphicsWhiteList,
                                                                @JsonProperty("methodeArticleMapper") MethodeMapperConfiguration methodeArticleMapperConfiguration,
-                                                               @JsonProperty("methodeArticleMapper") MethodeMapperConfiguration methodeContentPlaceholderMapperConfiguration,
+                                                               @JsonProperty("methodeContentPlaceholderMapper") MethodeMapperConfiguration methodeContentPlaceholderMapperConfiguration,
                                                                @JsonProperty("contentUriPrefix") String contentUriPrefix,
                                                                @JsonProperty("contentTypeTemplates") Map<String, String> contentTypeTemplates,
                                                                @JsonProperty("apiHost") String apiHost) {

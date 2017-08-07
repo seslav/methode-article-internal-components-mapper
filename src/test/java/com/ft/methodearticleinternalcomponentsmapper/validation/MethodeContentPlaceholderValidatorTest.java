@@ -1,7 +1,7 @@
 package com.ft.methodearticleinternalcomponentsmapper.validation;
 
 import com.ft.jerseyhttpwrapper.ResilientClient;
-import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMapperUnavailableException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeContentPlaceholderMapperUnavailableException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -30,10 +30,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MethodeArticleValidatorTest {
+public class MethodeContentPlaceholderValidatorTest {
 
     @Mock
-    private ResilientClient methodeArticleMapperClient;
+    private ResilientClient methodeContentPlaceholderClient;
 
     @Mock
     private WebResource.Builder builder;
@@ -50,12 +50,16 @@ public class MethodeArticleValidatorTest {
 
     private InputStream entity;
 
+    private MethodeContentPlaceholderValidator methodeContentPlaceholderValidator;
+
+    private static final String TRANSACTION_ID = "tid_test";
+
     @Before
     public void setup() throws Exception {
 
         entity = new ByteArrayInputStream("Test".getBytes(StandardCharsets.UTF_8));
         WebResource webResource = mock(WebResource.class);
-        when(methodeArticleMapperClient.resource(any(URI.class))).thenReturn(webResource);
+        when(methodeContentPlaceholderClient.resource(any(URI.class))).thenReturn(webResource);
         when(webResource.queryParam(eq("preview"), anyString())).thenReturn(webResource);
         when(webResource.accept(any(MediaType.class))).thenReturn(builder);
         when(builder.type(any(MediaType.class))).thenReturn(builder);
@@ -63,22 +67,18 @@ public class MethodeArticleValidatorTest {
         when(builder.entity(anyObject())).thenReturn(builder);
         when(builder.post(ClientResponse.class)).thenReturn(clientResponseWithCode(404));
 
-        methodeArticleValidator = new MethodeArticleValidator(
-                methodeArticleMapperClient,
+        methodeContentPlaceholderValidator = new MethodeContentPlaceholderValidator(
+                methodeContentPlaceholderClient,
                 URI.create("http://localhost:8080/__methode-article-mapper/map"),
                 "methode-article-mapper"
         );
     }
 
-    private MethodeArticleValidator methodeArticleValidator;
-
-    private static final String TRANSACTION_ID = "tid_test";
-
     @Test
     public void thatIfValidatorServiceReturns422PublishStatusIsIneligible() {
         when(builder.post(ClientResponse.class)).thenReturn(clientResponseWithCode(422));
 
-        PublishingStatus actual = methodeArticleValidator.getPublishingStatus(eomFile, TRANSACTION_ID, false);
+        PublishingStatus actual = methodeContentPlaceholderValidator.getPublishingStatus(eomFile, TRANSACTION_ID);
 
         assertThat(actual, is(PublishingStatus.INELIGIBLE));
     }
@@ -87,7 +87,7 @@ public class MethodeArticleValidatorTest {
     public void thatIfValidatorServiceReturns404PublishStatusIsDeleted() {
         when(builder.post(ClientResponse.class)).thenReturn(clientResponseWithCode(404));
 
-        PublishingStatus actual = methodeArticleValidator.getPublishingStatus(eomFile, TRANSACTION_ID, false);
+        PublishingStatus actual = methodeContentPlaceholderValidator.getPublishingStatus(eomFile, TRANSACTION_ID);
 
         assertThat(actual, is(PublishingStatus.DELETED));
     }
@@ -96,15 +96,15 @@ public class MethodeArticleValidatorTest {
     public void thatIfValidatorServiceReturns200PublishStatusIsValid() {
         when(builder.post(ClientResponse.class)).thenReturn(clientResponseWithCode(200));
 
-        PublishingStatus actual = methodeArticleValidator.getPublishingStatus(eomFile, TRANSACTION_ID, false);
+        PublishingStatus actual = methodeContentPlaceholderValidator.getPublishingStatus(eomFile, TRANSACTION_ID);
 
         assertThat(actual, is(PublishingStatus.VALID));
     }
 
-    @Test(expected = MethodeArticleMapperUnavailableException.class)
-    public void thatIfValidatorServiceReturnsNonExpectedStatusCodeMethodeArticleMapperUnavailableExceptionIsThrown() {
+    @Test(expected = MethodeContentPlaceholderMapperUnavailableException.class)
+    public void thatIfValidatorServiceReturnsNonExpectedStatusCodeExceptionIsThrown() {
         when(builder.post(ClientResponse.class)).thenReturn(clientResponseWithCode(500));
-        methodeArticleValidator.getPublishingStatus(eomFile, TRANSACTION_ID, false);
+        methodeContentPlaceholderValidator.getPublishingStatus(eomFile, TRANSACTION_ID);
     }
 
     private ClientResponse clientResponseWithCode(int status) {

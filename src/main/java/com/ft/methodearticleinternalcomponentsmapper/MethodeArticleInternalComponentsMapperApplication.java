@@ -89,12 +89,12 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
 
         MethodeMapperConfiguration mcpmConfiguration =
                 configuration.getMethodeContentPlaceholderMapperConfiguration();
+        EndpointConfiguration mcpmEndpointConfiguration = mcpmConfiguration.getEndpointConfiguration();
         Client mcpmClient = configureResilientClient(
                 environment,
-                mcpmConfiguration.getEndpointConfiguration(),
+                mcpmEndpointConfiguration,
                 mcpmConfiguration.getConnectionConfiguration()
         );
-        EndpointConfiguration mcpmEndpointConfiguration = mcpmConfiguration.getEndpointConfiguration();
         URI mcpmUri = UriBuilder
                 .fromPath(mcpmEndpointConfiguration.getPath())
                 .scheme("http")
@@ -144,11 +144,14 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 getConsumerClient(environment, consumerConfig)
         );
 
+
+        List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
+        healthchecks.add(buildMAMHealthChecks(mamClient, mamEndpointConfiguration));
+        healthchecks.add(buildMCPMHealthChecks(mcpmClient, mcpmEndpointConfiguration));
+
         registerHealthChecks(
                 environment,
-                buildClientHealthChecks(
-                        mamClient, mamEndpointConfiguration
-                )
+                healthchecks
         );
 
         environment.jersey().register(new MapResource(eomFileProcessor));
@@ -159,6 +162,10 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
             Environment environment,
             EndpointConfiguration endpointConfiguration,
             ConnectionConfiguration connectionConfig) {
+
+        JerseyClientConfiguration jerseyClientConfiguration = endpointConfiguration.getJerseyClientConfiguration();
+        jerseyClientConfiguration.setGzipEnabled(false);
+        jerseyClientConfiguration.setGzipEnabledForRequests(false);
 
         return ResilientClientBuilder.in(environment)
                 .using(endpointConfiguration)
@@ -180,11 +187,9 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         }
     }
 
-    private List<AdvancedHealthCheck> buildClientHealthChecks(Client methodeArticleMapperClient,
-                                                              EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
-
-        List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
-        healthchecks.add(new RemoteServiceHealthCheck(
+    private AdvancedHealthCheck buildMAMHealthChecks(Client methodeArticleMapperClient,
+                                                     EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
+        return new RemoteServiceHealthCheck(
                 "Methode Article Mapper",
                 methodeArticleMapperClient,
                 methodeArticleMapperEndpointConfiguration.getHost(),
@@ -193,9 +198,21 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 "methode-article-mapper",
                 1,
                 "Internal components of newly published Methode articles will not be available from the InternalContent API",
-                "https://dewey.ft.com/up-maicm.html")
-        );
-        return healthchecks;
+                "https://dewey.ft.com/up-maicm.html");
+    }
+
+    private AdvancedHealthCheck buildMCPMHealthChecks(Client methodeContentPlaceholderMapperClient,
+                                                      EndpointConfiguration methodeContentPlaceholderMapperEndpointConfiguration) {
+        return new RemoteServiceHealthCheck(
+                "Methode Content Placeholder Mapper",
+                methodeContentPlaceholderMapperClient,
+                methodeContentPlaceholderMapperEndpointConfiguration.getHost(),
+                methodeContentPlaceholderMapperEndpointConfiguration.getPort(),
+                "/__health",
+                "methode-content-placeholder-mapper",
+                1,
+                "Internal components of newly published Methode content placeholders will not be available from the InternalContent API",
+                "https://dewey.ft.com/up-mcpm.html");
     }
 
     private MessageBuilder getMessageBuilder(

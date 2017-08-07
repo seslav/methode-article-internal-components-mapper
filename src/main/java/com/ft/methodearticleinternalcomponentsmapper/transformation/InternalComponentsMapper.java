@@ -120,11 +120,7 @@ public class InternalComponentsMapper {
             final Topper topper = extractTopper(xpath, eomFileDocument);
             final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
 
-            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
-
-            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
-
-            return InternalComponents.builder()
+            InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
                     .withUuid(uuid.toString())
                     .withPublishReference(transactionId)
                     .withLastModified(lastModified)
@@ -132,7 +128,16 @@ public class InternalComponentsMapper {
                     .withTableOfContents(tableOfContents)
                     .withTopper(topper)
                     .withLeadImages(leadImages)
-                    .withUnpublishedContentDescription(unpublishedContentDescription)
+                    .withUnpublishedContentDescription(unpublishedContentDescription);
+
+            if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                return internalComponentsBuilder.build();
+            }
+
+            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
+            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
+
+            return internalComponentsBuilder
                     .withXMLBody(transformedBodyXML)
                     .build();
         } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException | IOException e) {

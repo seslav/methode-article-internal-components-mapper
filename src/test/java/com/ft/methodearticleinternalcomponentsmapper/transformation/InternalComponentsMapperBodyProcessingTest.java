@@ -35,6 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.equalToIgnoringWhiteSpace;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.Matchers.any;
@@ -161,19 +162,13 @@ public class InternalComponentsMapperBodyProcessingTest {
     }
 
     @Test
-    public void shouldTransformContentPlaceholderBodyOnPublish() {
+    public void shouldContentPlaceholderBodyShouldBeMissingOnPublish() {
         final EomFile eomFile = new EomFile.Builder()
                 .withValuesFrom(createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER))
                 .build();
 
-        final InternalComponents expectedContent = InternalComponents.builder()
-                .withValuesFrom(standardExpectedContent)
-                .withXMLBody(TRANSFORMED_BODY).build();
-
         InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
-
-        verify(bodyTransformer).transform(anyString(), eq(TRANSACTION_ID), eq(Maps.immutableEntry("uuid", eomFile.getUuid())));
-        assertThat(content.getBodyXML(), equalTo(expectedContent.getBodyXML()));
+        assertNull(content.getBodyXML());
     }
 
     @Test
