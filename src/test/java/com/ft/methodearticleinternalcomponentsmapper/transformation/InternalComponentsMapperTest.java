@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -383,6 +382,26 @@ public class InternalComponentsMapperTest {
         assertThat(actual.getPublishReference(), equalTo(TX_ID));
     }
 
+    @Test (expected = MethodeArticleNotEligibleForPublishException.class)
+    public void thatExceptionIsThrownWhenSourceCodeNotFTOrContentPlaceholder() throws Exception {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", "FastFT"))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
+
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
     private byte[] buildTopperOnlyEomFileValue(
             String backgroundColour,
             String layout,
@@ -451,20 +470,6 @@ public class InternalComponentsMapperTest {
         attributes.put("contentPackageNext", contentPackageNext);
 
         return mustache.execute(attributes).getBytes(UTF_8);
-    }
-
-    private InternalComponents createStandardExpectedContent() {
-        return InternalComponents.builder()
-                .withDesign(new Design("theme"))
-                .withTableOfContents(new TableOfContents("sequence", "labelType"))
-                .withTopper(new Topper("headline", "standfirst", "bgColor", "layout"))
-                .withLeadImages(Arrays.asList(new Image("img1", "type1"), new Image("img2", "type1"), new Image("img3", "type2")))
-                .withUnpublishedContentDescription("the next awesome article")
-                .withXMLBody("<body><p>some other random text</p></body>")
-                .withUuid(ARTICLE_UUID)
-                .withPublishReference(TX_ID)
-                .withLastModified(LAST_MODIFIED)
-                .build();
     }
 
     private static String readFile(final String path) {
