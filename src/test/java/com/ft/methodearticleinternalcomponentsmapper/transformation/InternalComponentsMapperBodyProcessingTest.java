@@ -11,7 +11,6 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
-import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.collect.Maps;
@@ -22,7 +21,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
@@ -95,12 +93,10 @@ public class InternalComponentsMapperBodyProcessingTest {
     private EomFile standardEomFile;
     private InternalComponents standardExpectedContent;
 
-    private InternalComponentsMapper eomFileProcessor;
-
-    @Mock
     private MethodeArticleValidator methodeArticleValidator;
-    @Mock
-    private MethodeContentPlaceholderValidator methodeContentPlaceholderValidator;
+    private MethodeArticleValidator methodeContentPlaceholderValidator;
+
+    private InternalComponentsMapper eomFileProcessor;
 
     public static EomFile createStandardEomFileWithMainImage(UUID uuid,
                                                              UUID mainImageUuid,
@@ -133,16 +129,22 @@ public class InternalComponentsMapperBodyProcessingTest {
     public void setUp() throws Exception {
         bodyTransformer = mock(FieldTransformer.class);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-        when(methodeArticleValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(methodeContentPlaceholderValidator.getPublishingStatus(any(), any())).thenReturn(PublishingStatus.VALID);
 
         htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
 
         standardEomFile = createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.FT);
         standardExpectedContent = createStandardExpectedContent();
 
+        methodeArticleValidator = mock(MethodeArticleValidator.class);
+        methodeContentPlaceholderValidator = mock(MethodeArticleValidator.class);
+        when(methodeArticleValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(methodeContentPlaceholderValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
 
-        eomFileProcessor = new InternalComponentsMapper(bodyTransformer, methodeArticleValidator, methodeContentPlaceholderValidator, htmlFieldProcessor);
+        Map<String, MethodeArticleValidator> articleValidators = new HashMap<>();
+        articleValidators.put(InternalComponentsMapper.SourceCode.FT, methodeArticleValidator);
+        articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, methodeContentPlaceholderValidator);
+
+        eomFileProcessor = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, articleValidators);
     }
 
     @Test

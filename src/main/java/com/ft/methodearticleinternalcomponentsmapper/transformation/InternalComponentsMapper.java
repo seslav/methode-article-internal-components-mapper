@@ -12,7 +12,6 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
-import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.base.Strings;
@@ -63,15 +62,14 @@ public class InternalComponentsMapper {
         String ARTICLE = "Article";
     }
 
-    interface SourceCode {
+    public interface SourceCode {
         String FT = "FT";
         String CONTENT_PLACEHOLDER = "ContentPlaceholder";
     }
 
-    private MethodeArticleValidator methodeArticleValidator;
-    private MethodeContentPlaceholderValidator methodeContentPlaceholderValidator;
-    private BodyProcessor htmlFieldProcessor;
     private FieldTransformer bodyTransformer;
+    private BodyProcessor htmlFieldProcessor;
+    private Map<String, MethodeArticleValidator> articleValidators;
 
     private static final String NO_PICTURE_FLAG = "No picture";
     private static final String DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED = "data-embedded";
@@ -84,26 +82,24 @@ public class InternalComponentsMapper {
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";
 
     public InternalComponentsMapper(final FieldTransformer bodyTransformer,
-                                    final MethodeArticleValidator methodeArticleValidator,
-                                    final MethodeContentPlaceholderValidator methodeContentPlaceholderValidator,
-                                    final BodyProcessor htmlFieldProcessor) {
-        this.methodeArticleValidator = methodeArticleValidator;
-        this.methodeContentPlaceholderValidator = methodeContentPlaceholderValidator;
-        this.htmlFieldProcessor = htmlFieldProcessor;
+                                    final BodyProcessor htmlFieldProcessor,
+                                    final Map<String, MethodeArticleValidator> articleValidators) {
         this.bodyTransformer = bodyTransformer;
+        this.htmlFieldProcessor = htmlFieldProcessor;
+        this.articleValidators = articleValidators;
     }
 
     public InternalComponents map(EomFile eomFile, String transactionId, Date lastModified, boolean preview) {
         try {
-            PublishingStatus status = PublishingStatus.INELIGIBLE;
+            UUID uuid = UUID.fromString(eomFile.getUuid());
+
             String sourceCode = retrieveSourceCode(eomFile.getAttributes());
-            if (SourceCode.FT.equals(sourceCode)) {
-                status = methodeArticleValidator.getPublishingStatus(eomFile, transactionId, preview);
-            } else if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
-                status = methodeContentPlaceholderValidator.getPublishingStatus(eomFile, transactionId);
+            if (!SourceCode.FT.equals(sourceCode) && !SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                throw new MethodeArticleNotEligibleForPublishException(uuid);
             }
 
-            UUID uuid = UUID.fromString(eomFile.getUuid());
+            Boolean previewParam = SourceCode.FT.equals(sourceCode) ? preview : null;
+            PublishingStatus status = articleValidators.get(sourceCode).getPublishingStatus(eomFile, transactionId, previewParam);
             switch (status) {
                 case INELIGIBLE:
                     throw new MethodeArticleNotEligibleForPublishException(uuid);

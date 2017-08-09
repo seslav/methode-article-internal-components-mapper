@@ -31,7 +31,6 @@ import com.ft.methodearticleinternalcomponentsmapper.transformation.BodyProcessi
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
-import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.platform.dropwizard.AdvancedHealthCheck;
 import com.ft.platform.dropwizard.AdvancedHealthCheckBundle;
 import com.ft.platform.dropwizard.DefaultGoodToGoChecker;
@@ -47,7 +46,9 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MethodeArticleInternalComponentsMapperApplication extends Application<MethodeArticleInternalComponentsMapperConfiguration> {
 
@@ -113,6 +114,9 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         UriBuilder concordanceApiBuilder = UriBuilder.fromPath(concordanceApiEndpointConfiguration.getPath()).scheme("http").host(concordanceApiEndpointConfiguration.getHost()).port(concordanceApiEndpointConfiguration.getPort());
         URI concordanceUri = concordanceApiBuilder.build();
 
+        Map<String, MethodeArticleValidator> articleValidators = new HashMap<>();
+        articleValidators.put(InternalComponentsMapper.SourceCode.FT, new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"));
+        articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, new MethodeArticleValidator(mcpmClient, mcpmUri, "methode-content-placeholder-mapper"));
         InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
                 new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri,
                         new VideoMatcher(configuration.getVideoSiteConfig()),
@@ -122,9 +126,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                         concordanceApiClient,
                         concordanceUri
                 ).newInstance(),
-                new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
-                new MethodeContentPlaceholderValidator(mcpmClient, mcpmUri, "methode-content-placeholder-mapper"),
-                new Html5SelfClosingTagBodyProcessor()
+                new Html5SelfClosingTagBodyProcessor(),
+                articleValidators
         );
 
         ConsumerConfiguration consumerConfig = configuration.getConsumerConfiguration();

@@ -3,7 +3,6 @@ package com.ft.methodearticleinternalcomponentsmapper.validation;
 import com.ft.jerseyhttpwrapper.ResilientClient;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMapperUnavailableException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
-import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.header.InBoundHeaders;
@@ -41,9 +40,6 @@ public class MethodeArticleValidatorTest {
     private InBoundHeaders headers;
     @Mock
     private MessageBodyWorkers workers;
-
-    @Mock
-    private ClientHandlerException clientHandlerException;
 
     @Mock
     private EomFile eomFile;

@@ -10,16 +10,12 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
-import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeContentPlaceholderValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -39,10 +35,12 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -76,30 +74,38 @@ public class InternalComponentsMapperTest {
             "    </EditorialNotes>" +
             "</ObjectMetadata>";
 
-    @Mock
     private EomFile eomFile;
-
-    @Mock
-    private MethodeArticleValidator methodeArticleValidator;
-
-    @Mock
-    private MethodeContentPlaceholderValidator methodeContentPlaceholderValidator;
-
-    @Mock
     private FieldTransformer bodyTransformer;
+    private Html5SelfClosingTagBodyProcessor htmlFieldProcessor;
 
-    @Spy
-    private Html5SelfClosingTagBodyProcessor bodyProcessor = spy(new Html5SelfClosingTagBodyProcessor());
+    private MethodeArticleValidator methodeArticleValidator;
+    private MethodeArticleValidator methodeContentPlaceholderValidator;
 
-    @InjectMocks
     private InternalComponentsMapper internalComponentsMapper;
 
     @Before
     public void setUp() {
+        eomFile = mock(EomFile.class);
         when(eomFile.getUuid()).thenReturn(ARTICLE_UUID);
         when(eomFile.getAttributes()).thenReturn(ATTRIBUTES
                 .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
                 .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT));
+
+        bodyTransformer = mock(FieldTransformer.class);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
+
+        htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
+
+        methodeArticleValidator = mock(MethodeArticleValidator.class);
+        methodeContentPlaceholderValidator = mock(MethodeArticleValidator.class);
+        when(methodeArticleValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(methodeContentPlaceholderValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
+
+        Map<String, MethodeArticleValidator> articleValidators = new HashMap<>();
+        articleValidators.put(InternalComponentsMapper.SourceCode.FT, methodeArticleValidator);
+        articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, methodeContentPlaceholderValidator);
+
+        internalComponentsMapper = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, articleValidators);
     }
 
     @Test
@@ -118,7 +124,6 @@ public class InternalComponentsMapperTest {
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, headline, standfirst))
                 .build();
 
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
@@ -368,7 +373,7 @@ public class InternalComponentsMapperTest {
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
                 .build();
 
-        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID))).thenReturn(PublishingStatus.VALID);
+        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
