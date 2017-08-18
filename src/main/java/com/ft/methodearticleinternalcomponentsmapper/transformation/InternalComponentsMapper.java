@@ -9,6 +9,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
+import com.ft.methodearticleinternalcomponentsmapper.model.Summary;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
@@ -76,6 +77,7 @@ public class InternalComponentsMapper {
     private static final String IMAGE_SET_TYPE = "http://www.ft.com/ontology/content/ImageSet";
     private static final String FT_CONTENT_BASE_URL = "http://api.ft.com/content/";
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
+    private static final String SUMMARY_TAG_XPATH = "/doc/lead/lead-components/lead-summary";
 
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
@@ -132,6 +134,11 @@ public class InternalComponentsMapper {
 
             String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
             final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
+            String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFileDocument);
+            if (!sourceSummaryXML.isEmpty()) {
+                final String transformedSummaryXML = transformField("<body>" + sourceSummaryXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
+                internalComponentsBuilder.withSummary(Summary.builder().withBodyXML(transformedSummaryXML).build());
+            }
 
             return internalComponentsBuilder
                     .withXMLBody(transformedBodyXML)
