@@ -1,4 +1,4 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Template;

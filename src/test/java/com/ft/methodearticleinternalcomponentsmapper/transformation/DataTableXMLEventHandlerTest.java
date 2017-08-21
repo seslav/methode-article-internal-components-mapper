@@ -1,11 +1,8 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
 import com.ft.bodyprocessing.xml.eventhandlers.StripElementAndContentsXMLEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.DataTableData;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.DataTableXMLEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.DataTableXMLParser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

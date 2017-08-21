@@ -1,10 +1,8 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.DefaultTransactionIdBodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.ImageSetXmlEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.MappedDataBodyProcessingContext;
 import com.ft.uuidutils.GenerateV3UUID;
 import com.google.common.collect.Maps;
 import org.codehaus.stax2.XMLEventReader2;

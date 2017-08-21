@@ -1,9 +1,8 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
 import com.ft.bodyprocessing.xml.eventhandlers.BaseXMLEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.PodcastXMLEventHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

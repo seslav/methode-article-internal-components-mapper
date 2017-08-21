@@ -1,4 +1,4 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.RemoveXMLEntityEscapingBodyProcessor;
