@@ -19,7 +19,7 @@ import com.ft.methodearticleinternalcomponentsmapper.configuration.ConnectionCon
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ConsumerConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.DocumentStoreApiConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleInternalComponentsMapperConfiguration;
-import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeArticleMapperConfiguration;
+import com.ft.methodearticleinternalcomponentsmapper.configuration.MethodeMapperConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.configuration.ProducerConfiguration;
 import com.ft.methodearticleinternalcomponentsmapper.health.CanConnectToMessageQueueProducerProxyHealthcheck;
 import com.ft.methodearticleinternalcomponentsmapper.health.RemoteServiceHealthCheck;
@@ -46,7 +46,9 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MethodeArticleInternalComponentsMapperApplication extends Application<MethodeArticleInternalComponentsMapperConfiguration> {
 
@@ -72,7 +74,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         BuildInfoResource buildInfoResource = new BuildInfoResource();
         environment.jersey().register(buildInfoResource);
 
-        MethodeArticleMapperConfiguration mamConfiguration =
+        MethodeMapperConfiguration mamConfiguration =
                 configuration.getMethodeArticleMapperConfiguration();
         Client mamClient = configureResilientClient(
                 environment,
@@ -84,6 +86,20 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .fromPath(mamEndpointConfiguration.getPath())
                 .scheme("http")
                 .host(mamEndpointConfiguration.getHost())
+                .build();
+
+        MethodeMapperConfiguration mcpmConfiguration =
+                configuration.getMethodeContentPlaceholderMapperConfiguration();
+        EndpointConfiguration mcpmEndpointConfiguration = mcpmConfiguration.getEndpointConfiguration();
+        Client mcpmClient = configureResilientClient(
+                environment,
+                mcpmEndpointConfiguration,
+                mcpmConfiguration.getConnectionConfiguration()
+        );
+        URI mcpmUri = UriBuilder
+                .fromPath(mcpmEndpointConfiguration.getPath())
+                .scheme("http")
+                .host(mcpmEndpointConfiguration.getHost())
                 .build();
 
         DocumentStoreApiConfiguration documentStoreApiConfiguration = configuration.getDocumentStoreApiConfiguration();
@@ -98,6 +114,9 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         UriBuilder concordanceApiBuilder = UriBuilder.fromPath(concordanceApiEndpointConfiguration.getPath()).scheme("http").host(concordanceApiEndpointConfiguration.getHost()).port(concordanceApiEndpointConfiguration.getPort());
         URI concordanceUri = concordanceApiBuilder.build();
 
+        Map<String, MethodeArticleValidator> articleValidators = new HashMap<>();
+        articleValidators.put(InternalComponentsMapper.SourceCode.FT, new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"));
+        articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, new MethodeArticleValidator(mcpmClient, mcpmUri, "methode-content-placeholder-mapper"));
         InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
                 new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri,
                         new VideoMatcher(configuration.getVideoSiteConfig()),
@@ -107,8 +126,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                         concordanceApiClient,
                         concordanceUri
                 ).newInstance(),
-                new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"),
-                new Html5SelfClosingTagBodyProcessor()
+                new Html5SelfClosingTagBodyProcessor(),
+                articleValidators
         );
 
         ConsumerConfiguration consumerConfig = configuration.getConsumerConfiguration();
@@ -128,11 +147,14 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 getConsumerClient(environment, consumerConfig)
         );
 
+
+        List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
+        healthchecks.add(buildMAMHealthChecks(mamClient, mamEndpointConfiguration));
+        healthchecks.add(buildMCPMHealthChecks(mcpmClient, mcpmEndpointConfiguration));
+
         registerHealthChecks(
                 environment,
-                buildClientHealthChecks(
-                        mamClient, mamEndpointConfiguration
-                )
+                healthchecks
         );
 
         environment.jersey().register(new MapResource(eomFileProcessor));
@@ -143,6 +165,10 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
             Environment environment,
             EndpointConfiguration endpointConfiguration,
             ConnectionConfiguration connectionConfig) {
+
+        JerseyClientConfiguration jerseyClientConfiguration = endpointConfiguration.getJerseyClientConfiguration();
+        jerseyClientConfiguration.setGzipEnabled(false);
+        jerseyClientConfiguration.setGzipEnabledForRequests(false);
 
         return ResilientClientBuilder.in(environment)
                 .using(endpointConfiguration)
@@ -164,11 +190,9 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         }
     }
 
-    private List<AdvancedHealthCheck> buildClientHealthChecks(Client methodeArticleMapperClient,
-                                                              EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
-
-        List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
-        healthchecks.add(new RemoteServiceHealthCheck(
+    private AdvancedHealthCheck buildMAMHealthChecks(Client methodeArticleMapperClient,
+                                                     EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
+        return new RemoteServiceHealthCheck(
                 "Methode Article Mapper",
                 methodeArticleMapperClient,
                 methodeArticleMapperEndpointConfiguration.getHost(),
@@ -177,9 +201,21 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 "methode-article-mapper",
                 1,
                 "Internal components of newly published Methode articles will not be available from the InternalContent API",
-                "https://dewey.ft.com/up-maicm.html")
-        );
-        return healthchecks;
+                "https://dewey.ft.com/up-maicm.html");
+    }
+
+    private AdvancedHealthCheck buildMCPMHealthChecks(Client methodeContentPlaceholderMapperClient,
+                                                      EndpointConfiguration methodeContentPlaceholderMapperEndpointConfiguration) {
+        return new RemoteServiceHealthCheck(
+                "Methode Content Placeholder Mapper",
+                methodeContentPlaceholderMapperClient,
+                methodeContentPlaceholderMapperEndpointConfiguration.getHost(),
+                methodeContentPlaceholderMapperEndpointConfiguration.getPort(),
+                "/__health",
+                "methode-content-placeholder-mapper",
+                1,
+                "Internal components of newly published Methode content placeholders will not be available from the InternalContent API",
+                "https://dewey.ft.com/up-mcpm.html");
     }
 
     private MessageBuilder getMessageBuilder(

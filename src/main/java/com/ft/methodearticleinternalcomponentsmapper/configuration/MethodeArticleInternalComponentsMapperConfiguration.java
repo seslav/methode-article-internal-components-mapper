@@ -14,7 +14,8 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     private final ProducerConfiguration producerConfiguration;
     private final DocumentStoreApiConfiguration documentStoreApiConfiguration;
     private final ConcordanceApiConfiguration concordanceApiConfiguration;
-    private final MethodeArticleMapperConfiguration methodeArticleMapperConfiguration;
+    private final MethodeMapperConfiguration methodeArticleMapperConfiguration;
+    private final MethodeMapperConfiguration methodeContentPlaceholderMapperConfiguration;
     private final List<VideoSiteConfiguration> videoSiteConfig;
     private final List<String> interactiveGraphicsWhiteList;
     private final String contentUriPrefix;
@@ -27,7 +28,8 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
                                                                @JsonProperty("concordanceApi") ConcordanceApiConfiguration concordanceApiConfiguration,
                                                                @JsonProperty("videoSiteConfig") List<VideoSiteConfiguration> videoSiteConfig,
                                                                @JsonProperty("interactiveGraphicsWhiteList") List<String> interactiveGraphicsWhiteList,
-                                                               @JsonProperty("methodeArticleMapper") MethodeArticleMapperConfiguration methodeArticleMapperConfiguration,
+                                                               @JsonProperty("methodeArticleMapper") MethodeMapperConfiguration methodeArticleMapperConfiguration,
+                                                               @JsonProperty("methodeContentPlaceholderMapper") MethodeMapperConfiguration methodeContentPlaceholderMapperConfiguration,
                                                                @JsonProperty("contentUriPrefix") String contentUriPrefix,
                                                                @JsonProperty("contentTypeTemplates") Map<String, String> contentTypeTemplates,
                                                                @JsonProperty("apiHost") String apiHost) {
@@ -38,6 +40,7 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
         this.videoSiteConfig = videoSiteConfig;
         this.interactiveGraphicsWhiteList = interactiveGraphicsWhiteList;
         this.methodeArticleMapperConfiguration = methodeArticleMapperConfiguration;
+        this.methodeContentPlaceholderMapperConfiguration = methodeContentPlaceholderMapperConfiguration;
         this.contentUriPrefix = contentUriPrefix;
         this.contentTypeTemplates = contentTypeTemplates;
         this.apiHost = apiHost;
@@ -79,8 +82,13 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     }
 
     @NotNull
-    public MethodeArticleMapperConfiguration getMethodeArticleMapperConfiguration() {
+    public MethodeMapperConfiguration getMethodeArticleMapperConfiguration() {
         return methodeArticleMapperConfiguration;
+    }
+
+    @NotNull
+    public MethodeMapperConfiguration getMethodeContentPlaceholderMapperConfiguration() {
+        return methodeContentPlaceholderMapperConfiguration;
     }
 
     @NotNull

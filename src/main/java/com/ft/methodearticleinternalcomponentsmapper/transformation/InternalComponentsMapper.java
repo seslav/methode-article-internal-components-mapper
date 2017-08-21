@@ -1,10 +1,10 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessor;
+import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.ft.methodearticleinternalcomponentsmapper.model.EomFile.SOURCE_ATTR_XPATH;
 import static com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper.Type.CONTENT_PACKAGE;
 import static com.ft.uuidutils.DeriveUUID.Salts.IMAGE_SET;
 
@@ -61,9 +62,14 @@ public class InternalComponentsMapper {
         String ARTICLE = "Article";
     }
 
-    private MethodeArticleValidator methodeArticleValidator;
-    private BodyProcessor htmlFieldProcessor;
+    public interface SourceCode {
+        String FT = "FT";
+        String CONTENT_PLACEHOLDER = "ContentPlaceholder";
+    }
+
     private FieldTransformer bodyTransformer;
+    private BodyProcessor htmlFieldProcessor;
+    private Map<String, MethodeArticleValidator> articleValidators;
 
     private static final String NO_PICTURE_FLAG = "No picture";
     private static final String DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED = "data-embedded";
@@ -76,24 +82,31 @@ public class InternalComponentsMapper {
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";
 
     public InternalComponentsMapper(final FieldTransformer bodyTransformer,
-                                    final MethodeArticleValidator methodeArticleValidator,
-                                    final BodyProcessor htmlFieldProcessor) {
-        this.methodeArticleValidator = methodeArticleValidator;
-        this.htmlFieldProcessor = htmlFieldProcessor;
+                                    final BodyProcessor htmlFieldProcessor,
+                                    final Map<String, MethodeArticleValidator> articleValidators) {
         this.bodyTransformer = bodyTransformer;
+        this.htmlFieldProcessor = htmlFieldProcessor;
+        this.articleValidators = articleValidators;
     }
 
     public InternalComponents map(EomFile eomFile, String transactionId, Date lastModified, boolean preview) {
-        PublishingStatus status = methodeArticleValidator.getPublishingStatus(eomFile, transactionId, preview);
-        UUID uuid = UUID.fromString(eomFile.getUuid());
-        switch (status) {
-            case INELIGIBLE:
-                throw new MethodeArticleNotEligibleForPublishException(uuid);
-            case DELETED:
-                throw new MethodeArticleMarkedDeletedException(uuid);
-        }
-
         try {
+            UUID uuid = UUID.fromString(eomFile.getUuid());
+
+            String sourceCode = retrieveSourceCode(eomFile.getAttributes());
+            if (!SourceCode.FT.equals(sourceCode) && !SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                throw new MethodeArticleNotEligibleForPublishException(uuid);
+            }
+
+            Boolean previewParam = SourceCode.FT.equals(sourceCode) ? preview : null;
+            PublishingStatus status = articleValidators.get(sourceCode).getPublishingStatus(eomFile, transactionId, previewParam);
+            switch (status) {
+                case INELIGIBLE:
+                    throw new MethodeArticleNotEligibleForPublishException(uuid);
+                case DELETED:
+                    throw new MethodeArticleMarkedDeletedException(uuid);
+            }
+
             final XPath xpath = XPathFactory.newInstance().newXPath();
             final Document eomFileDocument = getEomFileDocument(eomFile);
 
@@ -103,11 +116,7 @@ public class InternalComponentsMapper {
             final Topper topper = extractTopper(xpath, eomFileDocument);
             final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
 
-            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
-
-            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
-
-            return InternalComponents.builder()
+            InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
                     .withUuid(uuid.toString())
                     .withPublishReference(transactionId)
                     .withLastModified(lastModified)
@@ -115,7 +124,16 @@ public class InternalComponentsMapper {
                     .withTableOfContents(tableOfContents)
                     .withTopper(topper)
                     .withLeadImages(leadImages)
-                    .withUnpublishedContentDescription(unpublishedContentDescription)
+                    .withUnpublishedContentDescription(unpublishedContentDescription);
+
+            if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                return internalComponentsBuilder.build();
+            }
+
+            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
+            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
+
+            return internalComponentsBuilder
                     .withXMLBody(transformedBodyXML)
                     .build();
         } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException | IOException e) {
@@ -139,6 +157,12 @@ public class InternalComponentsMapper {
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         transformer.transform(new DOMSource(node), new StreamResult(writer));
         return writer.toString();
+    }
+
+    private String retrieveSourceCode(String attributes) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(attributes)));
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        return xpath.evaluate(SOURCE_ATTR_XPATH, attributesDocument);
     }
 
     private String transformBody(XPath xpath, String sourceBodyXML, String attributes, byte[] value, String transactionId, UUID uuid, boolean preview) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException, TransformerException {

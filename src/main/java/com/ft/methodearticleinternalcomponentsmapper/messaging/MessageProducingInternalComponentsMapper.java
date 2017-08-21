@@ -5,6 +5,7 @@ import com.ft.messaging.standards.message.v1.Message;
 import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleUnsupportedSourceCodeException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
@@ -44,6 +45,9 @@ public class MessageProducingInternalComponentsMapper {
             message = messageBuilder.buildDeletedInternalComponentsMessage(methodeContent.getUuid(), transactionId, messageTimestamp);
         } catch (MethodeArticleNotEligibleForPublishException e) {
             LOGGER.error("Article with uuid={} was no eligible for publishing.\n Stack trace was: {}", methodeContent.getUuid(), ExceptionUtils.getStackTrace(e));
+            return;
+        } catch (MethodeArticleUnsupportedSourceCodeException e) {
+            LOGGER.error("Article with uuid={} has unsupported SourceCode for publishing.\n Stack trace was: {}", methodeContent.getUuid(), ExceptionUtils.getStackTrace(e));
             return;
         } catch (InvalidMethodeContentException e) {
             LOGGER.error("Article with uuid={} has content that cannot be transformed.\n Stack trace was: {}", methodeContent.getUuid(), ExceptionUtils.getStackTrace(e));
