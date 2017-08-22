@@ -41,10 +41,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -82,7 +82,7 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
                 final DocumentBuilder documentBuilder = getDocumentBuilder();
                 final Document document = documentBuilder.parse(new InputSource(new StringReader(body)));
 
-                final List<Node> aTagsToCheck = new ArrayList<>();
+                final Map<Node, String> aTagsToCheck = new HashMap<>();
                 final XPath xpath = XPathFactory.newInstance().newXPath();
                 final NodeList aTags = (NodeList) xpath.evaluate("//a[count(ancestor::promo-link)=0]", document, XPathConstants.NODESET);
                 for (int i = 0; i < aTags.getLength(); i++) {
@@ -90,20 +90,20 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
 
                     if (isRemovable(aTag)) {
                         removeATag(aTag);
-                    } else if (containsUuid(getHref(aTag))) {
-                        aTagsToCheck.add(aTag);
+                    } else {
+                        Optional<String> optionalUuid = extractUuid(aTag);
+                        optionalUuid.ifPresent(s -> aTagsToCheck.put(aTag, s));
                     }
                 }
 
                 if (bodyProcessingContext instanceof TransactionIdBodyProcessingContext) {
                     TransactionIdBodyProcessingContext transactionIdBodyProcessingContext = (TransactionIdBodyProcessingContext) bodyProcessingContext;
                     String transactionId = transactionIdBodyProcessingContext.getTransactionId();
-                    if(StringUtils.isBlank(transactionId)) {
+                    if (StringUtils.isBlank(transactionId)) {
                         throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
                     }
 
-                    final Set<String> uuidsToCheck = extractUuids(aTagsToCheck);
-                    final Content[] content = getContentFromDocumentStore(uuidsToCheck, transactionId);
+                    final Content[] content = getContentFromDocumentStore(aTagsToCheck, transactionId);
                     processATags(aTagsToCheck, content);
 
                     return serializeBody(document);
@@ -172,10 +172,11 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         return true;
     }
 
-    private Content[] getContentFromDocumentStore(Set<String> uuids, String transactionId) {
-        if (uuids.isEmpty()) {
+    private Content[] getContentFromDocumentStore(Map<Node, String> tags, String transactionId) {
+        if (tags.isEmpty()) {
             return new Content[0];
         }
+        final Set<String> uuids = new HashSet<>(tags.values());
 
         URI documentsUri = UriBuilder.fromUri(uri).queryParam("uuid", uuids.toArray()).build();
         ClientResponse clientResponse = null;
@@ -233,17 +234,13 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         }
     }
 
-    private void processATags(List<Node> aTagsToCheck, Content[] content) {
-        for (Node node : aTagsToCheck) {
-            Optional<String> assetUuid = extractUuid(node);
-            if (assetUuid.isPresent()) {
-                String uuid = assetUuid.get();
-                Optional<Content> matchingContent = getMatchingContent(content, uuid);
-                if (matchingContent.isPresent()) {
-                    replaceLinkToContentPresentInDocumentStore(node, matchingContent.get());
-                } else if (isConvertibleToAssetOnFtCom(node)) {
-                    transformLinkToAssetOnFtCom(node, uuid);
-                }
+    private void processATags(Map<Node, String> aTags, Content[] content) {
+        for (Node aTag : aTags.keySet()) {
+            Optional<Content> matchingContent = getMatchingContent(content, aTags.get(aTag));
+            if (matchingContent.isPresent()) {
+                replaceLinkToContentPresentInDocumentStore(aTag, matchingContent.get());
+            } else if (isConvertibleToAssetOnFtCom(aTag)) {
+                transformLinkToAssetOnFtCom(aTag, aTags.get(aTag));
             }
         }
     }
@@ -256,7 +253,7 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         Element newElement = node.getOwnerDocument().createElement(CONTENT_TAG);
         newElement.setAttribute("id", content.getUuid());
 
-        if(!StringUtils.isBlank(content.getType())) {
+        if (!StringUtils.isBlank(content.getType())) {
             newElement.setAttribute("type", BASE_CONTENT_TYPE + content.getType());
         } else {
             newElement.setAttribute("type", DEFAULT_CONTENT_TYPE);
@@ -372,21 +369,6 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
             }
         }
         parentNode.removeChild(aTag);
-    }
-
-    private Set<String> extractUuids(List<Node> aTagsToCheck) {
-        final List<String> uuids = new ArrayList<>(aTagsToCheck.size());
-
-        for (Node node : aTagsToCheck) {
-            Optional<String> optionalUuid = extractUuid(node);
-            optionalUuid.ifPresent(uuids::add);
-        }
-
-        return new HashSet<>(uuids);
-    }
-
-    private boolean containsUuid(String href) {
-        return extractUuid(href).isPresent();
     }
 
     private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
