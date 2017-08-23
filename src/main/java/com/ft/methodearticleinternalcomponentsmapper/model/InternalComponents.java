@@ -1,6 +1,7 @@
 package com.ft.methodearticleinternalcomponentsmapper.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
@@ -61,6 +62,7 @@ public class InternalComponents {
         return unpublishedContentDescription;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getBodyXML() {
         return bodyXML;
     }

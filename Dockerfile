@@ -18,6 +18,7 @@ CMD exec java $JAVA_OPTS \
      -Ddw.server.applicationConnectors[0].port=8080 \
      -Ddw.server.adminConnectors[0].port=8081 \
      -Ddw.methodeArticleMapper.endpointConfiguration.primaryNodes=$VULCAN_HOST \
+     -Ddw.methodeContentPlaceholderMapper.endpointConfiguration.primaryNodes=$VULCAN_HOST \
      -Ddw.documentStoreApi.endpointConfiguration.primaryNodes=$VULCAN_HOST \
      -Ddw.concordanceApi.endpointConfiguration.primaryNodes=$VULCAN_HOST \
      -Ddw.consumer.messageConsumer.queueProxyHost=http://$VULCAN_HOST \
