@@ -33,7 +33,6 @@ import org.custommonkey.xmlunit.ElementNameAndTextQualifier;
 import org.custommonkey.xmlunit.XMLAssert;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
 import javax.xml.namespace.QName;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -133,6 +132,8 @@ public class BodyProcessingStepDefs {
         contentTypeTemplates.put("http://www.ft.com/ontology/content/MediaResource", "/content/{{id}}");
         contentTypeTemplates.put("http://www.ft.com/ontology/content/Video", "/content/{{id}}");
         contentTypeTemplates.put("http://www.ft.com/ontology/company/PublicCompany", "/organisations/{{id}}");
+        contentTypeTemplates.put("http://www.ft.com/ontology/content/ContentPackage", "/content/{{id}}");
+        contentTypeTemplates.put("http://www.ft.com/ontology/content/Content", "/content/{{id}}");
     }
 
     private static String randomChars(int howMany) {

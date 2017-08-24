@@ -162,5 +162,7 @@ contentTypeTemplates:
   http://www.ft.com/ontology/content/MediaResource: /content/{{id}}
   http://www.ft.com/ontology/content/Video: /content/{{id}}
   http://www.ft.com/ontology/company/PublicCompany: /organisations/{{id}}
+  http://www.ft.com/ontology/content/ContentPackage: /content/{{id}}
+  http://www.ft.com/ontology/content/Content: /content/{{id}}
 
 apiHost: "api.ft.com"

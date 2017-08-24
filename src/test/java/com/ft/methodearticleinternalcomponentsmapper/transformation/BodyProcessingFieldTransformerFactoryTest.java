@@ -65,6 +65,8 @@ public class BodyProcessingFieldTransformerFactoryTest {
         contentTypeTemplates.put("http://www.ft.com/ontology/content/MediaResource", "/content/{{id}}");
         contentTypeTemplates.put("http://www.ft.com/ontology/content/Video", "/content/{{id}}");
         contentTypeTemplates.put("http://www.ft.com/ontology/company/PublicCompany", "/organisations/{{id}}");
+        contentTypeTemplates.put("http://www.ft.com/ontology/content/ContentPackage", "/content/{{id}}");
+        contentTypeTemplates.put("http://www.ft.com/ontology/content/Content", "/content/{{id}}");
     }
 
     private static final String apiHost = "api.ft.com";
