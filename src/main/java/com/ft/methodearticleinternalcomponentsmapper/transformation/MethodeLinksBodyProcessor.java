@@ -80,7 +80,6 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         if (StringUtils.isBlank(body)) {
             return body;
         }
-
         try {
             final DocumentBuilder documentBuilder = getDocumentBuilder();
             final Document document = documentBuilder.parse(new InputSource(new StringReader(body)));
@@ -99,20 +98,18 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
                 }
             }
 
-            if (bodyProcessingContext instanceof TransactionIdBodyProcessingContext) {
-                TransactionIdBodyProcessingContext transactionIdBodyProcessingContext = (TransactionIdBodyProcessingContext) bodyProcessingContext;
-                String transactionId = transactionIdBodyProcessingContext.getTransactionId();
-                if (StringUtils.isBlank(transactionId)) {
-                    throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
-                }
-
-                final List<Content> content = getContentFromDocumentStore(aTagsToCheck, transactionId);
-                processATags(aTagsToCheck, content);
-
-                return serializeBody(document);
-            } else {
+            if (!(bodyProcessingContext instanceof TransactionIdBodyProcessingContext)) {
                 throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
             }
+
+            TransactionIdBodyProcessingContext transactionIdBodyProcessingContext = (TransactionIdBodyProcessingContext) bodyProcessingContext;
+            String transactionId = transactionIdBodyProcessingContext.getTransactionId();
+            if (StringUtils.isBlank(transactionId)) {
+                throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
+            }
+            final List<Content> content = getContentFromDocumentStore(aTagsToCheck, transactionId);
+            processATags(aTagsToCheck, content);
+            return serializeBody(document);
         } catch (Exception e) {
             throw new BodyProcessingException(e);
         }
