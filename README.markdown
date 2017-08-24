@@ -82,6 +82,9 @@ You can find an example of a transformed article below.
   ],
   "unpublishedContentDescription": "<p>Content package coming next text</p>",
   "bodyXML": "<body><p>Iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.</p>\n\n<ft-content data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/b1f14cd8-6ad4-11e7-1740-72a7a34381e5\"></ft-content>\n\n<p>Itaque earum rerum hic tenetur a sapiente delectus.</p>\n</body>",
+  "summary": {
+    "bodyXML": "<body><p>Iure reprehenderit qui in ea voluptate velit</p></body>"
+  }
   "uuid": "e7f2eed0-ef92-11e6-abbc-ee7d9c5b3b90",
   "lastModified": "2017-03-16T13:51:52.976Z",
   "publishReference": "tid_xhwijstdot"
