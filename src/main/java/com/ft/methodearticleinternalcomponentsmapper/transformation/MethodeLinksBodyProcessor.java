@@ -42,11 +42,11 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,44 +77,45 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
 
     @Override
     public String process(String body, BodyProcessingContext bodyProcessingContext) throws BodyProcessingException {
-        if (body != null && !body.trim().isEmpty()) {
-            try {
-                final DocumentBuilder documentBuilder = getDocumentBuilder();
-                final Document document = documentBuilder.parse(new InputSource(new StringReader(body)));
+        if (StringUtils.isBlank(body)) {
+            return body;
+        }
 
-                final Map<Node, String> aTagsToCheck = new HashMap<>();
-                final XPath xpath = XPathFactory.newInstance().newXPath();
-                final NodeList aTags = (NodeList) xpath.evaluate("//a[count(ancestor::promo-link)=0]", document, XPathConstants.NODESET);
-                for (int i = 0; i < aTags.getLength(); i++) {
-                    final Element aTag = (Element) aTags.item(i);
+        try {
+            final DocumentBuilder documentBuilder = getDocumentBuilder();
+            final Document document = documentBuilder.parse(new InputSource(new StringReader(body)));
 
-                    if (isRemovable(aTag)) {
-                        removeATag(aTag);
-                    } else {
-                        Optional<String> optionalUuid = extractUuid(aTag);
-                        optionalUuid.ifPresent(s -> aTagsToCheck.put(aTag, s));
-                    }
-                }
+            final Map<Node, String> aTagsToCheck = new HashMap<>();
+            final XPath xpath = XPathFactory.newInstance().newXPath();
+            final NodeList aTags = (NodeList) xpath.evaluate("//a[count(ancestor::promo-link)=0]", document, XPathConstants.NODESET);
+            for (int i = 0; i < aTags.getLength(); i++) {
+                final Element aTag = (Element) aTags.item(i);
 
-                if (bodyProcessingContext instanceof TransactionIdBodyProcessingContext) {
-                    TransactionIdBodyProcessingContext transactionIdBodyProcessingContext = (TransactionIdBodyProcessingContext) bodyProcessingContext;
-                    String transactionId = transactionIdBodyProcessingContext.getTransactionId();
-                    if (StringUtils.isBlank(transactionId)) {
-                        throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
-                    }
-
-                    final Content[] content = getContentFromDocumentStore(aTagsToCheck, transactionId);
-                    processATags(aTagsToCheck, content);
-
-                    return serializeBody(document);
+                if (isRemovable(aTag)) {
+                    removeATag(aTag);
                 } else {
+                    Optional<String> optionalUuid = extractUuid(aTag);
+                    optionalUuid.ifPresent(s -> aTagsToCheck.put(aTag, s));
+                }
+            }
+
+            if (bodyProcessingContext instanceof TransactionIdBodyProcessingContext) {
+                TransactionIdBodyProcessingContext transactionIdBodyProcessingContext = (TransactionIdBodyProcessingContext) bodyProcessingContext;
+                String transactionId = transactionIdBodyProcessingContext.getTransactionId();
+                if (StringUtils.isBlank(transactionId)) {
                     throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
                 }
-            } catch (Exception e) {
-                throw new BodyProcessingException(e);
+
+                final List<Content> content = getContentFromDocumentStore(aTagsToCheck, transactionId);
+                processATags(aTagsToCheck, content);
+
+                return serializeBody(document);
+            } else {
+                throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
             }
+        } catch (Exception e) {
+            throw new BodyProcessingException(e);
         }
-        return body;
     }
 
     /**
@@ -172,13 +173,12 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         return true;
     }
 
-    private Content[] getContentFromDocumentStore(Map<Node, String> tags, String transactionId) {
+    private List<Content> getContentFromDocumentStore(Map<Node, String> tags, String transactionId) {
         if (tags.isEmpty()) {
-            return new Content[0];
+            return Collections.emptyList();
         }
-        final Set<String> uuids = new HashSet<>(tags.values());
 
-        URI documentsUri = UriBuilder.fromUri(uri).queryParam("uuid", uuids.toArray()).build();
+        URI documentsUri = UriBuilder.fromUri(uri).queryParam("uuid", tags.values().stream().distinct().toArray()).build();
         ClientResponse clientResponse = null;
         try {
             clientResponse = documentStoreApiClient.resource(documentsUri)
@@ -200,8 +200,9 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
 
             ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             String jsonAsString = clientResponse.getEntity(String.class);
+            Content[] returnedContent = mapper.readValue(jsonAsString, Content[].class);
 
-            return mapper.readValue(jsonAsString, Content[].class);
+            return Arrays.asList(returnedContent);
         } catch (ClientHandlerException e) {
             Throwable cause = e.getCause();
             if (cause instanceof IOException) {
@@ -234,7 +235,7 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         }
     }
 
-    private void processATags(Map<Node, String> aTags, Content[] content) {
+    private void processATags(Map<Node, String> aTags, List<Content> content) {
         for (Node aTag : aTags.keySet()) {
             Optional<Content> matchingContent = getMatchingContent(content, aTags.get(aTag));
             if (matchingContent.isPresent()) {
@@ -245,8 +246,8 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         }
     }
 
-    private Optional<Content> getMatchingContent(Content[] content, String uuid) {
-        return Arrays.stream(content).filter(c -> c.getUuid().equals(uuid)).findFirst();
+    private Optional<Content> getMatchingContent(List<Content> content, String uuid) {
+        return content.stream().filter(c -> c.getUuid().equals(uuid)).findFirst();
     }
 
     private void replaceLinkToContentPresentInDocumentStore(Node node, Content content) {
