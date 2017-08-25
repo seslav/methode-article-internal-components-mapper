@@ -270,7 +270,7 @@ Transforms the 'internal' components of raw Methode articles into UPP format.
                 "bodyXML": "<body><ft-content data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://api.ft.com/content/7cceb3b6-12c7-11e7-0a0f-3870535ae6aa\"></ft-content><p>h</p>\n</body>",
                 "summary": {
                     "bodyXML": "<body>\n  <p>Latest government paper aims to tackle one of thorniest issues of departure with <strong>bold text</strong> and <em>italics</em> too. Here’s a<a href=\"http://www.ft.com\">hyperlink</a>as well.</p>\n  <ul>\n     <li>‘Strong’ case for frictionless Irish border after Brexit</li>\n     <li>Pound stumbles to new low against euro</li>\n     <li>Britain’s Brexit papers aim to fast-track customs talks</li>\n  </ul>\n</body>"
-                }
+                },
                 "uuid": "5fd4a5b8-12c7-11e7-9469-afea892e4de3",
                 "lastModified": "2017-03-28T10:44:09.439Z",
                 "publishReference": "tid_dohr8nvttl"
