@@ -134,6 +134,7 @@ public class BodyProcessingStepDefs {
         contentTypeTemplates.put("http://www.ft.com/ontology/company/PublicCompany", "/organisations/{{id}}");
         contentTypeTemplates.put("http://www.ft.com/ontology/content/ContentPackage", "/content/{{id}}");
         contentTypeTemplates.put("http://www.ft.com/ontology/content/Content", "/content/{{id}}");
+        contentTypeTemplates.put("http://www.ft.com/ontology/content/Image", "/content/{{id}}");
     }
 
     private static String randomChars(int howMany) {

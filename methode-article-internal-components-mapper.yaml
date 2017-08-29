@@ -164,5 +164,6 @@ contentTypeTemplates:
   http://www.ft.com/ontology/company/PublicCompany: /organisations/{{id}}
   http://www.ft.com/ontology/content/ContentPackage: /content/{{id}}
   http://www.ft.com/ontology/content/Content: /content/{{id}}
+  http://www.ft.com/ontology/content/Image: /content/{{id}}
 
 apiHost: "api.ft.com"
