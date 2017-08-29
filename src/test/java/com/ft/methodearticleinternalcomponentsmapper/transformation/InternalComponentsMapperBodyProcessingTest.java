@@ -8,6 +8,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
+import com.ft.methodearticleinternalcomponentsmapper.model.Summary;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
@@ -24,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +45,7 @@ import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +67,7 @@ public class InternalComponentsMapperBodyProcessingTest {
     private static final String TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF = "contentPackageListHref";
 
     private static final String IMAGE_SET_UUID = "U116035516646705FC";
+    private static final String SUMMARY = "summary";
 
     private static String ATTRIBUTES = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<!DOCTYPE ObjectMetadata SYSTEM \"/SysConfig/Classify/FTStories/classify.dtd\">" +
@@ -161,6 +165,25 @@ public class InternalComponentsMapperBodyProcessingTest {
 
         verify(bodyTransformer).transform(anyString(), eq(TRANSACTION_ID), eq(Maps.immutableEntry("uuid", eomFile.getUuid())));
         assertThat(content.getBodyXML(), equalTo(expectedContent.getBodyXML()));
+    }
+
+    @Test
+    public void shouldTransformSummaryBodyToo() {
+        final EomFile eomFile = new EomFile.Builder()
+                .withValuesFrom(createStandardEomFileWithSummary())
+                .build();
+
+        final InternalComponents expectedContent = InternalComponents.builder()
+                .withValuesFrom(standardExpectedContent)
+                .withXMLBody(TRANSFORMED_BODY)
+                .withSummary(Summary.builder().withBodyXML(TRANSFORMED_BODY).build())
+                .build();
+
+        InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
+
+        verify(bodyTransformer, times(2)).transform(anyString(), eq(TRANSACTION_ID), eq(Maps.immutableEntry("uuid", eomFile.getUuid())));
+        assertThat(content.getBodyXML(), equalTo(expectedContent.getBodyXML()));
+        assertThat(content.getSummary().getBodyXML(), equalTo(expectedContent.getBodyXML()));
     }
 
     @Test
@@ -265,7 +288,6 @@ public class InternalComponentsMapperBodyProcessingTest {
     private EomFile createEomFileWithRandomContentPackage() {
         return createStandardEomFileWithContentPackage(
                 uuid,
-                "cp",
                 "<a href=\"/FT/Content/Content%20Package/Live/content-package-test.dwc?uuid=" + UUID.randomUUID().toString() + "\"/>");
     }
 
@@ -383,40 +405,48 @@ public class InternalComponentsMapperBodyProcessingTest {
     }
 
     private EomFile createEomStoryFile(UUID uuid) {
-        return createStandardEomFile(uuid, "EOM::Story", InternalComponentsMapper.SourceCode.FT, null, null, null);
+        return createStandardEomFile(uuid, "EOM::Story", InternalComponentsMapper.SourceCode.FT, Collections.emptyMap());
     }
 
     private EomFile createStandardEomFile(UUID uuid, String sourceCode) {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", sourceCode, null, null, null);
+        return createStandardEomFile(uuid, "EOM::CompoundStory", sourceCode, Collections.emptyMap());
     }
 
-    private EomFile createStandardEomFileWithContentPackage(UUID uuid, String contentPackageDesc, String contentPackageHref) {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.FT, contentPackageDesc, contentPackageHref, null);
+    private EomFile createStandardEomFileWithContentPackage(UUID uuid, String contentPackageHref) {
+        Map<String, Object> templateValues = new HashMap<>();
+        templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE, Boolean.TRUE);
+        templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_DESC, "cp");
+        templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF, contentPackageHref);
+        return new EomFile.Builder()
+                .withUuid(uuid.toString())
+                .withType("EOM::CompoundStory")
+                .withValue(buildEomFileValue(templateValues))
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{isContentPackage\\}\\}", "true")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
+                .withSystemAttributes(buildEomFileSystemAttributes("FTcom"))
+                .withWorkflowStatus("Stories/WebReady")
+                .withWebUrl(null)
+                .build();
     }
 
     private EomFile createStandardEomFileWithImageSet(String imageSetID) {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.FT, "", "", imageSetID);
+        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.FT,
+                Collections.singletonMap(TEMPLATE_PLACEHOLDER_IMAGE_SET_UUID, imageSetID));
     }
 
-    private EomFile createStandardEomFile(UUID uuid, String eomType, String sourceCode, String contentPackageDesc,
-                                          String contentPackageListHref, String imageSetID) {
-        Map<String, Object> templateValues = new HashMap<>();
-        boolean isContentPackage = false;
-        if (contentPackageDesc != null && contentPackageListHref != null) {
-            templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE, Boolean.TRUE);
-            templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_DESC, contentPackageDesc);
-            templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF, contentPackageListHref);
-            isContentPackage = true;
-        }
+    private EomFile createStandardEomFileWithSummary() {
+        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.FT,
+                Collections.singletonMap(SUMMARY, true));
+    }
 
-        templateValues.put(TEMPLATE_PLACEHOLDER_IMAGE_SET_UUID, imageSetID);
-
+    private EomFile createStandardEomFile(UUID uuid, String eomType, String sourceCode, Map<String, Object> templateValues) {
         return new EomFile.Builder()
                 .withUuid(uuid.toString())
                 .withType(eomType)
                 .withValue(buildEomFileValue(templateValues))
                 .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{isContentPackage\\}\\}", String.valueOf(isContentPackage))
+                        .replaceFirst("\\{\\{isContentPackage\\}\\}", "false")
                         .replaceFirst("\\{\\{sourceCode\\}\\}", sourceCode))
                 .withSystemAttributes(buildEomFileSystemAttributes("FTcom"))
                 .withWorkflowStatus("Stories/WebReady")

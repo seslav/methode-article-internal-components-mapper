@@ -1,4 +1,4 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
@@ -6,7 +6,6 @@ import com.ft.bodyprocessing.xml.StAXTransformingBodyProcessor;
 import com.ft.bodyprocessing.xml.eventhandlers.RetainXMLEventHandler;
 import com.ft.bodyprocessing.xml.eventhandlers.XMLEventHandler;
 import com.ft.bodyprocessing.xml.eventhandlers.XMLEventHandlerRegistry;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.InlineImageXmlEventHandler;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.collect.ImmutableMap;
 import org.codehaus.stax2.XMLEventReader2;

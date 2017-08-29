@@ -407,7 +407,7 @@
 <hr/>
 <hr/>
 <hr/>
-<recommended><recommended-title>Title</recommended-title><p>Intro</p><ul><li><a type="http://www.ft.com/ontology/content/Article" url="http://api.ft.com/content/e30ce78c-59fe-11e7-b553-e2df1b0c3220">Internal articles’s title added by methode automatically</a></li><li><a href="http://ft.com/content/71ece778-5a53-11e7-9bc8-8055f264aa8b">Manually added FT article’s manual title</a></li><li><a href="http://example.com/manually/added/document1.pdf">External link’s manually added title</a></li></ul></recommended>
+<recommended><recommended-title>Title</recommended-title><p>Intro</p><ul><li><ft-content type="http://www.ft.com/ontology/content/Article" url="http://api.ft.com/content/a04cb831-6373-4548-ad77-2c43431d6552">Internal articles’s title added by methode automatically</ft-content></li><li><ft-content type="http://www.ft.com/ontology/content/Article" url="http://api.ft.com/content/a04cb831-6373-4548-ad77-2c43431d6552">Manually added FT article’s manual title</ft-content></li><li><a href="http://example.com/manually/added/document1.pdf">External link’s manually added title</a></li></ul></recommended>
 <div class="layout" data-layout-name="name" data-layout-width="body">
     <div class="layout-slot">
         <h2>some heading</h2>

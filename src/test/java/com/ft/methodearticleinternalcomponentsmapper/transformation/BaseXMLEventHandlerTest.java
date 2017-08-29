@@ -1,4 +1,4 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.xml.XMLEventReaderFactory;
 import org.codehaus.stax2.XMLInputFactory2;

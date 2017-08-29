@@ -16,6 +16,7 @@ public class InternalComponents {
     private final List<Image> leadImages;
     private final String unpublishedContentDescription;
     private final String bodyXML;
+    private final Summary summary;
 
     private final String uuid;
     private final Date lastModified;
@@ -27,6 +28,7 @@ public class InternalComponents {
                               @JsonProperty("leadImages") final List<Image> leadImages,
                               @JsonProperty("unpublishedContentDescription") final String unpublishedContentDescription,
                               @JsonProperty("bodyXML") final String bodyXML,
+                              @JsonProperty("summary") final Summary summary,
                               @JsonProperty("uuid") final String uuid,
                               @JsonProperty("lastModified") final Date lastModified,
                               @JsonProperty("publishReference") final String publishReference) {
@@ -36,6 +38,7 @@ public class InternalComponents {
         this.leadImages = leadImages;
         this.unpublishedContentDescription = unpublishedContentDescription;
         this.bodyXML = bodyXML;
+        this.summary = summary;
 
         this.uuid = uuid;
         this.lastModified = lastModified;
@@ -67,6 +70,10 @@ public class InternalComponents {
         return bodyXML;
     }
 
+    public Summary getSummary() {
+        return summary;
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -96,6 +103,7 @@ public class InternalComponents {
         private List<Image> leadImages;
         private String unpublishedContentDescription;
         private String bodyXML;
+        private Summary summary;
 
         private String uuid;
         private String publishReference;
@@ -134,6 +142,11 @@ public class InternalComponents {
             return this;
         }
 
+        public InternalComponents.Builder withSummary(Summary summary) {
+            this.summary = summary;
+            return this;
+        }
+
         public InternalComponents.Builder withUuid(String uuid) {
             this.uuid = uuid;
             return this;
@@ -156,6 +169,7 @@ public class InternalComponents {
                     .withLeadImages(content.getLeadImages())
                     .withUnpublishedContentDescription(content.getUnpublishedContentDescription())
                     .withXMLBody(content.getBodyXML())
+                    .withSummary(content.getSummary())
                     .withUuid(content.getUuid())
                     .withPublishReference(content.getPublishReference())
                     .withLastModified(content.getLastModified());
@@ -169,6 +183,7 @@ public class InternalComponents {
                     leadImages,
                     unpublishedContentDescription,
                     bodyXML,
+                    summary,
                     uuid,
                     lastModified,
                     publishReference);

@@ -11,8 +11,6 @@ import javax.xml.stream.events.StartElement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RecommendedXMLEventHandler extends BaseXMLEventHandler {
 
@@ -22,19 +20,12 @@ public class RecommendedXMLEventHandler extends BaseXMLEventHandler {
     private static final String LIST_TAG = "ul";
     private static final String LIST_ITEM_TAG = "li";
     private static final String ANCHOR_TAG = "a";
-    private static final String TYPE_ATTRIBUTE = "type";
     private static final String HREF_ATTRIBUTE = "href";
-    private static final String URL_ATTRIBUTE = "url";
-    private static final String TYPE_VALUE = "http://www.ft.com/ontology/content/Article";
-    private static final String BASE_URL = "http://api.ft.com/content/";
-    private static final String REGEX = "^(\\/[^=]*=)([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$";
 
-    private Pattern pattern;
     private RecommendedXMLParser recommendedXMLParser;
 
     public RecommendedXMLEventHandler(RecommendedXMLParser parser) {
         this.recommendedXMLParser = parser;
-        this.pattern = Pattern.compile(REGEX);
     }
 
     @Override
@@ -56,22 +47,12 @@ public class RecommendedXMLEventHandler extends BaseXMLEventHandler {
         eventWriter.writeStartTag(LIST_TAG, noAttributes());
         for (RecommendedData.Link link : recommendedData.getLinks()) {
             eventWriter.writeStartTag(LIST_ITEM_TAG, noAttributes());
-            writeAnchor(eventWriter, link.title, getAnchorAttributes(link));
+            Map<String, String> attributes = new HashMap<>();
+            attributes.put(HREF_ATTRIBUTE, link.address);
+            writeAnchor(eventWriter, link.title, attributes);
             eventWriter.writeEndTag(LIST_ITEM_TAG);
         }
         eventWriter.writeEndTag(LIST_TAG);
-    }
-
-    private Map<String, String> getAnchorAttributes(RecommendedData.Link link) {
-        Matcher matcher = pattern.matcher(link.address);
-        Map<String, String> attributes = new HashMap<>();
-        if (matcher.find()) {
-            attributes.put(TYPE_ATTRIBUTE, TYPE_VALUE);
-            attributes.put(URL_ATTRIBUTE, BASE_URL + matcher.group(2));
-        } else {
-            attributes.put(HREF_ATTRIBUTE, link.address);
-        }
-        return attributes;
     }
 
     private Map<String, String> noAttributes() {

@@ -1,12 +1,9 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
 import com.ft.bodyprocessing.xml.eventhandlers.XMLEventHandler;
 import com.ft.bodyprocessing.xml.eventhandlers.XmlParser;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.SlideshowData;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.SlideshowEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.StartElementMatcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

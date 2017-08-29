@@ -1,10 +1,7 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.writer.BodyWriter;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.RecommendedData;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.RecommendedXMLEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.RecommendedXMLParser;
 import org.codehaus.stax2.XMLEventReader2;
 import org.junit.Before;
 import org.junit.Test;

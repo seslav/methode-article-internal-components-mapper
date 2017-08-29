@@ -1,11 +1,8 @@
-package com.ft.methodearticleinternalcomponentsmapper.transformation.body;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.BodyProcessingException;
 import com.ft.bodyprocessing.writer.BodyWriter;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.PullQuoteData;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.PullQuoteEventHandler;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.PullQuoteXMLParser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
