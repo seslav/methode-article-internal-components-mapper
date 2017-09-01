@@ -175,14 +175,14 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
             return Collections.emptyList();
         }
 
-        URI documentsUri = UriBuilder.fromUri(uri).queryParam("uuid", tags.values().stream().distinct().toArray()).build();
         ClientResponse clientResponse = null;
         try {
-            clientResponse = documentStoreApiClient.resource(documentsUri)
+            clientResponse = documentStoreApiClient.resource(uri)
                     .accept(MediaType.APPLICATION_JSON_TYPE)
+                    .type(MediaType.APPLICATION_JSON_TYPE)
                     .header(TransactionIdUtils.TRANSACTION_ID_HEADER, transactionId)
                     .header("Host", "document-store-api")
-                    .get(ClientResponse.class);
+                    .post(ClientResponse.class, tags.values().stream().distinct().toArray());
 
             int responseStatusCode = clientResponse.getStatus();
             Family statusFamily = getFamilyByStatusCode(responseStatusCode);

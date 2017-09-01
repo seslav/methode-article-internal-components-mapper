@@ -37,7 +37,9 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -121,8 +123,9 @@ public class BodyProcessingFieldTransformerFactoryTest {
                 documentStoreUri, videoMatcher, interactiveGraphicsMatcher, contentTypeTemplates, apiHost, concordanceClient, concordanceUri).newInstance();
         when(documentStoreApiClient.resource((URI) any())).thenReturn(webResourceNotFound);
         when(webResourceNotFound.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builderNotFound);
+        when(builderNotFound.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builderNotFound);
         when(builderNotFound.header(anyString(), anyString())).thenReturn(builderNotFound);
-        when(builderNotFound.get(ClientResponse.class)).thenReturn(clientResponse);
+        when(builderNotFound.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
         when(clientResponse.getStatus()).thenReturn(200);
         when(clientResponse.getEntity(String.class)).thenReturn("[]");
         when(concordanceClient.resource((URI) any())).thenReturn(webResourceNotFound);
@@ -134,8 +137,9 @@ public class BodyProcessingFieldTransformerFactoryTest {
     public void kitchenSinkArticleShouldBeTransformedAccordingToRules() {
         when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
         when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
+        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
         when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
+        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
         when(clientResponse.getStatus()).thenReturn(200);
         when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\""
                 + KITCHEN_SINK_ASSET1_UUID + "\", \"type\": \"Article\"}, {\"uuid\":\""
@@ -1360,10 +1364,9 @@ public class BodyProcessingFieldTransformerFactoryTest {
     public void shouldTransformMethodeLinkFromRecommended() {
         when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
         when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
+        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
         when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
+        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
         when(clientResponse.getStatus()).thenReturn(200);
         when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + KITCHEN_SINK_ASSET5_UUID + "\", \"type\": \"Article\"}]");
 
@@ -1376,10 +1379,9 @@ public class BodyProcessingFieldTransformerFactoryTest {
     public void shouldTransformManualInternalLinkFromRecommended() {
         when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
         when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
+        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
         when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(builder.get(ClientResponse.class)).thenReturn(clientResponse);
+        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
         when(clientResponse.getStatus()).thenReturn(200);
         when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + KITCHEN_SINK_ASSET5_UUID + "\", \"type\": \"Article\"}]");
 
