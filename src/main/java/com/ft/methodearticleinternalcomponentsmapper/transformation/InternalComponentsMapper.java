@@ -119,7 +119,9 @@ public class InternalComponentsMapper {
             final List<Image> leadImages = extractImages(xpath, eomFileDocument, "/doc/lead/lead-image-set/lead-image-");
             final Topper topper = extractTopper(xpath, eomFileDocument);
             final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
-            final AlternativeTitles alternativeTitles = AlternativeTitles.builder().withShortTeaser(xpath.evaluate(SHORT_TEASER_TAG_XPATH, eomFileDocument).trim()).build();
+            final AlternativeTitles alternativeTitles = AlternativeTitles.builder()
+                    .withShortTeaser(Strings.nullToEmpty(xpath.evaluate(SHORT_TEASER_TAG_XPATH, eomFileDocument)).trim())
+                    .build();
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
                     .withUuid(uuid.toString())
