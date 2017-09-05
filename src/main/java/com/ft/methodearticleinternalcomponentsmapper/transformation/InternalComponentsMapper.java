@@ -5,6 +5,7 @@ import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeCon
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
+import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
@@ -78,6 +79,7 @@ public class InternalComponentsMapper {
     private static final String FT_CONTENT_BASE_URL = "http://api.ft.com/content/";
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
     private static final String SUMMARY_TAG_XPATH = "/doc/lead/lead-components/lead-summary";
+    private static final String SHORT_TEASER_TAG_XPATH = "/doc/lead/lead-headline/skybox-headline";
 
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
@@ -117,6 +119,9 @@ public class InternalComponentsMapper {
             final List<Image> leadImages = extractImages(xpath, eomFileDocument, "/doc/lead/lead-image-set/lead-image-");
             final Topper topper = extractTopper(xpath, eomFileDocument);
             final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
+            final AlternativeTitles alternativeTitles = AlternativeTitles.builder()
+                    .withShortTeaser(Strings.nullToEmpty(xpath.evaluate(SHORT_TEASER_TAG_XPATH, eomFileDocument)).trim())
+                    .build();
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
                     .withUuid(uuid.toString())
@@ -126,7 +131,8 @@ public class InternalComponentsMapper {
                     .withTableOfContents(tableOfContents)
                     .withTopper(topper)
                     .withLeadImages(leadImages)
-                    .withUnpublishedContentDescription(unpublishedContentDescription);
+                    .withUnpublishedContentDescription(unpublishedContentDescription)
+                    .withAlternativeTitles(alternativeTitles);
 
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
                 return internalComponentsBuilder.build();
