@@ -3,6 +3,7 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
@@ -195,6 +196,7 @@ public class InternalComponentsMapperTest {
         final String headline = "Topper headline";
         final String standfirst = "Topper standfirst";
         final String contentPackageNext = "<p>Content package coming next text</p>";
+        final String skyboxHeadline = "sample skybox headline";
 
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
@@ -203,7 +205,7 @@ public class InternalComponentsMapperTest {
                         .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
                         .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
-                        labelType, backgroundColour, layout, headline, standfirst, contentPackageNext))
+                        labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline))
                 .build();
 
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
@@ -239,6 +241,9 @@ public class InternalComponentsMapperTest {
         assertThat(topper.getHeadline(), is(headline));
         assertThat(topper.getStandfirst(), is(standfirst));
 
+        final AlternativeTitles alternativeTitles = actual.getAlternativeTitles();
+        assertThat(alternativeTitles.getShortTeaser(), is(skyboxHeadline));
+
         assertThat(actual.getUnpublishedContentDescription(), is(contentPackageNext));
     }
 
@@ -258,7 +263,7 @@ public class InternalComponentsMapperTest {
                         .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
                         .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
-                        labelType, "auto", "", "Topper Headline", "Topper standfirst", null))
+                        labelType, "auto", "", "Topper Headline", "Topper standfirst", null, ""))
                 .build();
 
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
@@ -437,7 +442,8 @@ public class InternalComponentsMapperTest {
                         "layout",
                         "headline",
                         "standfirst",
-                        contentPackageNext))
+                        contentPackageNext,
+                        "skyboxHeadline"))
                 .build();
     }
 
@@ -452,7 +458,8 @@ public class InternalComponentsMapperTest {
             String layout,
             String headline,
             String standfirst,
-            String contentPackageNext) {
+            String contentPackageNext,
+            String skyboxHeadline) {
         Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_WITH_ALL_COMPONENTS);
 
         Map<String, Object> attributes = new HashMap<>();
@@ -468,6 +475,7 @@ public class InternalComponentsMapperTest {
         attributes.put("headline", headline);
         attributes.put("standfirst", standfirst);
         attributes.put("contentPackageNext", contentPackageNext);
+        attributes.put("skyboxHeadline", skyboxHeadline);
 
         return mustache.execute(attributes).getBytes(UTF_8);
     }
