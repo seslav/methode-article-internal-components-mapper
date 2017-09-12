@@ -42,6 +42,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -94,7 +95,7 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
                     removeATag(aTag);
                 } else {
                     Optional<String> optionalUuid = extractUuid(aTag);
-                    optionalUuid.ifPresent(s -> aTagsToCheck.put(aTag, s));
+                    optionalUuid.ifPresent(uuid -> aTagsToCheck.put(aTag, uuid));
                 }
             }
 
@@ -175,14 +176,16 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
             return Collections.emptyList();
         }
 
-        URI documentsUri = UriBuilder.fromUri(uri).queryParam("uuid", tags.values().stream().distinct().toArray()).build();
+        Collection<String> uuids = tags.values();
+        URI documentsUri = UriBuilder.fromUri(uri).queryParam("mget", true).build();
         ClientResponse clientResponse = null;
         try {
             clientResponse = documentStoreApiClient.resource(documentsUri)
                     .accept(MediaType.APPLICATION_JSON_TYPE)
+                    .type(MediaType.APPLICATION_JSON_TYPE)
                     .header(TransactionIdUtils.TRANSACTION_ID_HEADER, transactionId)
                     .header("Host", "document-store-api")
-                    .get(ClientResponse.class);
+                    .post(ClientResponse.class, uuids);
 
             int responseStatusCode = clientResponse.getStatus();
             Family statusFamily = getFamilyByStatusCode(responseStatusCode);
