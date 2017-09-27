@@ -29,6 +29,12 @@ spec:
           value: {{ .Values.service.javaOpts }}
         - name: METHODE_ARTICLE_MAPPER_URL
           value: {{ .Values.service.MAMUrl }}
+        - name: METHODE_CPH_MAPPER_URL
+          value: {{ .Values.service.MCPMUrl }}
+        - name: DOC_STORE_API_URL
+          value: {{ .Values.service.DocStoreUrl }}
+        - name: CONCORDANCE_API_URL
+          value: {{ .Values.service.ConcordanceUrl }}
         - name: KAFKA_PROXY_URL
           valueFrom:
             configMapKeyRef:
