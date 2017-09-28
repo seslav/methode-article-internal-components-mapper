@@ -1,20 +1,12 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ft.api.util.transactionid.TransactionIdUtils;
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.BodyProcessingException;
 import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.bodyprocessing.TransactionIdBodyProcessingContext;
-import com.ft.jerseyhttpwrapper.ResilientClient;
-import com.ft.methodearticleinternalcomponentsmapper.exception.DocumentStoreApiUnmarshallingException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.DocumentStoreApiInvalidRequestException;
-import com.ft.methodearticleinternalcomponentsmapper.exception.DocumentStoreApiUnavailableException;
+import com.ft.methodearticleinternalcomponentsmapper.clients.DocumentStoreApiClient;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Content;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -23,9 +15,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response.Status.Family;
-import javax.ws.rs.core.UriBuilder;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,21 +26,15 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.sun.jersey.api.client.ClientResponse.Status.getFamilyByStatusCode;
 
 public class MethodeLinksBodyProcessor implements BodyProcessor {
 
@@ -68,12 +51,10 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
     private static final String FT_COM_URL_REGEX = "^https*:\\/\\/www.ft.com\\/.*";
     private static final Pattern FT_COM_URL_REGEX_PATTERN = Pattern.compile(FT_COM_URL_REGEX);
 
-    private ResilientClient documentStoreApiClient;
-    private URI uri;
+    private DocumentStoreApiClient documentStoreApiClient;
 
-    public MethodeLinksBodyProcessor(ResilientClient documentStoreApiClient, URI uri) {
+    public MethodeLinksBodyProcessor(DocumentStoreApiClient documentStoreApiClient) {
         this.documentStoreApiClient = documentStoreApiClient;
-        this.uri = uri;
     }
 
     @Override
@@ -108,7 +89,7 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
             if (StringUtils.isBlank(transactionId)) {
                 throw new IllegalStateException("bodyProcessingContext should provide transaction id.");
             }
-            final List<Content> content = getContentFromDocumentStore(aTagsToCheck, transactionId);
+            final List<Content> content = documentStoreApiClient.getContentForUuids(aTagsToCheck.values(), transactionId);
             processATags(aTagsToCheck, content);
             return serializeBody(document);
         } catch (Exception e) {
@@ -169,53 +150,6 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
         }
 
         return true;
-    }
-
-    private List<Content> getContentFromDocumentStore(Map<Node, String> tags, String transactionId) {
-        if (tags.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        Collection<String> uuids = tags.values();
-        URI documentsUri = UriBuilder.fromUri(uri).queryParam("mget", true).build();
-        ClientResponse clientResponse = null;
-        try {
-            clientResponse = documentStoreApiClient.resource(documentsUri)
-                    .accept(MediaType.APPLICATION_JSON_TYPE)
-                    .type(MediaType.APPLICATION_JSON_TYPE)
-                    .header(TransactionIdUtils.TRANSACTION_ID_HEADER, transactionId)
-                    .header("Host", "document-store-api")
-                    .post(ClientResponse.class, uuids);
-
-            int responseStatusCode = clientResponse.getStatus();
-            Family statusFamily = getFamilyByStatusCode(responseStatusCode);
-
-            if (statusFamily == Family.SERVER_ERROR) {
-                String msg = String.format("Document Store API returned %s", responseStatusCode);
-                throw new DocumentStoreApiUnavailableException(msg);
-            } else if (statusFamily == Family.CLIENT_ERROR) {
-                String msg = String.format("Document Store API returned %s", responseStatusCode);
-                throw new DocumentStoreApiInvalidRequestException(msg);
-            }
-
-            ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            String jsonAsString = clientResponse.getEntity(String.class);
-            Content[] returnedContent = mapper.readValue(jsonAsString, Content[].class);
-
-            return Arrays.asList(returnedContent);
-        } catch (ClientHandlerException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof IOException) {
-                throw new DocumentStoreApiUnavailableException(e);
-            }
-            throw e;
-        } catch (IOException e) {
-            throw new DocumentStoreApiUnmarshallingException("Failed to parse content received from Document Store API", e);
-        } finally {
-            if (clientResponse != null) {
-                clientResponse.close();
-            }
-        }
     }
 
     private String serializeBody(Document document) {

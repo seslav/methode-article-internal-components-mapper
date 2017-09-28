@@ -5,7 +5,9 @@ import com.ft.bodyprocessing.richcontent.VideoMatcher;
 import com.ft.bodyprocessing.richcontent.VideoSiteConfiguration;
 import com.ft.bodyprocessing.xml.eventhandlers.TransformingEventHandler;
 import com.ft.bodyprocessing.xml.eventhandlers.XMLEventHandler;
-import com.ft.jerseyhttpwrapper.ResilientClient;
+import com.ft.methodearticleinternalcomponentsmapper.clients.ConcordanceApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.clients.DocumentStoreApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.model.Content;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.ConceptView;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordance;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordances;
@@ -15,11 +17,6 @@ import com.ft.methodearticleinternalcomponentsmapper.transformation.FieldTransfo
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.MethodeBodyTransformationXMLEventHandlerRegistry;
 import com.google.common.collect.ImmutableList;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.header.InBoundHeaders;
-import com.sun.jersey.spi.MessageBodyWorkers;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -32,13 +29,7 @@ import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.ElementNameAndTextQualifier;
 import org.custommonkey.xmlunit.XMLAssert;
 
-import javax.ws.rs.core.MediaType;
 import javax.xml.namespace.QName;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,10 +43,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,18 +57,6 @@ public class BodyProcessingStepDefs {
 
     private static final String TEXT = "Some text in between tags";
     private static final String API_HOST = "api.ft.com";
-
-    private ResilientClient documentStoreApiClient;
-    private Client concordanceApiClient;
-    private VideoMatcher videoMatcher;
-    private InteractiveGraphicsMatcher interactiveGraphicsMatcher;
-    private URI documentStoreUri;
-    private URI concordanceUri;
-
-    private InBoundHeaders headers;
-    private MessageBodyWorkers workers;
-
-    private InputStream entity;
 
     private MethodeBodyTransformationXMLEventHandlerRegistry registry;
 
@@ -98,14 +75,10 @@ public class BodyProcessingStepDefs {
     private final static String TME_AUTHORITY = "http://api.ft.com/system/FT-TME";
     private static final String TME_ID_CONCORDED = "TnN0ZWluX09OX0ZvcnR1bmVDb21wYW55X0M=-T04=";
     private static final String TME_ID_NOT_CONCORDED = "notconcorded";
-    private static final URI CONCORDANCE_URL = URI.create("concordanceuri/concordances?authority=http%3A%2F%2Fapi.ft.com%2Fsystem%2FFT-TME&identifierValue=");
     private static final String API_URL_CONCORDED = "http://api.ft.com/organisations/704a3225-9b5c-3b4f-93c7-8e6a6993bfb0";
     private static final String CONTENT_STORE_UUID = "fbbee07f-5054-4a42-b596-64e0625d19a6";
     private static final Identifier identifier = new Identifier(TME_AUTHORITY, TME_ID_CONCORDED);
     private static final ConceptView concept = new ConceptView(API_URL_CONCORDED, API_URL_CONCORDED);
-    private Concordance concordance;
-    private Concordances concordancesResponse;
-    private Concordances concordancesEmpty;
 
 
     public static List<VideoSiteConfiguration> VIDEO_CONFIGS = Arrays.asList(
@@ -143,23 +116,16 @@ public class BodyProcessingStepDefs {
     }
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setup() throws Exception {
-        documentStoreApiClient = mock(ResilientClient.class);
-        concordanceApiClient = mock(Client.class);
-        documentStoreUri = new URI("www.anyuri.com");
-        concordanceUri = new URI("concordanceuri/concordances");
-        videoMatcher = new VideoMatcher(VIDEO_CONFIGS);
-        interactiveGraphicsMatcher = new InteractiveGraphicsMatcher(INTERACTIVE_GRAPHICS_RULES);
-        headers = mock(InBoundHeaders.class);
-        workers = mock(MessageBodyWorkers.class);
-        entity = new ByteArrayInputStream("Test".getBytes(StandardCharsets.UTF_8));
-        headers = mock(InBoundHeaders.class);
-        workers = mock(MessageBodyWorkers.class);
-        entity = new ByteArrayInputStream("Test".getBytes(StandardCharsets.UTF_8));
+        DocumentStoreApiClient documentStoreApiClient = mock(DocumentStoreApiClient.class);
+        ConcordanceApiClient concordanceApiClient = mock(ConcordanceApiClient.class);
+        VideoMatcher videoMatcher = new VideoMatcher(VIDEO_CONFIGS);
+        InteractiveGraphicsMatcher interactiveGraphicsMatcher = new InteractiveGraphicsMatcher(INTERACTIVE_GRAPHICS_RULES);
         registry = new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher);
-        concordance = new Concordance(concept, identifier);
-        concordancesResponse = new Concordances(Collections.singletonList(concordance));
-        concordancesEmpty = new Concordances(new ArrayList<>());
+        Concordance concordance = new Concordance(concept, identifier);
+        Concordances concordancesResponse = new Concordances(Collections.singletonList(concordance));
+        Concordances concordancesEmpty = new Concordances(new ArrayList<>());
 
         rulesAndHandlers = new HashMap<>();
         rulesAndHandlers.put("STRIP ELEMENT AND CONTENTS", "StripElementAndContentsXMLEventHandler");
@@ -183,31 +149,14 @@ public class BodyProcessingStepDefs {
         rulesAndHandlers.put("WRAP AND TRANSFORM A INLINE IMAGE", "WrappedHandlerXmlEventHandler");
         rulesAndHandlers.put("REPLACE BLOCK ELEMENT TAG", "SimpleTransformBlockElementEventHandler");
 
-        WebResource webResource = mock(WebResource.class);
-        WebResource webResourceNotFound = mock(WebResource.class);
-        WebResource.Builder builder = mock(WebResource.Builder.class);
-        WebResource.Builder builderNotFound = mock(WebResource.Builder.class);
-        ClientResponse clientResponse = mock(ClientResponse.class);
+        when(concordanceApiClient.getConcordancesByIdentifierValues(Collections.singletonList(TME_ID_NOT_CONCORDED))).thenReturn(concordancesEmpty);
+        when(concordanceApiClient.getConcordancesByIdentifierValues(Arrays.asList(TME_ID_CONCORDED, TME_ID_NOT_CONCORDED))).thenReturn(concordancesResponse);
+        when(concordanceApiClient.getConcordancesByIdentifierValues(Collections.singletonList(TME_ID_CONCORDED))).thenReturn(concordancesResponse);
 
-        when(concordanceApiClient.resource(URI.create(CONCORDANCE_URL + URLEncoder.encode(TME_ID_NOT_CONCORDED, "UTF-8")))).thenReturn(webResourceNotFound);
-        when(webResourceNotFound.accept(any(MediaType[].class))).thenReturn(builderNotFound);
-        when(builderNotFound.header(anyString(), anyObject())).thenReturn(builderNotFound);
-        when(builderNotFound.get(ClientResponse.class)).thenReturn(clientResponseWithCode(404));
-        when(builderNotFound.get(Concordances.class)).thenReturn(concordancesEmpty);
+        List<Content> content = Collections.singletonList(new Content(CONTENT_STORE_UUID, "Article"));
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(content);
 
-        when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
-        when(concordanceApiClient.resource(URI.create(CONCORDANCE_URL + URLEncoder.encode(TME_ID_CONCORDED, "UTF-8")))).thenReturn(webResource);
-        when(concordanceApiClient.resource(URI.create(CONCORDANCE_URL + URLEncoder.encode(TME_ID_CONCORDED, "UTF-8") + "&identifierValue=" + TME_ID_NOT_CONCORDED))).thenReturn(webResource);
-        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(webResource.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.get(Concordances.class)).thenReturn(concordancesResponse);
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + CONTENT_STORE_UUID + "\", \"type\": \"Article\"}]");
-
-        bodyTransformer = new BodyProcessingFieldTransformerFactory(documentStoreApiClient, documentStoreUri, videoMatcher, interactiveGraphicsMatcher, contentTypeTemplates, API_HOST, concordanceApiClient, concordanceUri).newInstance();
+        bodyTransformer = new BodyProcessingFieldTransformerFactory(documentStoreApiClient, videoMatcher, interactiveGraphicsMatcher, contentTypeTemplates, API_HOST, concordanceApiClient).newInstance();
     }
 
     @Given("^the Methode body contains (.+) the transformer will (.+) and the replacement tag will be (.+)$")
@@ -386,11 +335,6 @@ public class BodyProcessingStepDefs {
         assertThat("handler incorrect", handler, equalTo(eventHandler.getClass().getSimpleName()));
         return eventHandler;
     }
-
-    private ClientResponse clientResponseWithCode(int status) {
-        return new ClientResponse(status, headers, entity, workers);
-    }
-
 
     @Given("^There is a company tag in a Methode article body$")
     public void There_is_a_company_tag_in_a_Methode_article_body() throws Throwable {

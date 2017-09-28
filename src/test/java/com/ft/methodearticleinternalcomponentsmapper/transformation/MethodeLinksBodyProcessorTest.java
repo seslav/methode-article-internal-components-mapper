@@ -3,29 +3,27 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 import com.ft.bodyprocessing.BodyProcessingContext;
 import com.ft.bodyprocessing.BodyProcessingException;
 import com.ft.bodyprocessing.DefaultTransactionIdBodyProcessingContext;
-import com.ft.jerseyhttpwrapper.ResilientClient;
-import com.sun.jersey.api.client.ClientHandlerException;
+import com.ft.methodearticleinternalcomponentsmapper.clients.DocumentStoreApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.exception.DocumentStoreApiInvalidRequestException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.DocumentStoreApiUnavailableException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.DocumentStoreApiUnmarshallingException;
+import com.ft.methodearticleinternalcomponentsmapper.model.Content;
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-import java.net.URI;
+import java.util.Collections;
 import java.util.UUID;
 
 import static com.ft.methodetesting.xml.XmlMatcher.identicalXmlTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -34,31 +32,20 @@ public class MethodeLinksBodyProcessorTest {
     private static final String TRANSACTION_ID = "tid_test";
 
     @Mock
-    private ResilientClient documentStoreApiClient;
-    @Mock
-    private WebResource.Builder builder;
-    @Mock
-    private ClientHandlerException clientHandlerException;
+    private DocumentStoreApiClient documentStoreApiClient;
     @Mock
     private ClientResponse clientResponse;
     @Mock
     private BodyProcessingContext bodyProcessingContext;
-    @Mock
-    private WebResource webResource;
 
     private String uuid = UUID.randomUUID().toString();
     private MethodeLinksBodyProcessor bodyProcessor;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setup() throws Exception {
-        bodyProcessor = new MethodeLinksBodyProcessor(documentStoreApiClient, new URI("www.document-store-api.com"));
-        when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
-        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.header(anyString(), anyObject())).thenReturn(builder);
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[]");
+        bodyProcessor = new MethodeLinksBodyProcessor(documentStoreApiClient);
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.emptyList());
     }
 
     @Test
@@ -107,51 +94,36 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test(expected = BodyProcessingException.class)
-    public void shouldThrowBodyProcessingExceptionWhenDocumentStoreUnavailable() {
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenThrow(clientHandlerException);
-        when(clientHandlerException.getCause()).thenReturn(new IOException());
+    @SuppressWarnings("unchecked")
+    public void shouldThrowBodyProcessingExceptionWhenDocumentStoreThrowsUnavailableException() {
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenThrow(new DocumentStoreApiUnavailableException("Server error"));
 
         String body = "<body><a href=\"" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
     }
 
     @Test(expected = BodyProcessingException.class)
-    public void shouldThrowBodyProcessingExceptionWhenClientFailsToProcessTheRequestOrResponse() {
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenThrow(clientHandlerException);
+    @SuppressWarnings("unchecked")
+    public void shouldThrowBodyProcessingExceptionWhenDocumentStoreThrowsInvalidRequestException() {
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenThrow(new DocumentStoreApiInvalidRequestException("Client error"));
 
         String body = "<body><a href=\"" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
     }
 
     @Test(expected = BodyProcessingException.class)
-    public void shouldThrowBodyProcessingExceptionWhenDocumentStoreReturns5XX() {
-        when(clientResponse.getStatus()).thenReturn(503);
-
-        String body = "<body><a href=\"" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
-        bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
-    }
-
-    @Test(expected = BodyProcessingException.class)
-    public void shouldThrowBodyProcessingExceptionWhenDocumentStoreReturns4XX() {
-        when(clientResponse.getStatus()).thenReturn(404);
-
-        String body = "<body><a href=\"" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
-        bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
-    }
-
-    @Test(expected = BodyProcessingException.class)
-    public void shouldThrowBodyProcessingExceptionForFailureToParseJsonFromDocumentStore() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("Not a json");
+    @SuppressWarnings("unchecked")
+    public void shouldThrowBodyProcessingExceptionWhenDocumentStoreThrowsUnmarshallingException() {
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenThrow(new DocumentStoreApiUnmarshallingException("Unmarshalling error"));
 
         String body = "<body><a href=\"" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReplaceNodeWhenHrefContainsUuidPresentInDocumentStore() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + uuid + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
         String body = "<body><a href=\"http://www.url.com/" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
@@ -160,9 +132,9 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test
-    public void shouldSetContentTypeToDefaultValueWhenTypeIsMissingFromDocumentStoreResponse() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + uuid + "\"}]");
+    @SuppressWarnings("unchecked")
+    public void shouldSetContentTypeToDefaultValueWhenTypeIsMissingFromDocumentStore() {
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"")));
 
         String body = "<body><a href=\"http://www.url.com/" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
@@ -171,9 +143,9 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReplaceNodeWhenHrefContainsOnlyUuidPresentInDocumentStore() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + uuid + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
         String body = "<body><a href=\"" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
@@ -182,9 +154,9 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReplaceNodeAndNotAddTitleIfTitleIsMissing() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + uuid + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
         String body = "<body><a href=\"" + uuid + "\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
@@ -193,9 +165,9 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReplaceNodeWhenHrefContainsMethodePathWithUuidPresentInDocumentStore() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + uuid + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
         String body = "<body><a href=\"/Content/2007/Path/To/Methode/Article.xml?uuid=" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
@@ -228,9 +200,9 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReplaceNodeWhenHrefContainsExternalLinkWithUuidPresentInDocumentStore() {
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + uuid + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
         String body = "<body><a href=\"http://www.external.com/" + uuid + "\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));

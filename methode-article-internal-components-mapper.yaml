@@ -35,7 +35,6 @@ methodeArticleMapper:
         jerseyClient:
             timeout: 2000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
-        secondaryNodes: null
     connectionConfig:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
@@ -47,7 +46,6 @@ methodeContentPlaceholderMapper:
         jerseyClient:
             timeout: 2000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
-        secondaryNodes: null
     connectionConfig:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
@@ -135,12 +133,11 @@ interactiveGraphicsWhiteList: [ "http://interactive.ftdata.co.uk/(?!(_other/ben/
 documentStoreApi:
     endpointConfiguration:
         shortName: "documentStoreApi"
-        path: "/content"
         jerseyClient:
-            timeout: 2000ms
+            timeout: 5000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
-        secondaryNodes: null
-    connectionConfig:
+    hostHeader: "document-store-api"
+    connectionConfiguration:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
 
@@ -150,8 +147,8 @@ concordanceApi:
         jerseyClient:
             timeout: 5000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
-        secondaryNodes: null
         path: "/concordances"
+    hostHeader: "public-concordances-api"
     connectionConfiguration:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
