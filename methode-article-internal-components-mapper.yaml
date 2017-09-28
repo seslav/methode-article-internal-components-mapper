@@ -35,7 +35,8 @@ methodeArticleMapper:
         jerseyClient:
             timeout: 2000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
-    connectionConfig:
+    hostHeader: "methode-article-mapper"
+    connectionConfiguration:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
 
@@ -46,7 +47,8 @@ methodeContentPlaceholderMapper:
         jerseyClient:
             timeout: 2000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
-    connectionConfig:
+    hostHeader: "methode-content-placeholder-mapper"
+    connectionConfiguration:
         numberOfConnectionAttempts: 3
         timeoutMultiplier: 1000
 
@@ -143,7 +145,7 @@ documentStoreApi:
 
 concordanceApi:
     endpointConfiguration:
-        shortName: "concordance"
+        shortName: "publicConcordancesAPi"
         jerseyClient:
             timeout: 5000ms
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]

@@ -114,8 +114,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         Client concordanceApiHealthcheckClient = configureResilientClient(environment, concordanceApiEndpointConfig, concordanceApiConnConfig);
 
         Map<String, MethodeArticleValidator> articleValidators = new HashMap<>();
-        articleValidators.put(InternalComponentsMapper.SourceCode.FT, new MethodeArticleValidator(mamClient, mamUri, "methode-article-mapper"));
-        articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, new MethodeArticleValidator(mcpmClient, mcpmUri, "methode-content-placeholder-mapper"));
+        articleValidators.put(InternalComponentsMapper.SourceCode.FT, new MethodeArticleValidator(mamClient, mamUri, mamConfiguration.getHostHeader()));
+        articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, new MethodeArticleValidator(mcpmClient, mcpmUri, mcpmConfiguration.getHostHeader()));
         InternalComponentsMapper eomFileProcessor = new InternalComponentsMapper(
                 new BodyProcessingFieldTransformerFactory(documentStoreApiClient,
                         new VideoMatcher(configuration.getVideoSiteConfig()),
@@ -147,8 +147,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
 
 
         List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
-        healthchecks.add(buildMAMHealthCheck(mamClient, mamEndpointConfiguration));
-        healthchecks.add(buildMCPMHealthCheck(mcpmClient, mcpmEndpointConfiguration));
+        healthchecks.add(buildMAMHealthCheck(mamClient, mamConfiguration));
+        healthchecks.add(buildMCPMHealthCheck(mcpmClient, mcpmConfiguration));
         healthchecks.add(buildDocumentStoreApiHealthcheck(docStoreApiHealthcheckClient, docStoreApiConfig));
         healthchecks.add(buildConcordanceApiHealthcheck(concordanceApiHealthcheckClient, concordanceApiConfig));
 
@@ -206,14 +206,14 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
     }
 
     private AdvancedHealthCheck buildConcordanceApiHealthcheck(Client concordancesApiHealthcheckClient,
-                                                                 UppServiceConfiguration concordancesApiconfig) {
+                                                                 UppServiceConfiguration concordancesApiConfig) {
         return new RemoteServiceHealthCheck(
                 "Public Concordances API",
                 concordancesApiHealthcheckClient,
-                concordancesApiconfig.getEndpointConfiguration().getHost(),
-                concordancesApiconfig.getEndpointConfiguration().getPort(),
+                concordancesApiConfig.getEndpointConfiguration().getHost(),
+                concordancesApiConfig.getEndpointConfiguration().getPort(),
                 "/__health",
-                concordancesApiconfig.getHostHeader(),
+                concordancesApiConfig.getHostHeader(),
                 1,
                 "Internal components of newly published Methode articles will not be available from the InternalContent API.",
                 "https://dewey.ft.com/public-concordances-api"
@@ -221,28 +221,28 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
     }
 
     private AdvancedHealthCheck buildMAMHealthCheck(Client methodeArticleMapperClient,
-                                                    EndpointConfiguration methodeArticleMapperEndpointConfiguration) {
+                                                    UppServiceConfiguration methodeArticleMapperConfig) {
         return new RemoteServiceHealthCheck(
                 "Methode Article Mapper",
                 methodeArticleMapperClient,
-                methodeArticleMapperEndpointConfiguration.getHost(),
-                methodeArticleMapperEndpointConfiguration.getPort(),
+                methodeArticleMapperConfig.getEndpointConfiguration().getHost(),
+                methodeArticleMapperConfig.getEndpointConfiguration().getPort(),
                 "/__health",
-                "methode-article-mapper",
+                methodeArticleMapperConfig.getHostHeader(),
                 1,
                 "Internal components of newly published Methode articles will not be available from the InternalContent API",
                 "https://dewey.ft.com/up-maicm.html");
     }
 
     private AdvancedHealthCheck buildMCPMHealthCheck(Client methodeContentPlaceholderMapperClient,
-                                                     EndpointConfiguration methodeContentPlaceholderMapperEndpointConfiguration) {
+                                                     UppServiceConfiguration methodeContentPlaceholderMapperConfig) {
         return new RemoteServiceHealthCheck(
                 "Methode Content Placeholder Mapper",
                 methodeContentPlaceholderMapperClient,
-                methodeContentPlaceholderMapperEndpointConfiguration.getHost(),
-                methodeContentPlaceholderMapperEndpointConfiguration.getPort(),
+                methodeContentPlaceholderMapperConfig.getEndpointConfiguration().getHost(),
+                methodeContentPlaceholderMapperConfig.getEndpointConfiguration().getPort(),
                 "/__health",
-                "methode-content-placeholder-mapper",
+                methodeContentPlaceholderMapperConfig.getHostHeader(),
                 1,
                 "Internal components of newly published Methode content placeholders will not be available from the InternalContent API",
                 "https://dewey.ft.com/up-mcpm.html");
