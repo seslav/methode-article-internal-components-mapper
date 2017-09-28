@@ -4,6 +4,7 @@ import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingFieldException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
@@ -13,6 +14,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Summary;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
+import com.ft.methodearticleinternalcomponentsmapper.util.BlogUuidResolver;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
@@ -69,9 +71,10 @@ public class InternalComponentsMapper {
         String CONTENT_PLACEHOLDER = "ContentPlaceholder";
     }
 
-    private FieldTransformer bodyTransformer;
-    private BodyProcessor htmlFieldProcessor;
-    private Map<String, MethodeArticleValidator> articleValidators;
+    private final FieldTransformer bodyTransformer;
+    private final BodyProcessor htmlFieldProcessor;
+    private final BlogUuidResolver blogUuidResolver;
+    private final Map<String, MethodeArticleValidator> articleValidators;
 
     private static final String NO_PICTURE_FLAG = "No picture";
     private static final String DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED = "data-embedded";
@@ -80,16 +83,20 @@ public class InternalComponentsMapper {
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
     private static final String SUMMARY_TAG_XPATH = "/doc/lead/lead-components/lead-summary";
     private static final String SHORT_TEASER_TAG_XPATH = "/doc/lead/lead-headline/skybox-headline";
+    private static final String XPATH_GUID = "ObjectMetadata/WiresIndexing/serviceid";
+    private static final String XPATH_POST_ID = "ObjectMetadata/WiresIndexing/ref_field";
 
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";
 
-    public InternalComponentsMapper(final FieldTransformer bodyTransformer,
-                                    final BodyProcessor htmlFieldProcessor,
-                                    final Map<String, MethodeArticleValidator> articleValidators) {
+    public InternalComponentsMapper(FieldTransformer bodyTransformer,
+                                    BodyProcessor htmlFieldProcessor,
+                                    BlogUuidResolver blogUuidResolver,
+                                    Map<String, MethodeArticleValidator> articleValidators) {
         this.bodyTransformer = bodyTransformer;
         this.htmlFieldProcessor = htmlFieldProcessor;
+        this.blogUuidResolver = blogUuidResolver;
         this.articleValidators = articleValidators;
     }
 
@@ -135,6 +142,7 @@ public class InternalComponentsMapper {
                     .withAlternativeTitles(alternativeTitles);
 
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath));
                 return internalComponentsBuilder.build();
             }
 
@@ -152,6 +160,13 @@ public class InternalComponentsMapper {
         } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException | IOException e) {
             throw new TransformationException(e);
         }
+    }
+
+    private String resolvePlaceholderUuid(EomFile eomFile, String transactionId, UUID uuid, XPath xpath) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
+        String referenceId = extractRefField(xpath, attributesDocument, uuid);
+        String guid = extractServiceId(xpath, attributesDocument, uuid);
+        return blogUuidResolver.resolveUuid(guid, referenceId, transactionId);
     }
 
     private String retrieveField(XPath xpath, String expression, Document eomFileDocument) throws TransformerException, XPathExpressionException {
@@ -384,5 +399,21 @@ public class InternalComponentsMapper {
 
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         return documentBuilder.parse(new ByteArrayInputStream(eomFile.getValue()));
+    }
+
+    private String extractServiceId(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
+        final String serviceId = xPath.evaluate(XPATH_GUID, attributesDocument);
+        if (Strings.isNullOrEmpty(serviceId)) {
+            throw new MethodeMissingFieldException(uuid.toString(), "serviceid", "List");
+        }
+        return serviceId;
+    }
+
+    private String extractRefField(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
+        final String refField = xPath.evaluate(XPATH_POST_ID, attributesDocument);
+        if (Strings.isNullOrEmpty(refField)) {
+            throw new MethodeMissingFieldException(uuid.toString(), "ref_field", "List");
+        }
+        return refField;
     }
 }

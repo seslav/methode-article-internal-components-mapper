@@ -11,6 +11,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Summary;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
+import com.ft.methodearticleinternalcomponentsmapper.util.BlogUuidResolver;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
@@ -85,6 +86,10 @@ public class InternalComponentsMapperBodyProcessingTest {
             "           </Source>" +
             "        </Sources>" +
             "    </EditorialNotes>" +
+            "    <WiresIndexing>" +
+            "    <serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>" +
+            "    <ref_field>2193913</ref_field>" +
+            "    </WiresIndexing>" +
             "</ObjectMetadata>";
 
     private final UUID uuid = UUID.randomUUID();
@@ -92,13 +97,8 @@ public class InternalComponentsMapperBodyProcessingTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
     private FieldTransformer bodyTransformer;
-    private BodyProcessor htmlFieldProcessor;
-
     private EomFile standardEomFile;
     private InternalComponents standardExpectedContent;
-
-    private MethodeArticleValidator methodeArticleValidator;
-    private MethodeArticleValidator methodeContentPlaceholderValidator;
 
     private InternalComponentsMapper eomFileProcessor;
 
@@ -134,13 +134,14 @@ public class InternalComponentsMapperBodyProcessingTest {
         bodyTransformer = mock(FieldTransformer.class);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
-        htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
+        BodyProcessor htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
 
         standardEomFile = createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.FT);
         standardExpectedContent = createStandardExpectedContent();
 
-        methodeArticleValidator = mock(MethodeArticleValidator.class);
-        methodeContentPlaceholderValidator = mock(MethodeArticleValidator.class);
+        BlogUuidResolver blogUuidResolver = mock(BlogUuidResolver.class);
+        MethodeArticleValidator methodeArticleValidator = mock(MethodeArticleValidator.class);
+        MethodeArticleValidator methodeContentPlaceholderValidator = mock(MethodeArticleValidator.class);
         when(methodeArticleValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
         when(methodeContentPlaceholderValidator.getPublishingStatus(any(), any(), anyBoolean())).thenReturn(PublishingStatus.VALID);
 
@@ -148,7 +149,7 @@ public class InternalComponentsMapperBodyProcessingTest {
         articleValidators.put(InternalComponentsMapper.SourceCode.FT, methodeArticleValidator);
         articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, methodeContentPlaceholderValidator);
 
-        eomFileProcessor = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, articleValidators);
+        eomFileProcessor = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, blogUuidResolver, articleValidators);
     }
 
     @Test
@@ -187,7 +188,7 @@ public class InternalComponentsMapperBodyProcessingTest {
     }
 
     @Test
-    public void shouldContentPlaceholderBodyShouldBeMissingOnPublish() {
+    public void thatExceptionIsThrownIfContentPlaceholder() {
         final EomFile eomFile = new EomFile.Builder()
                 .withValuesFrom(createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER))
                 .build();

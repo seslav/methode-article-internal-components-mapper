@@ -3,6 +3,8 @@ package com.ft.methodearticleinternalcomponentsmapper.transformation;
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingFieldException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.UuidResolverException;
 import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
@@ -10,6 +12,7 @@ import com.ft.methodearticleinternalcomponentsmapper.model.Image;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
+import com.ft.methodearticleinternalcomponentsmapper.util.BlogUuidResolver;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.samskivert.mustache.Mustache;
@@ -72,11 +75,15 @@ public class InternalComponentsMapperTest {
             "           </Source>" +
             "        </Sources>" +
             "    </EditorialNotes>" +
+            "    <WiresIndexing>" +
+            "    {{serviceid}}" +
+            "    {{ref_field}}" +
+            "    </WiresIndexing>" +
             "</ObjectMetadata>";
 
     private EomFile eomFile;
     private FieldTransformer bodyTransformer;
-    private Html5SelfClosingTagBodyProcessor htmlFieldProcessor;
+    private BlogUuidResolver blogUuidResolver;
 
     private MethodeArticleValidator methodeArticleValidator;
     private MethodeArticleValidator methodeContentPlaceholderValidator;
@@ -94,7 +101,9 @@ public class InternalComponentsMapperTest {
         bodyTransformer = mock(FieldTransformer.class);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
-        htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
+        blogUuidResolver = mock(BlogUuidResolver.class);
+
+        Html5SelfClosingTagBodyProcessor htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
 
         methodeArticleValidator = mock(MethodeArticleValidator.class);
         methodeContentPlaceholderValidator = mock(MethodeArticleValidator.class);
@@ -105,7 +114,7 @@ public class InternalComponentsMapperTest {
         articleValidators.put(InternalComponentsMapper.SourceCode.FT, methodeArticleValidator);
         articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, methodeContentPlaceholderValidator);
 
-        internalComponentsMapper = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, articleValidators);
+        internalComponentsMapper = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, blogUuidResolver, articleValidators);
     }
 
     @Test
@@ -367,27 +376,137 @@ public class InternalComponentsMapperTest {
     public void thatContentPlaceholderIsTransformed() throws Exception {
         String backgroundColour = "fooBackground";
         String layout = "barColor";
+        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
+        String ref_field = "<ref_field>2193913</ref_field>";
 
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
                 .withType("EOM::CompoundStory")
                 .withAttributes(ATTRIBUTES
                         .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER))
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
+                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
+                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field))
                 .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
                 .build();
 
         when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
+        when(blogUuidResolver.resolveUuid(anyString(), anyString(), anyString())).thenReturn("resolved_uuid");
 
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
-        assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
+        assertThat(actual.getUuid(), equalTo("resolved_uuid"));
         assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
         assertThat(actual.getPublishReference(), equalTo(TX_ID));
     }
 
-    @Test (expected = MethodeArticleNotEligibleForPublishException.class)
+    @Test(expected = UuidResolverException.class)
+    public void thatExceptionIsThrownWhenContentPlaceholderUuidCantBeResolved() {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
+        String ref_field = "<ref_field>2193913</ref_field>";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
+                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
+                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        when(blogUuidResolver.resolveUuid(anyString(), anyString(), anyString())).thenThrow(new UuidResolverException("Can't resolve uuid"));
+
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
+    @Test(expected = MethodeMissingFieldException.class)
+    public void thatExceptionIsThrownForContentPlaceholderWhenRefFieldIsEmpty() {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
+        String ref_field = "<ref_field></ref_field>";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
+                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
+                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
+    @Test(expected = MethodeMissingFieldException.class)
+    public void thatExceptionIsThrownForContentPlaceholderWhenRefFieldIsMissing() {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
+                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
+                        .replaceFirst("\\{\\{ref_field\\}\\}", ""))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
+    @Test(expected = MethodeMissingFieldException.class)
+    public void thatExceptionIsThrownForContentPlaceholderWhenServiceIdIsEmpty() {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+        String serviceId = "<serviceid></serviceid>";
+        String ref_field = "<ref_field>2193913</ref_field>";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
+                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
+                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
+    @Test(expected = MethodeMissingFieldException.class)
+    public void thatExceptionIsThrownForContentPlaceholderWhenServiceIdIsMissing() {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+        String ref_field = "<ref_field>2193913</ref_field>";
+
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
+                        .replaceFirst("\\{\\{serviceid\\}\\}", "")
+                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field))
+                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
+                .build();
+
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
+    @Test(expected = MethodeArticleNotEligibleForPublishException.class)
     public void thatExceptionIsThrownWhenSourceCodeNotFTOrContentPlaceholder() throws Exception {
         String backgroundColour = "fooBackground";
         String layout = "barColor";
