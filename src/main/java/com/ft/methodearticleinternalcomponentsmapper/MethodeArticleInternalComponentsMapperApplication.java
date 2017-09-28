@@ -102,16 +102,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .build();
 
         DocumentStoreApiClient documentStoreApiClient = new DocumentStoreApiClient(configuration.getDocumentStoreApiConfiguration(), environment);
-        UppServiceConfiguration docStoreApiConfig = configuration.getDocumentStoreApiConfiguration();
-        EndpointConfiguration docStoreApiEndpointConfig = docStoreApiConfig.getEndpointConfiguration();
-        ConnectionConfiguration docStoreApiConnConfig  = docStoreApiConfig.getConnectionConfiguration();
-        Client docStoreApiHealthcheckClient = configureResilientClient(environment, docStoreApiEndpointConfig, docStoreApiConnConfig);
-
         ConcordanceApiClient concordanceApiClient = new ConcordanceApiClient(configuration.getConcordanceApiConfiguration(), environment);
-        UppServiceConfiguration concordanceApiConfig = configuration.getConcordanceApiConfiguration();
-        EndpointConfiguration concordanceApiEndpointConfig = concordanceApiConfig.getEndpointConfiguration();
-        ConnectionConfiguration concordanceApiConnConfig  = concordanceApiConfig.getConnectionConfiguration();
-        Client concordanceApiHealthcheckClient = configureResilientClient(environment, concordanceApiEndpointConfig, concordanceApiConnConfig);
 
         Map<String, MethodeArticleValidator> articleValidators = new HashMap<>();
         articleValidators.put(InternalComponentsMapper.SourceCode.FT, new MethodeArticleValidator(mamClient, mamUri, mamConfiguration.getHostHeader()));
@@ -149,8 +140,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
         List<AdvancedHealthCheck> healthchecks = new ArrayList<>();
         healthchecks.add(buildMAMHealthCheck(mamClient, mamConfiguration));
         healthchecks.add(buildMCPMHealthCheck(mcpmClient, mcpmConfiguration));
-        healthchecks.add(buildDocumentStoreApiHealthcheck(docStoreApiHealthcheckClient, docStoreApiConfig));
-        healthchecks.add(buildConcordanceApiHealthcheck(concordanceApiHealthcheckClient, concordanceApiConfig));
+        healthchecks.add(buildDocumentStoreApiHealthcheck(documentStoreApiClient.getJerseyClient(), configuration.getDocumentStoreApiConfiguration()));
+        healthchecks.add(buildConcordanceApiHealthcheck(concordanceApiClient.getJerseyClient(), configuration.getConcordanceApiConfiguration()));
 
         registerHealthChecks(
                 environment,
