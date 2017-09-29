@@ -403,7 +403,7 @@ public class InternalComponentsMapper {
     private String extractServiceId(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
         final String serviceId = xPath.evaluate(XPATH_GUID, attributesDocument);
         if (Strings.isNullOrEmpty(serviceId)) {
-            throw new MethodeMissingFieldException(uuid.toString(), "serviceid", "List");
+            throw new MethodeMissingFieldException(uuid.toString(), "serviceid");
         }
         return serviceId;
     }
@@ -411,7 +411,7 @@ public class InternalComponentsMapper {
     private String extractRefField(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
         final String refField = xPath.evaluate(XPATH_POST_ID, attributesDocument);
         if (Strings.isNullOrEmpty(refField)) {
-            throw new MethodeMissingFieldException(uuid.toString(), "ref_field", "List");
+            throw new MethodeMissingFieldException(uuid.toString(), "ref_field");
         }
         return refField;
     }
