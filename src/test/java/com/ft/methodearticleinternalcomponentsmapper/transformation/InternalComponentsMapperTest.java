@@ -12,7 +12,6 @@ import com.ft.methodearticleinternalcomponentsmapper.model.Image;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
 import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
 import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
-import com.ft.methodearticleinternalcomponentsmapper.util.BlogUuidResolver;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.samskivert.mustache.Mustache;

@@ -29,7 +29,7 @@ import com.ft.methodearticleinternalcomponentsmapper.resources.MapResource;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.BodyProcessingFieldTransformerFactory;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InteractiveGraphicsMatcher;
 import com.ft.methodearticleinternalcomponentsmapper.transformation.InternalComponentsMapper;
-import com.ft.methodearticleinternalcomponentsmapper.util.BlogUuidResolver;
+import com.ft.methodearticleinternalcomponentsmapper.transformation.BlogUuidResolver;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.platform.dropwizard.AdvancedHealthCheck;
 import com.ft.platform.dropwizard.AdvancedHealthCheckBundle;

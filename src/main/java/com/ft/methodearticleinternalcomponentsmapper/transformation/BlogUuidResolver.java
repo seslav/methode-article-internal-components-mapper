@@ -1,4 +1,4 @@
-package com.ft.methodearticleinternalcomponentsmapper.util;
+package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
