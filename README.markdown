@@ -12,7 +12,8 @@ This application depends on the following micro-services:
 * document-store-api
 * public-concordances-api
 
-Note: methode-article-mapper, document-store-api and public-concordances-api are used to validate the article if it's valid, and linked content in the body.
+Note: methode-article-mapper and public-concordances-api are used to validate the article if it's valid, and linked content in the body.
+Document-store-api is used for both article validation and to resolve contentPlaceholder UUIDs to the article UUID.
 
 ## Running
 
