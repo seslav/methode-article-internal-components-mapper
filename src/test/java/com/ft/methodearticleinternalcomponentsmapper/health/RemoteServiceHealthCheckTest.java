@@ -20,7 +20,9 @@ import javax.ws.rs.core.UriBuilder;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,32 +37,46 @@ public class RemoteServiceHealthCheckTest {
     @Mock
     private Client mockClient;
     @Mock
+    private WebResource.Builder builder;
+    @Mock
     private WebResource mockResource;
     @Mock
     private ClientResponse mockClientResponse;
 
     @Before
     public void setUp() throws Exception {
-
         URI goodToGoUri = UriBuilder.fromPath("__gtg")
                 .scheme("http").host(HOST).port(PORT).build();
         when(mockClient.resource(goodToGoUri)).thenReturn(mockResource);
-        WebResource.Builder builder = mock(WebResource.Builder.class);
-        when(mockResource.header("Host", HOST_HEADER)).thenReturn(builder);
+        when(mockResource.getRequestBuilder()).thenReturn(builder);
+        when(builder.header("Host", HOST_HEADER)).thenReturn(builder);
         when(builder.get(ClientResponse.class)).thenReturn(mockClientResponse);
 
+        healthCheck = getRemoteServiceHealthCheckWithHostHeader(HOST_HEADER);
+    }
 
-        healthCheck = new RemoteServiceHealthCheck(
-                "upp-service",
-                mockClient,
-                HOST,
-                PORT,
-                "/__gtg",
-                HOST_HEADER,
-                1,
-                "very high impact!",
-                "http://a.panic.guide.url/"
-        );
+    @Test
+    public void testHostHeaderIsNotAddedWhenHostHeaderIsEmpty() throws Exception {
+        healthCheck = getRemoteServiceHealthCheckWithHostHeader("");
+        when(mockClientResponse.getStatus()).thenReturn(200);
+
+        AdvancedResult expectedHealthCheckResult = AdvancedResult.healthy();
+        AdvancedResult actualHealthCheckResult = healthCheck.checkAdvanced();
+
+        assertThat(actualHealthCheckResult.status(), is(equalTo(expectedHealthCheckResult.status())));
+        verify(builder, never()).header(anyString(), anyString());
+    }
+
+    @Test
+    public void testHostHeaderIsNotAddedWhenHostHeaderIsNull() throws Exception {
+        healthCheck = getRemoteServiceHealthCheckWithHostHeader(null);
+        when(mockClientResponse.getStatus()).thenReturn(200);
+
+        AdvancedResult expectedHealthCheckResult = AdvancedResult.healthy();
+        AdvancedResult actualHealthCheckResult = healthCheck.checkAdvanced();
+
+        assertThat(actualHealthCheckResult.status(), is(equalTo(expectedHealthCheckResult.status())));
+        verify(builder, never()).header(anyString(), anyString());
     }
 
     @Test
@@ -71,6 +87,7 @@ public class RemoteServiceHealthCheckTest {
         AdvancedResult actualHealthCheckResult = healthCheck.checkAdvanced();
 
         assertThat(actualHealthCheckResult.status(), is(equalTo(expectedHealthCheckResult.status())));
+        verify(builder).header("Host", HOST_HEADER);
     }
 
     @Test
@@ -81,6 +98,7 @@ public class RemoteServiceHealthCheckTest {
         AdvancedResult actualHealthCheckResult = healthCheck.checkAdvanced();
 
         assertThat(actualHealthCheckResult.status(), is(equalTo(expectedHealthCheckResult.status())));
+        verify(builder).header("Host", HOST_HEADER);
     }
 
     @Test
@@ -91,5 +109,20 @@ public class RemoteServiceHealthCheckTest {
         AdvancedResult actualHealthCheckResult = healthCheck.checkAdvanced();
 
         assertThat(actualHealthCheckResult.status(), is(equalTo(expectedHealthCheckResult.status())));
+        verify(builder).header("Host", HOST_HEADER);
+    }
+
+    private RemoteServiceHealthCheck getRemoteServiceHealthCheckWithHostHeader(String hostHeader) {
+        return new RemoteServiceHealthCheck(
+                "upp-service",
+                mockClient,
+                HOST,
+                PORT,
+                "/__gtg",
+                hostHeader,
+                1,
+                "very high impact!",
+                "http://a.panic.guide.url/"
+        );
     }
 }
