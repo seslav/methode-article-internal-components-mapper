@@ -141,8 +141,7 @@ public class InternalComponentsMapper {
                     .withAlternativeTitles(alternativeTitles);
 
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
-                internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath));
-                return internalComponentsBuilder.build();
+                return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath)).build();
             }
 
             String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
