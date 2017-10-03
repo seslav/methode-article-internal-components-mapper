@@ -146,10 +146,8 @@ public class InternalComponentsMapper {
                     .withAlternativeTitles(alternativeTitles);
 
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
-                Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
-                String listItemWiredIndexType = extractListItemWiredIndexType(xpath, attributesDocument);
-                if (BLOG_CATEGORIES.contains(listItemWiredIndexType)) {
-                    return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(attributesDocument, transactionId, uuid, xpath)).build();
+                if (isWordpressBlogContentPlaceholder(eomFile, xpath)) {
+                    return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath)).build();
                 }
                 return internalComponentsBuilder.build();
             }
@@ -170,7 +168,14 @@ public class InternalComponentsMapper {
         }
     }
 
-    private String resolvePlaceholderUuid( Document attributesDocument, String transactionId, UUID uuid, XPath xpath) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
+    private boolean isWordpressBlogContentPlaceholder(EomFile eomFile, XPath xpath) throws ParserConfigurationException, XPathExpressionException, IOException, SAXException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
+        String listItemWiredIndexType = extractListItemWiredIndexType(xpath, attributesDocument);
+        return BLOG_CATEGORIES.contains(listItemWiredIndexType);
+    }
+
+    private String resolvePlaceholderUuid(EomFile eomFile, String transactionId, UUID uuid, XPath xpath) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
         String referenceId = extractRefField(xpath, attributesDocument, uuid);
         String guid = extractServiceId(xpath, attributesDocument, uuid);
         return blogUuidResolver.resolveUuid(guid, referenceId, transactionId);
