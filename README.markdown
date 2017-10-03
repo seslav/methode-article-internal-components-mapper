@@ -13,7 +13,7 @@ This application depends on the following micro-services:
 * public-concordances-api
 
 Note: methode-article-mapper and public-concordances-api are used to validate the article if it's valid, and linked content in the body.
-Document-store-api is used for both article validation and to resolve contentPlaceholder UUIDs to the article UUID.
+Document-store-api is used for both article validation and to resolve Content Placeholder UUIDs, that are pointing to and FT blog, to the original Wordpress UUID.
 
 ## Running
 

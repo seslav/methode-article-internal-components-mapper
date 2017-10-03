@@ -18,6 +18,7 @@ import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleVa
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.Document;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.ft.methodearticleinternalcomponentsmapper.model.EomFile.SOURCE_ATTR_XPATH;
@@ -84,6 +86,9 @@ public class InternalComponentsMapper {
     private static final String SHORT_TEASER_TAG_XPATH = "/doc/lead/lead-headline/skybox-headline";
     private static final String XPATH_GUID = "ObjectMetadata/WiresIndexing/serviceid";
     private static final String XPATH_POST_ID = "ObjectMetadata/WiresIndexing/ref_field";
+    private static final String XPATH_LIST_ITEM_TYPE = "ObjectMetadata/WiresIndexing/category";
+    private static final Set<String> BLOG_CATEGORIES =
+            ImmutableSet.of("blog", "webchat-live-blogs", "webchat-live-qa", "webchat-markets-live", "fastft");
 
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
@@ -141,7 +146,12 @@ public class InternalComponentsMapper {
                     .withAlternativeTitles(alternativeTitles);
 
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
-                return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath)).build();
+                Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
+                String listItemWiredIndexType = extractListItemWiredIndexType(xpath, attributesDocument);
+                if (BLOG_CATEGORIES.contains(listItemWiredIndexType)) {
+                    return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(attributesDocument, transactionId, uuid, xpath)).build();
+                }
+                return internalComponentsBuilder.build();
             }
 
             String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
@@ -160,8 +170,7 @@ public class InternalComponentsMapper {
         }
     }
 
-    private String resolvePlaceholderUuid(EomFile eomFile, String transactionId, UUID uuid, XPath xpath) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
-        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
+    private String resolvePlaceholderUuid( Document attributesDocument, String transactionId, UUID uuid, XPath xpath) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
         String referenceId = extractRefField(xpath, attributesDocument, uuid);
         String guid = extractServiceId(xpath, attributesDocument, uuid);
         return blogUuidResolver.resolveUuid(guid, referenceId, transactionId);
@@ -397,6 +406,10 @@ public class InternalComponentsMapper {
 
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         return documentBuilder.parse(new ByteArrayInputStream(eomFile.getValue()));
+    }
+
+    private String extractListItemWiredIndexType(XPath xPath, Document attributesDocument) throws XPathExpressionException {
+        return xPath.evaluate(XPATH_LIST_ITEM_TYPE, attributesDocument);
     }
 
     private String extractServiceId(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
