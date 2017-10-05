@@ -145,6 +145,12 @@ public class InternalComponentsMapper {
                     .withUnpublishedContentDescription(unpublishedContentDescription)
                     .withAlternativeTitles(alternativeTitles);
 
+            String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFileDocument);
+            if (!sourceSummaryXML.isEmpty()) {
+                final String transformedSummaryXML = transformField("<body>" + sourceSummaryXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
+                internalComponentsBuilder.withSummary(Summary.builder().withBodyXML(transformedSummaryXML).build());
+            }
+
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
                 if (isWordpressBlogContentPlaceholder(eomFile, xpath)) {
                     return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath)).build();
@@ -154,11 +160,6 @@ public class InternalComponentsMapper {
 
             String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
             final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
-            String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFileDocument);
-            if (!sourceSummaryXML.isEmpty()) {
-                final String transformedSummaryXML = transformField("<body>" + sourceSummaryXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
-                internalComponentsBuilder.withSummary(Summary.builder().withBodyXML(transformedSummaryXML).build());
-            }
 
             return internalComponentsBuilder
                     .withXMLBody(transformedBodyXML)
