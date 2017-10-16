@@ -3,6 +3,8 @@ package com.ft.methodearticleinternalcomponentsmapper.model.concordance;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.util.Objects;
+
 import static java.util.Objects.requireNonNull;
 
 public class Identifier {
@@ -21,6 +23,20 @@ public class Identifier {
 
     public String getIdentifierValue() {
         return identifierValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Identifier that = (Identifier) o;
+        return Objects.equals(authority, that.authority) &&
+                Objects.equals(identifierValue, that.identifierValue);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(authority, identifierValue);
     }
 
     @Override

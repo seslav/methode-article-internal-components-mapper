@@ -4,6 +4,7 @@ import com.ft.bodyprocessing.BodyProcessor;
 import com.ft.methodearticleinternalcomponentsmapper.exception.InvalidMethodeContentException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
+import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingFieldException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
@@ -17,6 +18,7 @@ import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleVa
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.ft.uuidutils.DeriveUUID;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.Document;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.ft.methodearticleinternalcomponentsmapper.model.EomFile.SOURCE_ATTR_XPATH;
@@ -69,9 +72,10 @@ public class InternalComponentsMapper {
         String CONTENT_PLACEHOLDER = "ContentPlaceholder";
     }
 
-    private FieldTransformer bodyTransformer;
-    private BodyProcessor htmlFieldProcessor;
-    private Map<String, MethodeArticleValidator> articleValidators;
+    private final FieldTransformer bodyTransformer;
+    private final BodyProcessor htmlFieldProcessor;
+    private final BlogUuidResolver blogUuidResolver;
+    private final Map<String, MethodeArticleValidator> articleValidators;
 
     private static final String NO_PICTURE_FLAG = "No picture";
     private static final String DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED = "data-embedded";
@@ -80,16 +84,23 @@ public class InternalComponentsMapper {
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
     private static final String SUMMARY_TAG_XPATH = "/doc/lead/lead-components/lead-summary";
     private static final String SHORT_TEASER_TAG_XPATH = "/doc/lead/lead-headline/skybox-headline";
+    private static final String XPATH_GUID = "ObjectMetadata/WiresIndexing/serviceid";
+    private static final String XPATH_POST_ID = "ObjectMetadata/WiresIndexing/ref_field";
+    private static final String XPATH_LIST_ITEM_TYPE = "ObjectMetadata/WiresIndexing/category";
+    private static final Set<String> BLOG_CATEGORIES =
+            ImmutableSet.of("blog", "webchat-live-blogs", "webchat-live-qa", "webchat-markets-live", "fastft");
 
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";
 
-    public InternalComponentsMapper(final FieldTransformer bodyTransformer,
-                                    final BodyProcessor htmlFieldProcessor,
-                                    final Map<String, MethodeArticleValidator> articleValidators) {
+    public InternalComponentsMapper(FieldTransformer bodyTransformer,
+                                    BodyProcessor htmlFieldProcessor,
+                                    BlogUuidResolver blogUuidResolver,
+                                    Map<String, MethodeArticleValidator> articleValidators) {
         this.bodyTransformer = bodyTransformer;
         this.htmlFieldProcessor = htmlFieldProcessor;
+        this.blogUuidResolver = blogUuidResolver;
         this.articleValidators = articleValidators;
     }
 
@@ -134,17 +145,21 @@ public class InternalComponentsMapper {
                     .withUnpublishedContentDescription(unpublishedContentDescription)
                     .withAlternativeTitles(alternativeTitles);
 
-            if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
-                return internalComponentsBuilder.build();
-            }
-
-            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
-            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
             String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFileDocument);
             if (!sourceSummaryXML.isEmpty()) {
                 final String transformedSummaryXML = transformField("<body>" + sourceSummaryXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
                 internalComponentsBuilder.withSummary(Summary.builder().withBodyXML(transformedSummaryXML).build());
             }
+
+            if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
+                if (isWordpressBlogContentPlaceholder(eomFile, xpath)) {
+                    return internalComponentsBuilder.withUuid(resolvePlaceholderUuid(eomFile, transactionId, uuid, xpath)).build();
+                }
+                return internalComponentsBuilder.build();
+            }
+
+            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
+            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
 
             return internalComponentsBuilder
                     .withXMLBody(transformedBodyXML)
@@ -152,6 +167,19 @@ public class InternalComponentsMapper {
         } catch (ParserConfigurationException | SAXException | XPathExpressionException | TransformerException | IOException e) {
             throw new TransformationException(e);
         }
+    }
+
+    private boolean isWordpressBlogContentPlaceholder(EomFile eomFile, XPath xpath) throws ParserConfigurationException, XPathExpressionException, IOException, SAXException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
+        String listItemWiredIndexType = extractListItemWiredIndexType(xpath, attributesDocument);
+        return BLOG_CATEGORIES.contains(listItemWiredIndexType);
+    }
+
+    private String resolvePlaceholderUuid(EomFile eomFile, String transactionId, UUID uuid, XPath xpath) throws SAXException, IOException, ParserConfigurationException, XPathExpressionException {
+        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(eomFile.getAttributes())));
+        String referenceId = extractRefField(xpath, attributesDocument, uuid);
+        String guid = extractServiceId(xpath, attributesDocument, uuid);
+        return blogUuidResolver.resolveUuid(guid, referenceId, transactionId);
     }
 
     private String retrieveField(XPath xpath, String expression, Document eomFileDocument) throws TransformerException, XPathExpressionException {
@@ -384,5 +412,25 @@ public class InternalComponentsMapper {
 
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         return documentBuilder.parse(new ByteArrayInputStream(eomFile.getValue()));
+    }
+
+    private String extractListItemWiredIndexType(XPath xPath, Document attributesDocument) throws XPathExpressionException {
+        return xPath.evaluate(XPATH_LIST_ITEM_TYPE, attributesDocument);
+    }
+
+    private String extractServiceId(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
+        final String serviceId = xPath.evaluate(XPATH_GUID, attributesDocument);
+        if (Strings.isNullOrEmpty(serviceId)) {
+            throw new MethodeMissingFieldException(uuid.toString(), "serviceid");
+        }
+        return serviceId;
+    }
+
+    private String extractRefField(XPath xPath, Document attributesDocument, UUID uuid) throws XPathExpressionException {
+        final String refField = xPath.evaluate(XPATH_POST_ID, attributesDocument);
+        if (Strings.isNullOrEmpty(refField)) {
+            throw new MethodeMissingFieldException(uuid.toString(), "ref_field");
+        }
+        return refField;
     }
 }

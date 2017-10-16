@@ -1,13 +1,12 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.BodyProcessingException;
+import com.ft.methodearticleinternalcomponentsmapper.clients.ConcordanceApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.exception.ConcordanceApiException;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.ConceptView;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordance;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordances;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Identifier;
-import com.ft.methodearticleinternalcomponentsmapper.transformation.TearSheetLinksTransformer;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.ElementNameAndTextQualifier;
 import org.custommonkey.xmlunit.XMLAssert;
@@ -29,22 +28,17 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.URI;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class TearSheetLinksTransformerTest {
-    private static final URI CONCORDANCE_API = URI.create("http://localhost/concordances");
-    private static final URI CONCORDANCE_URL = URI.create(
-            "http://localhost/concordances?authority=http%3A%2F%2Fapi.ft.com%2Fsystem%2FFT-TME&identifierValue=");
     private final static String TME_AUTHORITY = "http://api.ft.com/system/FT-TME";
     private static final String TME_ID_1 = "tmeid1";
     private static final String TME_ID_2 = "tmeid2";
@@ -70,20 +64,20 @@ public class TearSheetLinksTransformerTest {
     private NodeList nodes;
     private DocumentBuilder db;
     private TearSheetLinksTransformer toTest;
-    private Client client = mock(Client.class);
+    private ConcordanceApiClient client = mock(ConcordanceApiClient.class);
     private Identifier identifier = new Identifier(TME_AUTHORITY, TME_ID_2);
     private ConceptView concept = new ConceptView(API_URL2, API_URL2);
     private Concordances concordances;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        toTest = new TearSheetLinksTransformer(client, CONCORDANCE_API);
+        toTest = new TearSheetLinksTransformer(client);
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         db = dbf.newDocumentBuilder();
 
         Concordance concordance = new Concordance(concept, identifier);
-        concordances = new Concordances(Arrays.asList(concordance));
-
+        concordances = new Concordances(Collections.singletonList(concordance));
     }
 
     @Test
@@ -98,11 +92,11 @@ public class TearSheetLinksTransformerTest {
     }
 
     @Test
-    public void shouldNotChangeBodyIfCompanyTMEIdNotConcorded() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void shouldNotChangeBodyIfConcordanceApiThrowsConcordanceApiException() throws Exception {
         doc = db.parse(new InputSource(new StringReader(BODY_2)));
         nodes = getNodeList(doc);
-        String queryUrl = CONCORDANCE_URL + TME_ID_1;
-        mockConcordanceQueryResponse(queryUrl, null);
+        when(client.getConcordancesByIdentifierValues(anyList())).thenThrow(new ConcordanceApiException("Error"));
         toTest.handle(doc, nodes);
         String actual = serializeDocument(doc);
         Diff diff = new Diff(BODY_2, actual);
@@ -111,11 +105,50 @@ public class TearSheetLinksTransformerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void shouldNotChangeBodyIfConcordanceApiReturnsNull() throws Exception {
+        doc = db.parse(new InputSource(new StringReader(BODY_2)));
+        nodes = getNodeList(doc);
+        when(client.getConcordancesByIdentifierValues(anyList())).thenReturn(null);
+        toTest.handle(doc, nodes);
+        String actual = serializeDocument(doc);
+        Diff diff = new Diff(BODY_2, actual);
+        diff.overrideElementQualifier(new ElementNameAndTextQualifier());
+        XMLAssert.assertXMLEqual(diff, true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldNotChangeBodyIfConcordanceApiReturnsNullList() throws Exception {
+        doc = db.parse(new InputSource(new StringReader(BODY_2)));
+        nodes = getNodeList(doc);
+        when(client.getConcordancesByIdentifierValues(anyList())).thenReturn(new Concordances(null));
+        toTest.handle(doc, nodes);
+        String actual = serializeDocument(doc);
+        Diff diff = new Diff(BODY_2, actual);
+        diff.overrideElementQualifier(new ElementNameAndTextQualifier());
+        XMLAssert.assertXMLEqual(diff, true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldNotChangeBodyIfConcordanceApiReturnsEmptyList() throws Exception {
+        doc = db.parse(new InputSource(new StringReader(BODY_2)));
+        nodes = getNodeList(doc);
+        when(client.getConcordancesByIdentifierValues(anyList())).thenReturn(new Concordances(Collections.emptyList()));
+        toTest.handle(doc, nodes);
+        String actual = serializeDocument(doc);
+        Diff diff = new Diff(BODY_2, actual);
+        diff.overrideElementQualifier(new ElementNameAndTextQualifier());
+        XMLAssert.assertXMLEqual(diff, true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void shouldTransformCompanyIfCompanyTMEIdIsConcorded() throws Exception {
         doc = db.parse(new InputSource(new StringReader(BODY_3)));
         nodes = getNodeList(doc);
-        String queryUrl = CONCORDANCE_URL + TME_ID_2;
-        mockConcordanceQueryResponse(queryUrl, concordances);
+        when(client.getConcordancesByIdentifierValues(anyList())).thenReturn(concordances);
         toTest.handle(doc, nodes);
         String actual = serializeDocument(doc);
 
@@ -130,11 +163,11 @@ public class TearSheetLinksTransformerTest {
 
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldTransformMultipleCompanies() throws Exception {
         doc = db.parse(new InputSource(new StringReader(BODY_4)));
         nodes = getNodeList(doc);
-        String queryUrl1 = CONCORDANCE_URL + TME_ID_2 + "&identifierValue=" + TME_ID_1;
-        mockConcordanceQueryResponse(queryUrl1, concordances);
+        when(client.getConcordancesByIdentifierValues(anyList())).thenReturn(concordances);
         toTest.handle(doc, nodes);
         String actual = serializeDocument(doc);
 
@@ -173,14 +206,4 @@ public class TearSheetLinksTransformerTest {
             throw new BodyProcessingException(e);
         }
     }
-
-
-    private void mockConcordanceQueryResponse(String queryUrl, Concordances response) {
-        WebResource resource = mock(WebResource.class);
-        WebResource.Builder builder = mock(WebResource.Builder.class);
-        when(client.resource(URI.create(queryUrl))).thenReturn(resource);
-        when(resource.header(anyString(), anyObject())).thenReturn(builder);
-        when(builder.get(Concordances.class)).thenReturn(response);
-    }
-
 }

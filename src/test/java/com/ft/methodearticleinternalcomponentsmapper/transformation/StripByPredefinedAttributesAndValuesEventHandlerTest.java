@@ -13,7 +13,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +27,8 @@ public class StripByPredefinedAttributesAndValuesEventHandlerTest extends BaseXM
 
     @Mock private XMLEventReader2 mockXmlEventReader;
     @Mock private BodyWriter eventWriter;
-    @Mock private StringWriter mockStringWriter;
     @Mock private BodyProcessingContext mockBodyProcessingContext;
     @Mock private XMLEventHandler fallbackEventHandler;
-    @Mock private FieldTransformer mockTransformer;
 
     @Before
     public void setup() throws Exception {

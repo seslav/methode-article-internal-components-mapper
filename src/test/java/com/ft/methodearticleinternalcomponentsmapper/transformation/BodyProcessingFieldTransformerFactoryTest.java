@@ -4,15 +4,14 @@ import com.ft.bodyprocessing.BodyProcessingException;
 import com.ft.bodyprocessing.richcontent.RichContentItem;
 import com.ft.bodyprocessing.richcontent.Video;
 import com.ft.bodyprocessing.richcontent.VideoMatcher;
-import com.ft.jerseyhttpwrapper.ResilientClient;
+import com.ft.methodearticleinternalcomponentsmapper.clients.ConcordanceApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.clients.DocumentStoreApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.model.Content;
+import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordances;
 import com.ft.uuidutils.GenerateV3UUID;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.WebResource.Builder;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,10 +20,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +36,9 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -85,28 +84,19 @@ public class BodyProcessingFieldTransformerFactoryTest {
     private FieldTransformer bodyTransformer;
 
     @Mock
-    private ResilientClient documentStoreApiClient;
+    private DocumentStoreApiClient documentStoreApiClient;
     @Mock
     private VideoMatcher videoMatcher;
     @Mock
     private InteractiveGraphicsMatcher interactiveGraphicsMatcher;
     @Mock
-    private WebResource webResourceNotFound;
-    @Mock
-    private Builder builderNotFound;
-    @Mock
-    private WebResource webResource;
-    @Mock
-    private ClientResponse clientResponse;
-    @Mock
-    private Builder builder;
-    @Mock
-    private Client concordanceClient;
+    private ConcordanceApiClient concordanceApiClient;
 
     private Video exampleYouTubeVideo;
     private Video exampleVimeoVideo;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setup() throws Exception {
         exampleVimeoVideo = new Video();
         exampleVimeoVideo.setUrl("https://www.vimeo.com/77761436");
@@ -116,37 +106,23 @@ public class BodyProcessingFieldTransformerFactoryTest {
         exampleYouTubeVideo.setUrl("https://www.youtube.com/watch?v=OTT5dQcarl0");
         exampleYouTubeVideo.setEmbedded(true);
 
-        URI documentStoreUri = new URI("www.anyuri.com");
-        URI concordanceUri = new URI("www.concordanceapi.com");
-
-        bodyTransformer = new BodyProcessingFieldTransformerFactory(documentStoreApiClient,
-                documentStoreUri, videoMatcher, interactiveGraphicsMatcher, contentTypeTemplates, apiHost, concordanceClient, concordanceUri).newInstance();
-        when(documentStoreApiClient.resource((URI) any())).thenReturn(webResourceNotFound);
-        when(webResourceNotFound.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builderNotFound);
-        when(builderNotFound.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builderNotFound);
-        when(builderNotFound.header(anyString(), anyString())).thenReturn(builderNotFound);
-        when(builderNotFound.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[]");
-        when(concordanceClient.resource((URI) any())).thenReturn(webResourceNotFound);
-        when(webResourceNotFound.header(anyString(), anyString())).thenReturn(builderNotFound);
+        bodyTransformer = new BodyProcessingFieldTransformerFactory(documentStoreApiClient, videoMatcher,
+                interactiveGraphicsMatcher, contentTypeTemplates, apiHost, concordanceApiClient).newInstance();
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.emptyList());
+        when(concordanceApiClient.getConcordancesByIdentifierValues(anyList())).thenReturn(new Concordances(Collections.emptyList()));
     }
 
     // This is our thorough test of a complicated article that can be created in Methode. Has all the special characters and components. Do not remove!
     @Test
+    @SuppressWarnings("unchecked")
     public void kitchenSinkArticleShouldBeTransformedAccordingToRules() {
-        when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
-        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\""
-                + KITCHEN_SINK_ASSET1_UUID + "\", \"type\": \"Article\"}, {\"uuid\":\""
-                + KITCHEN_SINK_ASSET2_UUID + "\", \"type\": \"Article\"}, {\"uuid\":\""
-                + KITCHEN_SINK_ASSET3_UUID + "\", \"type\": \"Article\"}, {\"uuid\":\""
-                + KITCHEN_SINK_ASSET4_UUID + "\", \"type\": \"Article\"}, {\"uuid\":\""
-                + KITCHEN_SINK_ASSET5_UUID + "\", \"type\": \"Article\"}]");
+        List<Content> content = new ArrayList<>();
+        content.add(new Content(KITCHEN_SINK_ASSET1_UUID, "Article"));
+        content.add(new Content(KITCHEN_SINK_ASSET2_UUID, "Article"));
+        content.add(new Content(KITCHEN_SINK_ASSET3_UUID, "Article"));
+        content.add(new Content(KITCHEN_SINK_ASSET4_UUID, "Article"));
+        content.add(new Content(KITCHEN_SINK_ASSET5_UUID, "Article"));
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(content);
 
         String originalBody = readFromFile("body/kitchen_sink_article_body.xml");
 
@@ -1361,14 +1337,10 @@ public class BodyProcessingFieldTransformerFactoryTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldTransformMethodeLinkFromRecommended() {
-        when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
-        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + KITCHEN_SINK_ASSET5_UUID + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString()))
+                .thenReturn(Collections.singletonList(new Content(KITCHEN_SINK_ASSET5_UUID, "Article")));
 
         String originalRecommendedContent = "<body><recommended><ul><li><a href=\"/FT/Content/Companies/Stories/Live/GB/New%20UUID%20Generation%20for%20image-sets/rj/Article01%20without%20imageset.xml?uuid=" + KITCHEN_SINK_ASSET5_UUID + "\">Internal articles’s title added by methode automatically</a></li></ul></recommended></body>";
         String transformedContent = "<body><recommended><recommended-title/><ul><li><ft-content type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/" + KITCHEN_SINK_ASSET5_UUID + "\">Internal articles’s title added by methode automatically</ft-content></li></ul></recommended></body>";
@@ -1376,14 +1348,10 @@ public class BodyProcessingFieldTransformerFactoryTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldTransformManualInternalLinkFromRecommended() {
-        when(documentStoreApiClient.resource(any(URI.class))).thenReturn(webResource);
-        when(webResource.accept(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.type(MediaType.APPLICATION_JSON_TYPE)).thenReturn(builder);
-        when(builder.header(anyString(), anyString())).thenReturn(builder);
-        when(builder.post(eq(ClientResponse.class), anyObject())).thenReturn(clientResponse);
-        when(clientResponse.getStatus()).thenReturn(200);
-        when(clientResponse.getEntity(String.class)).thenReturn("[{\"uuid\":\"" + KITCHEN_SINK_ASSET5_UUID + "\", \"type\": \"Article\"}]");
+        when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString()))
+                .thenReturn(Collections.singletonList(new Content(KITCHEN_SINK_ASSET5_UUID, "Article")));
 
         String originalRecommendedContent = "<body><recommended><ul><li><a href=\"http://www.ft.com/content/" + KITCHEN_SINK_ASSET5_UUID + "\">Manually added FT article’s manual title</a></li></ul></recommended></body>";
         String transformedContent = "<body><recommended><recommended-title/><ul><li><ft-content type=\"http://www.ft.com/ontology/content/Article\" url=\"http://api.ft.com/content/" + KITCHEN_SINK_ASSET5_UUID + "\">Manually added FT article’s manual title</ft-content></li></ul></recommended></body>";

@@ -1,84 +1,70 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.xml.dom.XPathHandler;
+import com.ft.methodearticleinternalcomponentsmapper.clients.ConcordanceApiClient;
+import com.ft.methodearticleinternalcomponentsmapper.exception.ConcordanceApiException;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordance;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordances;
-import com.sun.jersey.api.client.Client;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import javax.ws.rs.core.UriBuilder;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 
 public class TearSheetLinksTransformer implements XPathHandler {
     private static final Logger LOG = LoggerFactory.getLogger(TearSheetLinksTransformer.class);
 
-    private final static String TME_AUTHORITY = "http://api.ft.com/system/FT-TME";
-    private final static String CONCEPT_TAG = "concept";
-    private final static String COMPANY_TYPE = "http://www.ft.com/ontology/company/PublicCompany";
+    private static final String TME_AUTHORITY = "http://api.ft.com/system/FT-TME";
+    private static final String CONCEPT_TAG = "concept";
+    private static final String COMPANY_TYPE = "http://www.ft.com/ontology/company/PublicCompany";
     private static final Pattern CONCEPT_UUID = Pattern.compile(
             ".*/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
             Pattern.CASE_INSENSITIVE);
 
-    private final Client client;
-    private final URI concordanceAPI;
+    private final ConcordanceApiClient client;
 
-    public TearSheetLinksTransformer(Client client, URI concordanceAPI) {
+    public TearSheetLinksTransformer(ConcordanceApiClient client) {
         this.client = client;
-        this.concordanceAPI = concordanceAPI;
     }
 
     @Override
     public void handle(Document document, NodeList nodes) {
+        List<String> identifierValues = new ArrayList<>();
         int len = nodes.getLength();
         if (len > 0) {
-            UriBuilder builder = UriBuilder.fromUri(concordanceAPI);
-            try {
-                builder.queryParam("authority", URLEncoder.encode(TME_AUTHORITY, "UTF-8"));
-                for (int i = len - 1; i >= 0; i--) {
-                    Element el = (Element) nodes.item(i);
-                    // this is because the previous processor changes attribute
-                    // names to be all lower case, makes the handler less
-                    // dependent on processor order
-                    String id = StringUtils.isNotBlank(el.getAttribute("CompositeId")) ? el.getAttribute("CompositeId")
-                            : el.getAttribute("compositeid");
-                    if (StringUtils.isNotBlank(id)) {
-                        builder.queryParam("identifierValue", URLEncoder.encode(id, "UTF-8"));
-                    }
+            for (int i = len - 1; i >= 0; i--) {
+                Element el = (Element) nodes.item(i);
+                // this is because the previous processor changes attribute
+                // names to be all lower case, makes the handler less
+                // dependent on processor order
+                String id = StringUtils.isNotBlank(el.getAttribute("CompositeId")) ? el.getAttribute("CompositeId")
+                        : el.getAttribute("compositeid");
+                if (StringUtils.isNotBlank(id)) {
+                    identifierValues.add(id);
                 }
-
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("Encoding for concordance call failed  ");
             }
-
-            URI concordanceApiQuery = builder.buildFromEncoded();
-            Concordances responseConcordances = client.resource(concordanceApiQuery)
-                    .header("Host", "public-concordances-api").get(Concordances.class);
-            if (responseConcordances != null && responseConcordances.getConcordances() != null
-                    && !responseConcordances.getConcordances().isEmpty()) {
-
-                transformTearSheetLink(responseConcordances.getConcordances(), nodes);
-            } else {
-                List<String> identifiers = URLEncodedUtils.parse(concordanceApiQuery, "UTF-8").stream()
-                        .filter(item -> item.getName().equals("identifierValue")).map(NameValuePair::getValue)
-                        .collect(Collectors.toList());
-                identifiers.forEach(item -> LOG.warn("Composite Id is not concorded CompositeId=" + item));
+            try {
+                Concordances concordances = client.getConcordancesByIdentifierValues(identifierValues);
+                if (concordancesArePresent(concordances)) {
+                    transformTearSheetLink(concordances.getConcordances(), nodes);
+                } else {
+                    identifierValues.forEach(item -> LOG.warn("Composite Id is not concorded CompositeId=" + item));
+                }
+            } catch (ConcordanceApiException e) {
+                LOG.warn("Unable to retrieve concordances for identifier values: " + identifierValues, e);
             }
         }
+    }
+
+    private boolean concordancesArePresent(Concordances concordances) {
+        return concordances != null && concordances.getConcordances() != null && !concordances.getConcordances().isEmpty();
     }
 
     private void transformTearSheetLink(List<Concordance> concordances, NodeList nodes) {

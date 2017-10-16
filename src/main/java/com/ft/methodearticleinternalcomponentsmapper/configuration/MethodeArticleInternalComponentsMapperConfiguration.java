@@ -12,10 +12,11 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
 
     private final ConsumerConfiguration consumerConfiguration;
     private final ProducerConfiguration producerConfiguration;
-    private final DocumentStoreApiConfiguration documentStoreApiConfiguration;
-    private final ConcordanceApiConfiguration concordanceApiConfiguration;
-    private final MethodeMapperConfiguration methodeArticleMapperConfiguration;
-    private final MethodeMapperConfiguration methodeContentPlaceholderMapperConfiguration;
+    private final UppServiceConfiguration documentStoreApiConfiguration;
+    private final UppServiceConfiguration concordanceApiConfiguration;
+    private final UppServiceConfiguration methodeArticleMapperConfiguration;
+    private final UppServiceConfiguration methodeContentPlaceholderMapperConfiguration;
+    private final ValidationConfiguration validationConfiguration;
     private final List<VideoSiteConfiguration> videoSiteConfig;
     private final List<String> interactiveGraphicsWhiteList;
     private final String contentUriPrefix;
@@ -24,12 +25,13 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
 
     public MethodeArticleInternalComponentsMapperConfiguration(@JsonProperty("consumer") ConsumerConfiguration consumerConfiguration,
                                                                @JsonProperty("producer") ProducerConfiguration producerConfiguration,
-                                                               @JsonProperty("documentStoreApi") DocumentStoreApiConfiguration documentStoreApiConfiguration,
-                                                               @JsonProperty("concordanceApi") ConcordanceApiConfiguration concordanceApiConfiguration,
+                                                               @JsonProperty("documentStoreApi") UppServiceConfiguration documentStoreApiConfiguration,
+                                                               @JsonProperty("concordanceApi") UppServiceConfiguration concordanceApiConfiguration,
                                                                @JsonProperty("videoSiteConfig") List<VideoSiteConfiguration> videoSiteConfig,
                                                                @JsonProperty("interactiveGraphicsWhiteList") List<String> interactiveGraphicsWhiteList,
-                                                               @JsonProperty("methodeArticleMapper") MethodeMapperConfiguration methodeArticleMapperConfiguration,
-                                                               @JsonProperty("methodeContentPlaceholderMapper") MethodeMapperConfiguration methodeContentPlaceholderMapperConfiguration,
+                                                               @JsonProperty("methodeArticleMapper") UppServiceConfiguration methodeArticleMapperConfiguration,
+                                                               @JsonProperty("methodeContentPlaceholderMapper") UppServiceConfiguration methodeContentPlaceholderMapperConfiguration,
+                                                               @JsonProperty("validationConfiguration") ValidationConfiguration validationConfiguration,
                                                                @JsonProperty("contentUriPrefix") String contentUriPrefix,
                                                                @JsonProperty("contentTypeTemplates") Map<String, String> contentTypeTemplates,
                                                                @JsonProperty("apiHost") String apiHost) {
@@ -41,6 +43,7 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
         this.interactiveGraphicsWhiteList = interactiveGraphicsWhiteList;
         this.methodeArticleMapperConfiguration = methodeArticleMapperConfiguration;
         this.methodeContentPlaceholderMapperConfiguration = methodeContentPlaceholderMapperConfiguration;
+        this.validationConfiguration = validationConfiguration;
         this.contentUriPrefix = contentUriPrefix;
         this.contentTypeTemplates = contentTypeTemplates;
         this.apiHost = apiHost;
@@ -57,12 +60,12 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     }
 
     @NotNull
-    public ConcordanceApiConfiguration getConcordanceApiConfiguration() {
+    public UppServiceConfiguration getConcordanceApiConfiguration() {
         return concordanceApiConfiguration;
     }
 
     @NotNull
-    public DocumentStoreApiConfiguration getDocumentStoreApiConfiguration() {
+    public UppServiceConfiguration getDocumentStoreApiConfiguration() {
         return documentStoreApiConfiguration;
     }
 
@@ -82,13 +85,18 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     }
 
     @NotNull
-    public MethodeMapperConfiguration getMethodeArticleMapperConfiguration() {
+    public UppServiceConfiguration getMethodeArticleMapperConfiguration() {
         return methodeArticleMapperConfiguration;
     }
 
     @NotNull
-    public MethodeMapperConfiguration getMethodeContentPlaceholderMapperConfiguration() {
+    public UppServiceConfiguration getMethodeContentPlaceholderMapperConfiguration() {
         return methodeContentPlaceholderMapperConfiguration;
+    }
+
+    @NotNull
+    public ValidationConfiguration getValidationConfiguration() {
+        return validationConfiguration;
     }
 
     @NotNull

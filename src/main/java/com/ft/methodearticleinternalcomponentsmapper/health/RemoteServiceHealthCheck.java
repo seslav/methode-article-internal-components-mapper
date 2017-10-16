@@ -6,6 +6,7 @@ import com.ft.platform.dropwizard.AdvancedResult;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 
+import com.sun.jersey.api.client.WebResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,11 @@ public class RemoteServiceHealthCheck extends AdvancedHealthCheck {
     public AdvancedResult checkAdvanced() throws Exception {
         ClientResponse response = null;
         try {
-            response = client.resource(remoteServiceUri).header("Host", hostHeader).get(ClientResponse.class);
+            WebResource.Builder builder = client.resource(remoteServiceUri).getRequestBuilder();
+            if (hostHeader != null && !hostHeader.isEmpty()) {
+                builder.header("Host", hostHeader);
+            }
+            response = builder.get(ClientResponse.class);
             if (response.getStatus() != 200) {
                 String message = String.format("Unexpected status : %s", response.getStatus());
                 return reportUnhealthy(message);
