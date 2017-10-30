@@ -18,6 +18,7 @@ public class InternalComponents {
     private final String bodyXML;
     private final Summary summary;
     private final AlternativeTitles alternativeTitles;
+    private final AlternativeStandfirsts alternativeStandfirsts;
 
     private final String uuid;
     private final Date lastModified;
@@ -31,6 +32,7 @@ public class InternalComponents {
                               @JsonProperty("bodyXML") final String bodyXML,
                               @JsonProperty("summary") final Summary summary,
                               @JsonProperty("alternativeTitles") final AlternativeTitles alternativeTitles,
+                              @JsonProperty("alternativeStandfirsts") final AlternativeStandfirsts alternativeStandfirsts,
                               @JsonProperty("uuid") final String uuid,
                               @JsonProperty("lastModified") final Date lastModified,
                               @JsonProperty("publishReference") final String publishReference) {
@@ -42,6 +44,7 @@ public class InternalComponents {
         this.bodyXML = bodyXML;
         this.summary = summary;
         this.alternativeTitles = alternativeTitles;
+        this.alternativeStandfirsts = alternativeStandfirsts;
 
         this.uuid = uuid;
         this.lastModified = lastModified;
@@ -81,6 +84,10 @@ public class InternalComponents {
         return alternativeTitles;
     }
 
+    public AlternativeStandfirsts getAlternativeStandfirsts() {
+        return alternativeStandfirsts;
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -112,6 +119,7 @@ public class InternalComponents {
         private String bodyXML;
         private Summary summary;
         private AlternativeTitles alternativeTitles;
+        private AlternativeStandfirsts alternativeStandfirsts;
 
         private String uuid;
         private String publishReference;
@@ -160,6 +168,11 @@ public class InternalComponents {
             return this;
         }
 
+        public InternalComponents.Builder withAlternativeStandfirsts(AlternativeStandfirsts alternativeStandfirsts) {
+            this.alternativeStandfirsts = alternativeStandfirsts;
+            return this;
+        }
+
         public InternalComponents.Builder withUuid(String uuid) {
             this.uuid = uuid;
             return this;
@@ -184,6 +197,7 @@ public class InternalComponents {
                     .withXMLBody(content.getBodyXML())
                     .withSummary(content.getSummary())
                     .withAlternativeTitles(content.getAlternativeTitles())
+                    .withAlternativeStandfirsts(content.getAlternativeStandfirsts())
                     .withUuid(content.getUuid())
                     .withPublishReference(content.getPublishReference())
                     .withLastModified(content.getLastModified());
@@ -199,6 +213,7 @@ public class InternalComponents {
                     bodyXML,
                     summary,
                     alternativeTitles,
+                    alternativeStandfirsts,
                     uuid,
                     lastModified,
                     publishReference);
