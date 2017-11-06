@@ -6,6 +6,7 @@ import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMar
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingFieldException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
+import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeStandfirsts;
 import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
@@ -84,6 +85,8 @@ public class InternalComponentsMapper {
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
     private static final String SUMMARY_TAG_XPATH = "/doc/lead/lead-components/lead-summary";
     private static final String SHORT_TEASER_TAG_XPATH = "/doc/lead/lead-headline/skybox-headline";
+    private static final String PROMOTIONAL_TITLE_VARIANT_TAG_XPATH = "/doc/lead/web-index-headline-variant/ln";
+    private static final String PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH = "/doc/lead/web-stand-first-variant/p";
     private static final String XPATH_GUID = "ObjectMetadata/WiresIndexing/serviceid";
     private static final String XPATH_POST_ID = "ObjectMetadata/WiresIndexing/ref_field";
     private static final String XPATH_LIST_ITEM_TYPE = "ObjectMetadata/WiresIndexing/category";
@@ -132,6 +135,10 @@ public class InternalComponentsMapper {
             final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
             final AlternativeTitles alternativeTitles = AlternativeTitles.builder()
                     .withShortTeaser(Strings.nullToEmpty(xpath.evaluate(SHORT_TEASER_TAG_XPATH, eomFileDocument)).trim())
+                    .withPromotionalTitleVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_TITLE_VARIANT_TAG_XPATH, eomFileDocument)).trim())
+                    .build();
+            final AlternativeStandfirsts alternativeStandfirsts = AlternativeStandfirsts.builder()
+                    .withPromotionalStandfirstVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH, eomFileDocument)).trim())
                     .build();
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
@@ -143,7 +150,8 @@ public class InternalComponentsMapper {
                     .withTopper(topper)
                     .withLeadImages(leadImages)
                     .withUnpublishedContentDescription(unpublishedContentDescription)
-                    .withAlternativeTitles(alternativeTitles);
+                    .withAlternativeTitles(alternativeTitles)
+                    .withAlternativeStandfirsts(alternativeStandfirsts);
 
             String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFileDocument);
             if (!sourceSummaryXML.isEmpty()) {

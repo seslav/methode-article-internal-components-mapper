@@ -5,6 +5,7 @@ import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMar
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingFieldException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.UuidResolverException;
+import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeStandfirsts;
 import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
@@ -208,6 +209,8 @@ public class InternalComponentsMapperTest {
         final String standfirst = "Topper standfirst";
         final String contentPackageNext = "<p>Content package coming next text</p>";
         final String skyboxHeadline = "sample skybox headline";
+        final String promotioanlTitleVariant = "promotional title variant";
+        final String promotioanlStandfirstVariant = "promotional standfirst variant";
 
         eomFile = new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
@@ -216,7 +219,8 @@ public class InternalComponentsMapperTest {
                         .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
                         .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
-                        labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline))
+                        labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline,
+                        promotioanlTitleVariant, promotioanlStandfirstVariant))
                 .build();
 
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
@@ -254,6 +258,10 @@ public class InternalComponentsMapperTest {
 
         final AlternativeTitles alternativeTitles = actual.getAlternativeTitles();
         assertThat(alternativeTitles.getShortTeaser(), is(skyboxHeadline));
+        assertThat(alternativeTitles.getPromotionalTitleVariant(), is(promotioanlTitleVariant));
+
+        final AlternativeStandfirsts alternativeStandfirsts = actual.getAlternativeStandfirsts();
+        assertThat(alternativeStandfirsts.getPromotionalStandfirstVariant(), is(promotioanlStandfirstVariant));
 
         assertThat(actual.getUnpublishedContentDescription(), is(contentPackageNext));
     }
@@ -274,7 +282,7 @@ public class InternalComponentsMapperTest {
                         .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
                         .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
                 .withValue(buildEomFileValue(squareImg, standardImg, wideImg, designTheme, sequence,
-                        labelType, "auto", "", "Topper Headline", "Topper standfirst", null, ""))
+                        labelType, "auto", "", "Topper Headline", "Topper standfirst", null, "", "", ""))
                 .build();
 
         when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
@@ -660,7 +668,9 @@ public class InternalComponentsMapperTest {
                         "headline",
                         "standfirst",
                         contentPackageNext,
-                        "skyboxHeadline"))
+                        "skyboxHeadline",
+                        "promotionalTitleVariant",
+                        "promotionalStandfirstVariant"))
                 .build();
     }
 
@@ -676,7 +686,9 @@ public class InternalComponentsMapperTest {
             String headline,
             String standfirst,
             String contentPackageNext,
-            String skyboxHeadline) {
+            String skyboxHeadline,
+            String promotioanlTitleVariant,
+            String promotioanlStandfirstVariant) {
         Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_WITH_ALL_COMPONENTS);
 
         Map<String, Object> attributes = new HashMap<>();
@@ -693,6 +705,8 @@ public class InternalComponentsMapperTest {
         attributes.put("standfirst", standfirst);
         attributes.put("contentPackageNext", contentPackageNext);
         attributes.put("skyboxHeadline", skyboxHeadline);
+        attributes.put("promotioanlTitleVariant", promotioanlTitleVariant);
+        attributes.put("promotioanlStandfirstVariant", promotioanlStandfirstVariant);
 
         return mustache.execute(attributes).getBytes(UTF_8);
     }
