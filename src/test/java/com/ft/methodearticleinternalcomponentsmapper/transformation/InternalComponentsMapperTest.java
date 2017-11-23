@@ -52,6 +52,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class InternalComponentsMapperTest {
 
+    private static final String API_HOST = "test.api.ft.com";
     private static final String ARTICLE_UUID = UUID.randomUUID().toString();
     private static final String TX_ID = "tid_test";
     private static final Date LAST_MODIFIED = new Date();
@@ -117,7 +118,7 @@ public class InternalComponentsMapperTest {
         articleValidators.put(InternalComponentsMapper.SourceCode.FT, methodeArticleValidator);
         articleValidators.put(InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER, methodeContentPlaceholderValidator);
 
-        internalComponentsMapper = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, blogUuidResolver, articleValidators);
+        internalComponentsMapper = new InternalComponentsMapper(bodyTransformer, htmlFieldProcessor, blogUuidResolver, articleValidators, API_HOST);
     }
 
     @Test
