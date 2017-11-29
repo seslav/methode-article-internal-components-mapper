@@ -66,7 +66,7 @@ public class RewriteLinkXMLEventHandler extends BaseXMLEventHandler {
             }
         } else {
             // ft-related uses an untyped url for arbitrary destinations
-            final String url = getAttribute(event, URL_ATTRIBUTE_NAME, "Missing url atribute on un-typed link");
+            final String url = getAttribute(event, URL_ATTRIBUTE_NAME, "Missing url attribute on un-typed link");
             eventWriter.writeStartTag(getRewriteElementName(), singletonMap(URL_ATTRIBUTE_NAME, url));
         }
     }

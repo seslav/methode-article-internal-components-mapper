@@ -124,7 +124,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 ).newInstance(),
                 new Html5SelfClosingTagBodyProcessor(),
                 blogUuidResolver,
-                articleValidators
+                articleValidators,
+                configuration.getApiHost()
         );
 
         ConsumerConfiguration consumerConfig = configuration.getConsumerConfiguration();
@@ -205,7 +206,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
     }
 
     private AdvancedHealthCheck buildConcordanceApiHealthcheck(Client concordancesApiHealthcheckClient,
-                                                                 UppServiceConfiguration concordancesApiConfig) {
+                                                               UppServiceConfiguration concordancesApiConfig) {
         return new RemoteServiceHealthCheck(
                 "Public Concordances API",
                 concordancesApiHealthcheckClient,

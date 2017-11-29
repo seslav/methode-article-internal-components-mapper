@@ -56,7 +56,7 @@ public class BodyProcessingStepDefs {
     private FieldTransformer bodyTransformer;
 
     private static final String TEXT = "Some text in between tags";
-    private static final String API_HOST = "api.ft.com";
+    private static final String API_HOST = "test.api.ft.com";
 
     private MethodeBodyTransformationXMLEventHandlerRegistry registry;
 

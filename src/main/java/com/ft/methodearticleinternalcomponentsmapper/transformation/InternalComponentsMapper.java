@@ -77,11 +77,11 @@ public class InternalComponentsMapper {
     private final BodyProcessor htmlFieldProcessor;
     private final BlogUuidResolver blogUuidResolver;
     private final Map<String, MethodeArticleValidator> articleValidators;
+    private final String apiHost;
 
     private static final String NO_PICTURE_FLAG = "No picture";
     private static final String DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED = "data-embedded";
     private static final String IMAGE_SET_TYPE = "http://www.ft.com/ontology/content/ImageSet";
-    private static final String FT_CONTENT_BASE_URL = "http://api.ft.com/content/";
     private static final String BODY_TAG_XPATH = "/doc/story/text/body";
     private static final String SUMMARY_TAG_XPATH = "/doc/lead/lead-components/lead-summary";
     private static final String SHORT_TEASER_TAG_XPATH = "/doc/lead/lead-headline/skybox-headline";
@@ -100,11 +100,13 @@ public class InternalComponentsMapper {
     public InternalComponentsMapper(FieldTransformer bodyTransformer,
                                     BodyProcessor htmlFieldProcessor,
                                     BlogUuidResolver blogUuidResolver,
-                                    Map<String, MethodeArticleValidator> articleValidators) {
+                                    Map<String, MethodeArticleValidator> articleValidators,
+                                    String apiHost) {
         this.bodyTransformer = bodyTransformer;
         this.htmlFieldProcessor = htmlFieldProcessor;
         this.blogUuidResolver = blogUuidResolver;
         this.articleValidators = articleValidators;
+        this.apiHost = apiHost;
     }
 
     public InternalComponents map(EomFile eomFile, String transactionId, Date lastModified, boolean preview) {
@@ -312,7 +314,7 @@ public class InternalComponentsMapper {
 
     private String putMainImageReferenceInBodyNode(Node bodyNode, String mainImageUUID) throws TransformerException {
         Element newElement = bodyNode.getOwnerDocument().createElement("ft-content");
-        newElement.setAttribute("url", FT_CONTENT_BASE_URL + mainImageUUID);
+        newElement.setAttribute("url", String.format("http://%s/content/%s", apiHost, mainImageUUID));
         newElement.setAttribute("type", IMAGE_SET_TYPE);
         newElement.setAttribute(DEFAULT_IMAGE_ATTRIBUTE_DATA_EMBEDDED, "true");
         bodyNode.insertBefore(newElement, bodyNode.getFirstChild());
