@@ -90,6 +90,11 @@ public class InternalComponentsMapper {
     private static final String XPATH_GUID = "ObjectMetadata/WiresIndexing/serviceid";
     private static final String XPATH_POST_ID = "ObjectMetadata/WiresIndexing/ref_field";
     private static final String XPATH_LIST_ITEM_TYPE = "ObjectMetadata/WiresIndexing/category";
+    private static final String XPATH_CONTENT_PACKAGE = "/ObjectMetadata/OutputChannels/DIFTcom/isContentPackage";
+    private static final String XPATH_ARTICLE_IMAGE = "/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage";
+    private static final String XPATH_DESIGN_THEME_OLD = "/doc/lead/lead-components/content-package/@design-theme";
+    private static final String XPATH_DESIGN_THEME = "/ObjectMetadata/OutputChannels/DIFTcom/DesignTheme";
+    private static final String XPATH_DESIGN_LAYOUT = "/ObjectMetadata/OutputChannels/DIFTcom/DesignLayout";
     private static final Set<String> BLOG_CATEGORIES =
             ImmutableSet.of("blog", "webchat-live-blogs", "webchat-live-qa", "webchat-markets-live", "fastft");
 
@@ -128,19 +133,20 @@ public class InternalComponentsMapper {
             }
 
             final XPath xpath = XPathFactory.newInstance().newXPath();
-            final Document eomFileDocument = getEomFileDocument(eomFile);
+            final Document attributesDocument = getAttributesDocument(eomFile);
+            final Document valueDocument = getValueDocument(eomFile);
 
-            final Design design = extractDesign(xpath, eomFileDocument);
-            final TableOfContents tableOfContents = extractTableOfContents(xpath, eomFileDocument);
-            final List<Image> leadImages = extractImages(xpath, eomFileDocument, "/doc/lead/lead-image-set/lead-image-");
-            final Topper topper = extractTopper(xpath, eomFileDocument);
-            final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, eomFileDocument);
+            final Design design = extractDesign(xpath, valueDocument, attributesDocument);
+            final TableOfContents tableOfContents = extractTableOfContents(xpath, valueDocument);
+            final List<Image> leadImages = extractImages(xpath, valueDocument, "/doc/lead/lead-image-set/lead-image-");
+            final Topper topper = extractTopper(xpath, valueDocument);
+            final String unpublishedContentDescription = extractUnpublishedContentDescription(xpath, valueDocument);
             final AlternativeTitles alternativeTitles = AlternativeTitles.builder()
-                    .withShortTeaser(Strings.nullToEmpty(xpath.evaluate(SHORT_TEASER_TAG_XPATH, eomFileDocument)).trim())
-                    .withPromotionalTitleVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_TITLE_VARIANT_TAG_XPATH, eomFileDocument)).trim())
+                    .withShortTeaser(Strings.nullToEmpty(xpath.evaluate(SHORT_TEASER_TAG_XPATH, valueDocument)).trim())
+                    .withPromotionalTitleVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_TITLE_VARIANT_TAG_XPATH, valueDocument)).trim())
                     .build();
             final AlternativeStandfirsts alternativeStandfirsts = AlternativeStandfirsts.builder()
-                    .withPromotionalStandfirstVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH, eomFileDocument)).trim())
+                    .withPromotionalStandfirstVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH, valueDocument)).trim())
                     .build();
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
@@ -155,7 +161,7 @@ public class InternalComponentsMapper {
                     .withAlternativeTitles(alternativeTitles)
                     .withAlternativeStandfirsts(alternativeStandfirsts);
 
-            String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFileDocument);
+            String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, valueDocument);
             if (!sourceSummaryXML.isEmpty()) {
                 final String transformedSummaryXML = transformField("<body>" + sourceSummaryXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
                 internalComponentsBuilder.withSummary(Summary.builder().withBodyXML(transformedSummaryXML).build());
@@ -168,8 +174,8 @@ public class InternalComponentsMapper {
                 return internalComponentsBuilder.build();
             }
 
-            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, eomFileDocument);
-            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, eomFile.getAttributes(), eomFile.getValue(), transactionId, uuid, preview);
+            String sourceBodyXML = retrieveField(xpath, BODY_TAG_XPATH, valueDocument);
+            final String transformedBodyXML = transformBody(xpath, sourceBodyXML, attributesDocument, valueDocument, transactionId, uuid, preview);
 
             return internalComponentsBuilder
                     .withXMLBody(transformedBodyXML)
@@ -216,10 +222,8 @@ public class InternalComponentsMapper {
         return xpath.evaluate(SOURCE_ATTR_XPATH, attributesDocument);
     }
 
-    private String transformBody(XPath xpath, String sourceBodyXML, String attributes, byte[] value, String transactionId, UUID uuid, boolean preview) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException, TransformerException {
+    private String transformBody(XPath xpath, String sourceBodyXML, Document attributesDocument, Document valueDocument, String transactionId, UUID uuid, boolean preview) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException, TransformerException {
         TransformationMode mode = preview ? TransformationMode.PREVIEW : TransformationMode.PUBLISH;
-        Document attributesDocument = getDocumentBuilder().parse(new InputSource(new StringReader(attributes)));
-        Document valueDocument = getDocumentBuilder().parse(new ByteArrayInputStream(value));
         final String type = determineType(xpath, attributesDocument);
 
         final String transformedBody = transformField(sourceBodyXML, bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
@@ -230,7 +234,7 @@ public class InternalComponentsMapper {
     }
 
     private String determineType(final XPath xpath, final Document attributesDocument) throws XPathExpressionException, TransformerException {
-        final String isContentPackage = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/isContentPackage", attributesDocument);
+        final String isContentPackage = xpath.evaluate(XPATH_CONTENT_PACKAGE, attributesDocument);
         if (Boolean.TRUE.toString().equalsIgnoreCase(isContentPackage)) {
             return CONTENT_PACKAGE;
         }
@@ -297,7 +301,7 @@ public class InternalComponentsMapper {
             Element bodyNode = getDocumentBuilder()
                     .parse(inputSource)
                     .getDocumentElement();
-            final String flag = xpath.evaluate("/ObjectMetadata/OutputChannels/DIFTcom/DIFTcomArticleImage", attributesDocument);
+            final String flag = xpath.evaluate(XPATH_ARTICLE_IMAGE, attributesDocument);
             if (!NO_PICTURE_FLAG.equalsIgnoreCase(flag)) {
                 return putMainImageReferenceInBodyNode(bodyNode, mainImageUUID);
             }
@@ -321,14 +325,18 @@ public class InternalComponentsMapper {
         return getNodeAsHTML5String(bodyNode);
     }
 
-    private Design extractDesign(final XPath xPath, final Document eomFileDoc) throws XPathExpressionException {
-        final String theme = Strings.nullToEmpty(xPath.evaluate("/doc/lead/lead-components/content-package/@design-theme", eomFileDoc)).trim();
-
-        if (Strings.isNullOrEmpty(theme)) {
+    private Design extractDesign(final XPath xPath, final Document valueDoc, final Document attributesDoc) throws XPathExpressionException {
+        final String designThemeOld = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_THEME_OLD, valueDoc)).trim().toLowerCase();
+        final String designThemeNew = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_THEME, attributesDoc)).trim().toLowerCase();
+        String designTheme = designThemeNew;
+        if (Strings.isNullOrEmpty(designThemeNew)) {
+            designTheme = designThemeOld;
+        }
+        String designLayout = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_LAYOUT, attributesDoc)).trim().toLowerCase();
+        if (Strings.isNullOrEmpty(designTheme) && Strings.isNullOrEmpty(designLayout)) {
             return null;
         }
-
-        return new Design(theme);
+        return new Design(designTheme, designLayout);
     }
 
     private TableOfContents extractTableOfContents(final XPath xPath, final Document eomFileDoc) throws XPathExpressionException {
@@ -416,12 +424,18 @@ public class InternalComponentsMapper {
         return writer.toString();
     }
 
-    private Document getEomFileDocument(EomFile eomFile) throws ParserConfigurationException, SAXException, IOException {
+    private Document getValueDocument(EomFile eomFile) throws ParserConfigurationException, SAXException, IOException {
         final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
         final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         return documentBuilder.parse(new ByteArrayInputStream(eomFile.getValue()));
+    }
+
+    private Document getAttributesDocument(EomFile eomFile) throws ParserConfigurationException, SAXException, IOException {
+        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        return documentBuilder.parse(new InputSource(new StringReader(eomFile.getAttributes())));
     }
 
     private String extractListItemWiredIndexType(XPath xPath, Document attributesDocument) throws XPathExpressionException {

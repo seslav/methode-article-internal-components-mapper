@@ -86,6 +86,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .fromPath(mamEndpointConfiguration.getPath())
                 .scheme("http")
                 .host(mamEndpointConfiguration.getHost())
+                .port(mamEndpointConfiguration.getPort())
                 .build();
 
         UppServiceConfiguration mcpmConfiguration =
@@ -100,6 +101,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                 .fromPath(mcpmEndpointConfiguration.getPath())
                 .scheme("http")
                 .host(mcpmEndpointConfiguration.getHost())
+                .port(mcpmEndpointConfiguration.getPort())
                 .build();
 
         DocumentStoreApiClient documentStoreApiClient = new DocumentStoreApiClient(configuration.getDocumentStoreApiConfiguration(), environment);

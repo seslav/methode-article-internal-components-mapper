@@ -2,11 +2,11 @@ server:
 
   applicationConnectors:
     - type: http
-      port: 11070
+      port: 11080
 
   adminConnectors:
       - type: http
-        port: 11071
+        port: 11081
 
   requestLog:
 
@@ -34,6 +34,7 @@ methodeArticleMapper:
         path: map
         jerseyClient:
             timeout: 2000ms
+#        primaryNodes: ["localhost:11070:11071"]
         primaryNodes: ["localhost:8080:8080", "localhost:8080:8080"]
     hostHeader: "methode-article-mapper"
     connectionConfiguration:
