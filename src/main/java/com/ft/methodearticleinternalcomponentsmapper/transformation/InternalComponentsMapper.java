@@ -98,6 +98,8 @@ public class InternalComponentsMapper {
     private static final Set<String> BLOG_CATEGORIES =
             ImmutableSet.of("blog", "webchat-live-blogs", "webchat-live-qa", "webchat-markets-live", "fastft");
 
+    private static final String DEFAULT_DESIGN_THEME = "default";
+    private static final String DEFAULT_DESIGN_LAYOUT = "basic";
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";
@@ -327,14 +329,16 @@ public class InternalComponentsMapper {
 
     private Design extractDesign(final XPath xPath, final Document valueDoc, final Document attributesDoc) throws XPathExpressionException {
         final String designThemeOld = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_THEME_OLD, valueDoc)).trim().toLowerCase();
-        final String designThemeNew = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_THEME, attributesDoc)).trim().toLowerCase();
-        String designTheme = designThemeNew;
-        if (Strings.isNullOrEmpty(designThemeNew)) {
+        String designTheme = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_THEME, attributesDoc)).trim().toLowerCase();
+        if (designTheme.isEmpty()) {
             designTheme = designThemeOld;
         }
+        if (designTheme.isEmpty()) {
+            designTheme = DEFAULT_DESIGN_THEME;
+        }
         String designLayout = Strings.nullToEmpty(xPath.evaluate(XPATH_DESIGN_LAYOUT, attributesDoc)).trim().toLowerCase();
-        if (Strings.isNullOrEmpty(designTheme) && Strings.isNullOrEmpty(designLayout)) {
-            return null;
+        if (designLayout.isEmpty()) {
+            designLayout = DEFAULT_DESIGN_LAYOUT;
         }
         return new Design(designTheme, designLayout);
     }

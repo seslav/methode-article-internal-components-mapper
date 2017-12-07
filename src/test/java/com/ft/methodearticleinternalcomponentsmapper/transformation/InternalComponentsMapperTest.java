@@ -23,7 +23,9 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -320,6 +322,48 @@ public class InternalComponentsMapperTest {
         final Design design = actual.getDesign();
         assertThat(design, is(notNullValue()));
         assertThat(design.getTheme(), is(oldDesignTheme));
+    }
+
+    @Test
+    public void testDesignThemeFromNoSource() throws UnsupportedEncodingException {
+        final String squareImg = UUID.randomUUID().toString();
+        final String standardImg = UUID.randomUUID().toString();
+        final String wideImg = UUID.randomUUID().toString();
+        final String sequence = "exact-order";
+        final String labelType = "part-number";
+        final String backgroundColour = "auto";
+        final String layout = "split-text-left";
+        final String headline = "Topper headline";
+        final String standfirst = "Topper standfirst";
+        final String contentPackageNext = "<p>Content package coming next text</p>";
+        final String skyboxHeadline = "sample skybox headline";
+        final String promotioanlTitleVariant = "promotional title variant";
+        final String promotioanlStandfirstVariant = "promotional standfirst variant";
+
+        byte[] value = buildEomFileValue(squareImg, standardImg, wideImg, "toremove", sequence,
+                labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline,
+                promotioanlTitleVariant, promotioanlStandfirstVariant);
+        eomFile = new EomFile.Builder()
+                .withUuid(ARTICLE_UUID)
+                .withType("EOM::CompoundStory")
+                .withAttributes(ATTRIBUTES
+                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
+                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
+                        .replaceFirst("<DesignTheme>\\{\\{designTheme\\}\\}</DesignTheme>", "")
+                        .replaceFirst("<DesignLayout>\\{\\{designLayout\\}\\}</DesignLayout>", "")
+                )
+                .withValue(new String(value, Charset.forName("UTF-8")).replaceFirst("design-theme=\"toremove\"", "").getBytes("UTF-8"))
+                .build();
+
+        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
+        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final Design design = actual.getDesign();
+        assertThat(design, is(notNullValue()));
+        assertThat(design.getTheme(), is("default"));
+        assertThat(design.getLayout(), is("basic"));
     }
 
     @Test
