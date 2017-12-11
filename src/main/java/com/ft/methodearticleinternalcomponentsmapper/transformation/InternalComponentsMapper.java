@@ -98,8 +98,8 @@ public class InternalComponentsMapper {
     private static final Set<String> BLOG_CATEGORIES =
             ImmutableSet.of("blog", "webchat-live-blogs", "webchat-live-qa", "webchat-markets-live", "fastft");
 
-    private static final String DEFAULT_DESIGN_THEME = "default";
-    private static final String DEFAULT_DESIGN_LAYOUT = "basic";
+    private static final String DEFAULT_DESIGN_THEME = "basic";
+    private static final String DEFAULT_DESIGN_LAYOUT = "default";
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";

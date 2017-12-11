@@ -362,8 +362,8 @@ public class InternalComponentsMapperTest {
 
         final Design design = actual.getDesign();
         assertThat(design, is(notNullValue()));
-        assertThat(design.getTheme(), is("default"));
-        assertThat(design.getLayout(), is("basic"));
+        assertThat(design.getTheme(), is("basic"));
+        assertThat(design.getLayout(), is("default"));
     }
 
     @Test
