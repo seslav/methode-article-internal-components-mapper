@@ -77,6 +77,8 @@ public class InternalComponentsMapperBodyProcessingTest {
             "        <DIFTcom>" +
             "            <isContentPackage>{{isContentPackage}}</isContentPackage>" +
             "            <DIFTcomArticleImage>{{articleImage}}</DIFTcomArticleImage>" +
+            "            <DesignTheme>Extra</DesignTheme>" +
+            "            <DesignLayout>Wide</DesignLayout>" +
             "        </DIFTcom>" +
             "    </OutputChannels>" +
             "    <EditorialNotes>" +
@@ -512,7 +514,7 @@ public class InternalComponentsMapperBodyProcessingTest {
 
     private InternalComponents createStandardExpectedContent() {
         return InternalComponents.builder()
-                .withDesign(new Design("theme"))
+                .withDesign(new Design("basic", "default"))
                 .withTableOfContents(new TableOfContents("sequence", "labelType"))
                 .withTopper(new Topper("headline", "standfirst", "bgColor", "layout"))
                 .withLeadImages(Arrays.asList(new Image("img1", "type1"), new Image("img2", "type1"), new Image("img3", "type2")))
