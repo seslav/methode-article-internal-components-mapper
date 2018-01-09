@@ -13,6 +13,8 @@ replicaCount: 2
 image:
   repository: coco/methode-article-internal-components-mapper
   pullPolicy: IfNotPresent
-#resources:
-#  limits:
-#    memory: 256Mi
+resources:
+  requests:
+    memory: 128Mi
+  limits:
+    memory: 256Mi
