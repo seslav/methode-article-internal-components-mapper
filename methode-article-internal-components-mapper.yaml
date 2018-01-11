@@ -193,5 +193,5 @@ validationConfiguration:
         www.ft.com/fastft: FT-LABS-WP-1-335
 
 appInfo:
-    systemCode: "MethodeArticleInternalComponentsMapperApplication"
+    systemCode: "up-maicm"
     description: "MethodeArticleInternalComponentsMapperApplication"
