@@ -191,3 +191,7 @@ validationConfiguration:
         blogs.ft.com/the-exchange: FT-LABS-WP-1-332
         blogs.ft.com/larry-summers: FT-LABS-WP-1-333
         www.ft.com/fastft: FT-LABS-WP-1-335
+
+appInfo:
+    systemCode: "MethodeArticleInternalComponentsMapperApplication"
+    description: "A Dropwizard application, consumes Kafka events and maps raw Methode articles to internal content components. The transformed content components are put back to Kafka"
