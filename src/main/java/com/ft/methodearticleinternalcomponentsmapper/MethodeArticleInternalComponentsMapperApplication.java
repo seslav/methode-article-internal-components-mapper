@@ -34,7 +34,7 @@ import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleVa
 import com.ft.platform.dropwizard.AdvancedHealthCheck;
 import com.ft.platform.dropwizard.AdvancedHealthCheckBundle;
 import com.ft.platform.dropwizard.DefaultGoodToGoChecker;
-import com.ft.platform.dropwizard.GoodToGoBundle;
+import com.ft.platform.dropwizard.GoodToGoConfiguredBundle;
 import com.sun.jersey.api.client.Client;
 import io.dropwizard.Application;
 import io.dropwizard.client.JerseyClientConfiguration;
@@ -59,7 +59,7 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
     @Override
     public void initialize(final Bootstrap<MethodeArticleInternalComponentsMapperConfiguration> bootstrap) {
         bootstrap.addBundle(new AdvancedHealthCheckBundle());
-        bootstrap.addBundle(new GoodToGoBundle(new DefaultGoodToGoChecker()));
+        bootstrap.addBundle(new GoodToGoConfiguredBundle(new DefaultGoodToGoChecker()));
     }
 
     @Override

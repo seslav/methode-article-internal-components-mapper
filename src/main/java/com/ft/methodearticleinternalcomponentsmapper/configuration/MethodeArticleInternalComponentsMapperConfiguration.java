@@ -4,13 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ft.bodyprocessing.richcontent.VideoSiteConfiguration;
 import com.ft.platform.dropwizard.AppInfo;
 import com.ft.platform.dropwizard.ConfigWithAppInfo;
+import com.ft.platform.dropwizard.ConfigWithGTG;
+import com.ft.platform.dropwizard.GTGConfig;
+
 import io.dropwizard.Configuration;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class MethodeArticleInternalComponentsMapperConfiguration extends Configuration implements ConfigWithAppInfo {
+public class MethodeArticleInternalComponentsMapperConfiguration extends Configuration implements ConfigWithAppInfo, ConfigWithGTG {
 
     private final ConsumerConfiguration consumerConfiguration;
     private final ProducerConfiguration producerConfiguration;
@@ -53,6 +56,9 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
 
     @JsonProperty
     private AppInfo appInfo = new AppInfo();
+    
+    @JsonProperty
+    private final GTGConfig gtgConfig= new GTGConfig();
 
     @NotNull
     public ConsumerConfiguration getConsumerConfiguration() {
@@ -118,4 +124,9 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     public AppInfo getAppInfo() {
         return appInfo;
     }
+
+	@Override
+	public GTGConfig getGtg() {
+		return gtgConfig;
+	}
 }
