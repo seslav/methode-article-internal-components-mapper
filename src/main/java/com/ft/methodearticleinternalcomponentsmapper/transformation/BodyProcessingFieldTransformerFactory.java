@@ -59,6 +59,7 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
                 new RegexRemoverBodyProcessor("<(p|li|h[1-6])[^/>]*>(\\s|(<br\\s*/>))*</(p|li|h[1-6])>"),
                 new RegexRemoverBodyProcessor("<ul[^/]*>\\s*</ul>"),
                 new DOMTransformingBodyProcessor(xpathHandlers),
+                new ImageExtractorBodyProcessor(),
                 stAXTransformingBodyProcessor(),
                 new MethodeLinksBodyProcessor(documentStoreApiClient),
                 new ModularXsltBodyProcessor(xslts()),
