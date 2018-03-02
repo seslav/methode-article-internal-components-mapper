@@ -152,7 +152,7 @@ public class InternalComponentsMapper {
             final AlternativeStandfirsts alternativeStandfirsts = AlternativeStandfirsts.builder()
                     .withPromotionalStandfirstVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH, valueDocument)).trim())
                     .build();
-            final String pushNotificationCohort = extractPushNotificationCohort(xpath, attributesDocument);
+            final String pushNotificationsCohort = extractPushNotificationsCohort(xpath, attributesDocument);
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
                     .withUuid(uuid.toString())
@@ -165,7 +165,7 @@ public class InternalComponentsMapper {
                     .withUnpublishedContentDescription(unpublishedContentDescription)
                     .withAlternativeTitles(alternativeTitles)
                     .withAlternativeStandfirsts(alternativeStandfirsts)
-                    .withPushNotificationCohort(pushNotificationCohort);
+                    .withPushNotificationsCohort(pushNotificationsCohort);
 
             String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, valueDocument);
             if (!sourceSummaryXML.isEmpty()) {
@@ -466,12 +466,12 @@ public class InternalComponentsMapper {
         return refField;
     }
 
-    private String extractPushNotificationCohort(XPath xpath, Document attributesDocument) throws XPathExpressionException {
-        String pushNotificationCohort = Strings.nullToEmpty(xpath.evaluate(XPATH_PUSH_NOTIFICATION_COHORT, attributesDocument));
-        if (Strings.isNullOrEmpty(pushNotificationCohort) || pushNotificationCohort.equals(PUSH_NOTIFICATION_COHORT_NONE)) {
+    private String extractPushNotificationsCohort(XPath xpath, Document attributesDocument) throws XPathExpressionException {
+        String pushNotificationsCohort = Strings.nullToEmpty(xpath.evaluate(XPATH_PUSH_NOTIFICATION_COHORT, attributesDocument));
+        if (Strings.isNullOrEmpty(pushNotificationsCohort) || pushNotificationsCohort.equals(PUSH_NOTIFICATION_COHORT_NONE)) {
             return null;
         }
 
-        return pushNotificationCohort.toLowerCase().replace("_", "-");
+        return pushNotificationsCohort.toLowerCase().replace("_", "-");
     }
 }

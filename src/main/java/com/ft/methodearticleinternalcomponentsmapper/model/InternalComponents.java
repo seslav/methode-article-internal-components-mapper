@@ -19,7 +19,7 @@ public class InternalComponents {
     private final Summary summary;
     private final AlternativeTitles alternativeTitles;
     private final AlternativeStandfirsts alternativeStandfirsts;
-    private final String pushNotificationCohort;
+    private final String pushNotificationsCohort;
 
     private final String uuid;
     private final Date lastModified;
@@ -34,7 +34,7 @@ public class InternalComponents {
                               @JsonProperty("summary") final Summary summary,
                               @JsonProperty("alternativeTitles") final AlternativeTitles alternativeTitles,
                               @JsonProperty("alternativeStandfirsts") final AlternativeStandfirsts alternativeStandfirsts,
-                              @JsonProperty("pushNotificationCohort") final String pushNotificationCohort,
+                              @JsonProperty("pushNotificationsCohort") final String pushNotificationsCohort,
                               @JsonProperty("uuid") final String uuid,
                               @JsonProperty("lastModified") final Date lastModified,
                               @JsonProperty("publishReference") final String publishReference) {
@@ -47,7 +47,7 @@ public class InternalComponents {
         this.summary = summary;
         this.alternativeTitles = alternativeTitles;
         this.alternativeStandfirsts = alternativeStandfirsts;
-        this.pushNotificationCohort = pushNotificationCohort;
+        this.pushNotificationsCohort = pushNotificationsCohort;
 
         this.uuid = uuid;
         this.lastModified = lastModified;
@@ -91,8 +91,8 @@ public class InternalComponents {
         return alternativeStandfirsts;
     }
 
-    public String getPushNotificationCohort() {
-        return pushNotificationCohort;
+    public String getPushNotificationsCohort() {
+        return pushNotificationsCohort;
     }
 
     public String getUuid() {
@@ -127,7 +127,7 @@ public class InternalComponents {
         private Summary summary;
         private AlternativeTitles alternativeTitles;
         private AlternativeStandfirsts alternativeStandfirsts;
-        private String pushNotificationCohort;
+        private String pushNotificationsCohort;
 
         private String uuid;
         private String publishReference;
@@ -181,8 +181,8 @@ public class InternalComponents {
             return this;
         }
 
-        public InternalComponents.Builder withPushNotificationCohort(String pushNotificationCohort) {
-            this.pushNotificationCohort = pushNotificationCohort;
+        public InternalComponents.Builder withPushNotificationsCohort(String pushNotificationsCohort) {
+            this.pushNotificationsCohort = pushNotificationsCohort;
             return this;
         }
 
@@ -211,7 +211,7 @@ public class InternalComponents {
                     .withSummary(content.getSummary())
                     .withAlternativeTitles(content.getAlternativeTitles())
                     .withAlternativeStandfirsts(content.getAlternativeStandfirsts())
-                    .withPushNotificationCohort(content.getPushNotificationCohort())
+                    .withPushNotificationsCohort(content.getPushNotificationsCohort())
                     .withUuid(content.getUuid())
                     .withPublishReference(content.getPublishReference())
                     .withLastModified(content.getLastModified());
@@ -228,7 +228,7 @@ public class InternalComponents {
                     summary,
                     alternativeTitles,
                     alternativeStandfirsts,
-                    pushNotificationCohort,
+                    pushNotificationsCohort,
                     uuid,
                     lastModified,
                     publishReference);

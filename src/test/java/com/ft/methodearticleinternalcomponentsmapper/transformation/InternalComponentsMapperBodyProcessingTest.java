@@ -66,7 +66,7 @@ public class InternalComponentsMapperBodyProcessingTest {
     private static final String PLACEHOLDER_SUMMARY = "summary";
     private static final String PLACEHOLDER_SOURCE_CODE = "sourceCode";
 
-    private static final String PLACEHOLDER_PUSH_NOTIFICATION_COHORT = "pushNotificationCohort";
+    private static final String PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT = "pushNotificationsCohort";
 
     private static final String EOM_COMPOUND_STORY = "EOM::CompoundStory";
     private static final String EOM_STORY = "EOM::Story";
@@ -76,12 +76,12 @@ public class InternalComponentsMapperBodyProcessingTest {
     private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
     private static final String EMPTY_BODY = "<body></body>";
 
-    private static final String ATTRIBUTE_PUSH_NOTIFICATION_COHORT_UK = "UK_breaking_news";
-    private static final String EXPECTED_PUSH_NOTIFICATION_COHORT_UK = "uk-breaking-news";
-    private static final String ATTRIBUTE_PUSH_NOTIFICATION_COHORT_GLOBAL = "Global_breaking_news";
-    private static final String EXPECTED_PUSH_NOTIFICATION_COHORT_GLOBAL = "global-breaking-news";
-    private static final String ATTRIBUTE_PUSH_NOTIFICATION_COHORT_NONE = "None";
-    private static final String EXPECTED_PUSH_NOTIFICATION_COHORT_NONE = null;
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK = "UK_breaking_news";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK = "uk-breaking-news";
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "Global_breaking_news";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "global-breaking-news";
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE = "None";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_NONE = null;
 
     private static final String API_HOST = "test.api.ft.com";
     private static final String TRANSACTION_ID = "tid_test";
@@ -199,32 +199,32 @@ public class InternalComponentsMapperBodyProcessingTest {
     }
 
     @Test
-    public void shouldTransformPushNotificationCohortUK() {
-        testPushNotificationCohort(ATTRIBUTE_PUSH_NOTIFICATION_COHORT_UK, EXPECTED_PUSH_NOTIFICATION_COHORT_UK);
+    public void shouldTransformPushNotificationsCohortUK() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK, EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK);
     }
 
     @Test
-    public void shouldTransformPushNotificationCohortGlobal() {
-        testPushNotificationCohort(ATTRIBUTE_PUSH_NOTIFICATION_COHORT_GLOBAL, EXPECTED_PUSH_NOTIFICATION_COHORT_GLOBAL);
+    public void shouldTransformPushNotificationsCohortGlobal() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL, EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL);
     }
 
     @Test
-    public void shouldTransformPushNotificationCohortNone() {
-        testPushNotificationCohort(ATTRIBUTE_PUSH_NOTIFICATION_COHORT_NONE, EXPECTED_PUSH_NOTIFICATION_COHORT_NONE);
+    public void shouldTransformPushNotificationsCohortNone() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE, EXPECTED_PUSH_NOTIFICATIONS_COHORT_NONE);
     }
 
-    private void testPushNotificationCohort(String attributePushNotificationCohort, String expectedPushNotificationCohort) {
-        attributesPlaceholdersValues.put(PLACEHOLDER_PUSH_NOTIFICATION_COHORT, attributePushNotificationCohort);
+    private void testPushNotificationsCohort(String attributePushNotificationsCohort, String expectedPushNotificationsCohort) {
+        attributesPlaceholdersValues.put(PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT, attributePushNotificationsCohort);
         final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         final InternalComponents expectedContent = InternalComponents.builder()
                 .withValuesFrom(standardExpectedContent)
                 .withXMLBody(TRANSFORMED_BODY)
-                .withPushNotificationCohort(expectedPushNotificationCohort)
+                .withPushNotificationsCohort(expectedPushNotificationsCohort)
                 .build();
 
         InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
-        assertThat(content.getPushNotificationCohort(), equalTo(expectedContent.getPushNotificationCohort()));
+        assertThat(content.getPushNotificationsCohort(), equalTo(expectedContent.getPushNotificationsCohort()));
     }
 
     @Test
