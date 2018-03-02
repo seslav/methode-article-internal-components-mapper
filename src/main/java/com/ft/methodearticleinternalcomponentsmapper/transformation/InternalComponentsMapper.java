@@ -95,6 +95,7 @@ public class InternalComponentsMapper {
     private static final String XPATH_DESIGN_THEME_OLD = "/doc/lead/lead-components/content-package/@design-theme";
     private static final String XPATH_DESIGN_THEME = "/ObjectMetadata/OutputChannels/DIFTcom/DesignTheme";
     private static final String XPATH_DESIGN_LAYOUT = "/ObjectMetadata/OutputChannels/DIFTcom/DesignLayout";
+    private static final String XPATH_PUSH_NOTIFICATION_COHORT = "/ObjectMetadata/OutputChannels/DIFTcom/pushNotification";
     private static final Set<String> BLOG_CATEGORIES =
             ImmutableSet.of("blog", "webchat-live-blogs", "webchat-live-qa", "webchat-markets-live", "fastft");
 
@@ -103,6 +104,7 @@ public class InternalComponentsMapper {
     private static final String START_BODY = "<body";
     private static final String END_BODY = "</body>";
     private static final String EMPTY_VALIDATED_BODY = "<body></body>";
+    private static final String PUSH_NOTIFICATION_COHORT_NONE = "None";
 
     public InternalComponentsMapper(FieldTransformer bodyTransformer,
                                     BodyProcessor htmlFieldProcessor,
@@ -150,6 +152,7 @@ public class InternalComponentsMapper {
             final AlternativeStandfirsts alternativeStandfirsts = AlternativeStandfirsts.builder()
                     .withPromotionalStandfirstVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH, valueDocument)).trim())
                     .build();
+            final String pushNotificationCohort = extractPushNotificationCohort(xpath, attributesDocument);
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
                     .withUuid(uuid.toString())
@@ -161,7 +164,8 @@ public class InternalComponentsMapper {
                     .withLeadImages(leadImages)
                     .withUnpublishedContentDescription(unpublishedContentDescription)
                     .withAlternativeTitles(alternativeTitles)
-                    .withAlternativeStandfirsts(alternativeStandfirsts);
+                    .withAlternativeStandfirsts(alternativeStandfirsts)
+                    .withPushNotificationCohort(pushNotificationCohort);
 
             String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, valueDocument);
             if (!sourceSummaryXML.isEmpty()) {
@@ -460,5 +464,14 @@ public class InternalComponentsMapper {
             throw new MethodeMissingFieldException(uuid.toString(), "ref_field");
         }
         return refField;
+    }
+
+    private String extractPushNotificationCohort(XPath xpath, Document attributesDocument) throws XPathExpressionException {
+        String pushNotificationCohort = Strings.nullToEmpty(xpath.evaluate(XPATH_PUSH_NOTIFICATION_COHORT, attributesDocument));
+        if (Strings.isNullOrEmpty(pushNotificationCohort) || pushNotificationCohort.equals(PUSH_NOTIFICATION_COHORT_NONE)) {
+            return null;
+        }
+
+        return pushNotificationCohort.toLowerCase().replace("_", "-");
     }
 }

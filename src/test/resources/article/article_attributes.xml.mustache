@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ObjectMetadata SYSTEM "/SysConfig/Classify/FTStories/classify.dtd">
+<ObjectMetadata>
+    <OutputChannels>
+        <DIFTcom>
+            <isContentPackage>{{isContentPackage}}</isContentPackage>
+            {{#articleImage}}
+            <DIFTcomArticleImage>{{articleImage}}</DIFTcomArticleImage>
+            {{/articleImage}}
+            <DesignTheme>Extra</DesignTheme>
+            <DesignLayout>Wide</DesignLayout>
+            {{#pushNotificationCohort}}
+            <pushNotification>{{pushNotificationCohort}}</pushNotification>
+            {{/pushNotificationCohort}}
+        </DIFTcom>
+    </OutputChannels>
+    <EditorialNotes>
+        <Sources>
+           <Source>
+               <SourceCode>{{sourceCode}}</SourceCode>
+           </Source>
+        </Sources>
+    </EditorialNotes>
+    <WiresIndexing>
+    <category>blog</category>
+    <serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>
+    <ref_field>2193913</ref_field>
+    </WiresIndexing>
+</ObjectMetadata>
