@@ -25,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,84 +52,53 @@ import static org.mockito.Mockito.when;
 public class InternalComponentsMapperBodyProcessingTest {
     private static final String ARTICLE_TEMPLATE = FileUtils.readFile("article/article_value.xml.mustache");
     private static final String SYSTEM_ATTRIBUTES_TEMPLATE = FileUtils.readFile("article/article_system_attributes.xml.mustache");
+    private static final String ATTRIBUTES_TEMPLATE = FileUtils.readFile("article/article_attributes.xml.mustache");
 
-    private static final String API_HOST = "test.api.ft.com";
-    private static final String TRANSACTION_ID = "tid_test";
+    private static final String PLACEHOLDER_ARTICLE_IMAGE = "articleImage";
+    private static final String PLACEHOLDER_MAINIMAGE = "mainImageUuid";
+    private static final String PLACEHOLDER_IMAGE_SET_UUID = "imageSetID";
+
+    private static final String PLACEHOLDER_IS_CONTENT_PACKAGE = "isContentPackage";
+    private static final String PLACEHOLDER_CONTENT_PACKAGE = "contentPackage";
+    private static final String PLACEHOLDER_CONTENT_PACKAGE_DESC = "contentPackageDesc";
+    private static final String PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF = "contentPackageListHref";
+
+    private static final String PLACEHOLDER_SUMMARY = "summary";
+    private static final String PLACEHOLDER_SOURCE_CODE = "sourceCode";
+
+    private static final String PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT = "pushNotificationsCohort";
+
+    private static final String EOM_COMPOUND_STORY = "EOM::CompoundStory";
+    private static final String EOM_STORY = "EOM::Story";
+
+    private static final String IMAGE_SET_UUID = "U116035516646705FC";
 
     private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
     private static final String EMPTY_BODY = "<body></body>";
+
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK = "UK_breaking_news";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK = "uk-breaking-news";
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "Global_breaking_news";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "global-breaking-news";
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE = "None";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_NONE = null;
+
+    private static final String API_HOST = "test.api.ft.com";
+    private static final String TRANSACTION_ID = "tid_test";
     private static final Date LAST_MODIFIED = new Date();
-
-    private static final String TEMPLATE_PLACEHOLDER_MAINIMAGE = "mainImageUuid";
-    private static final String TEMPLATE_PLACEHOLDER_IMAGE_SET_UUID = "imageSetID";
-    private static final String TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE = "contentPackage";
-    private static final String TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_DESC = "contentPackageDesc";
-    private static final String TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF = "contentPackageListHref";
-
-    private static final String IMAGE_SET_UUID = "U116035516646705FC";
-    private static final String SUMMARY = "summary";
-
-    private static String ATTRIBUTES = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-            "<!DOCTYPE ObjectMetadata SYSTEM \"/SysConfig/Classify/FTStories/classify.dtd\">" +
-            "<ObjectMetadata>" +
-            "    <OutputChannels>" +
-            "        <DIFTcom>" +
-            "            <isContentPackage>{{isContentPackage}}</isContentPackage>" +
-            "            <DIFTcomArticleImage>{{articleImage}}</DIFTcomArticleImage>" +
-            "            <DesignTheme>Extra</DesignTheme>" +
-            "            <DesignLayout>Wide</DesignLayout>" +
-            "        </DIFTcom>" +
-            "    </OutputChannels>" +
-            "    <EditorialNotes>" +
-            "        <Sources>" +
-            "           <Source>" +
-            "               <SourceCode>{{sourceCode}}</SourceCode>" +
-            "           </Source>" +
-            "        </Sources>" +
-            "    </EditorialNotes>" +
-            "    <WiresIndexing>" +
-            "    <category>blog</category>" +
-            "    <serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>" +
-            "    <ref_field>2193913</ref_field>" +
-            "    </WiresIndexing>" +
-            "</ObjectMetadata>";
-
-    private final UUID uuid = UUID.randomUUID();
+    private static final UUID uuid = UUID.randomUUID();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
-    private FieldTransformer bodyTransformer;
+
+    private Map<String, Object> valuePlaceholdersValues;
+    private Map<String, Object> systemAttributesPlaceholdersValues;
+    private Map<String, Object> attributesPlaceholdersValues;
     private EomFile standardEomFile;
     private InternalComponents standardExpectedContent;
 
+    private FieldTransformer bodyTransformer;
     private InternalComponentsMapper eomFileProcessor;
-
-    public static EomFile createStandardEomFileWithMainImage(UUID uuid,
-                                                             UUID mainImageUuid,
-                                                             String articleImageMetadataFlag) {
-        Map<String, Object> templateValues = new HashMap<>();
-        templateValues.put(TEMPLATE_PLACEHOLDER_MAINIMAGE, mainImageUuid);
-        return new EomFile.Builder()
-                .withUuid(uuid.toString())
-                .withType("EOM:CompoundStory")
-                .withValue(buildEomFileValue(templateValues))
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", articleImageMetadataFlag)
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
-                .build();
-    }
-
-    private static byte[] buildEomFileValue(Map<String, Object> templatePlaceholdersValues) {
-        Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_TEMPLATE);
-        return mustache.execute(templatePlaceholdersValues).getBytes(UTF_8);
-    }
-
-    private static String buildEomFileSystemAttributes(String channel) {
-        Template mustache = Mustache.compiler().compile(SYSTEM_ATTRIBUTES_TEMPLATE);
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("channel", channel);
-        return mustache.execute(attributes);
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -139,7 +107,16 @@ public class InternalComponentsMapperBodyProcessingTest {
 
         BodyProcessor htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
 
-        standardEomFile = createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.FT);
+        valuePlaceholdersValues = new HashMap<>();
+
+        systemAttributesPlaceholdersValues = new HashMap<>();
+        systemAttributesPlaceholdersValues.put("channel", "FTcom");
+
+        attributesPlaceholdersValues = new HashMap<>();
+        attributesPlaceholdersValues.put(PLACEHOLDER_SOURCE_CODE, InternalComponentsMapper.SourceCode.FT);
+        attributesPlaceholdersValues.put(PLACEHOLDER_IS_CONTENT_PACKAGE, "false");
+
+        standardEomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         standardExpectedContent = createStandardExpectedContent();
 
         BlogUuidResolver blogUuidResolver = mock(BlogUuidResolver.class);
@@ -158,9 +135,7 @@ public class InternalComponentsMapperBodyProcessingTest {
 
     @Test
     public void shouldTransformArticleBodyOnPublish() {
-        final EomFile eomFile = new EomFile.Builder()
-                .withValuesFrom(createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.FT))
-                .build();
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         final InternalComponents expectedContent = InternalComponents.builder()
                 .withValuesFrom(standardExpectedContent)
@@ -174,9 +149,8 @@ public class InternalComponentsMapperBodyProcessingTest {
 
     @Test
     public void shouldTransformSummaryBodyToo() {
-        final EomFile eomFile = new EomFile.Builder()
-                .withValuesFrom(createStandardEomFileWithSummary())
-                .build();
+        valuePlaceholdersValues.put(PLACEHOLDER_SUMMARY, true);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         final InternalComponents expectedContent = InternalComponents.builder()
                 .withValuesFrom(standardExpectedContent)
@@ -188,14 +162,14 @@ public class InternalComponentsMapperBodyProcessingTest {
 
         verify(bodyTransformer, times(2)).transform(anyString(), eq(TRANSACTION_ID), eq(Maps.immutableEntry("uuid", eomFile.getUuid())));
         assertThat(content.getBodyXML(), equalTo(expectedContent.getBodyXML()));
-        assertThat(content.getSummary().getBodyXML(), equalTo(expectedContent.getBodyXML()));
+        assertThat(content.getSummary().getBodyXML(), equalTo(expectedContent.getSummary().getBodyXML()));
     }
 
     @Test
     public void shouldTransformSummaryBodyForContentPlaceholder() {
-        final EomFile eomFile = new EomFile.Builder()
-                .withValuesFrom(createContentPlaceholderEomFileWithSummary())
-                .build();
+        valuePlaceholdersValues.put(PLACEHOLDER_SUMMARY, true);
+        attributesPlaceholdersValues.put(PLACEHOLDER_SOURCE_CODE, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         String blogUuid = UUID.randomUUID().toString();
         BlogUuidResolver blogUuidResolver = mock(BlogUuidResolver.class);
@@ -225,10 +199,38 @@ public class InternalComponentsMapperBodyProcessingTest {
     }
 
     @Test
-    public void thatExceptionIsThrownIfContentPlaceholder() {
-        final EomFile eomFile = new EomFile.Builder()
-                .withValuesFrom(createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER))
+    public void shouldTransformPushNotificationsCohortUK() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK, EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK);
+    }
+
+    @Test
+    public void shouldTransformPushNotificationsCohortGlobal() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL, EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL);
+    }
+
+    @Test
+    public void shouldTransformPushNotificationsCohortNone() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE, EXPECTED_PUSH_NOTIFICATIONS_COHORT_NONE);
+    }
+
+    private void testPushNotificationsCohort(String attributePushNotificationsCohort, String expectedPushNotificationsCohort) {
+        attributesPlaceholdersValues.put(PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT, attributePushNotificationsCohort);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents expectedContent = InternalComponents.builder()
+                .withValuesFrom(standardExpectedContent)
+                .withXMLBody(TRANSFORMED_BODY)
+                .withPushNotificationsCohort(expectedPushNotificationsCohort)
                 .build();
+
+        InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
+        assertThat(content.getPushNotificationsCohort(), equalTo(expectedContent.getPushNotificationsCohort()));
+    }
+
+    @Test
+    public void thatExceptionIsThrownIfContentPlaceholder() {
+        attributesPlaceholdersValues.put(PLACEHOLDER_SOURCE_CODE, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
         assertNull(content.getBodyXML());
@@ -255,42 +257,42 @@ public class InternalComponentsMapperBodyProcessingTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionIfBodyTagIsMissingFromTransformedBody() {
-        final EomFile eomFile = createEomStoryFile(uuid);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn("<p>some other random text</p>");
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfBodyIsNull() {
-        final EomFile eomFile = createEomStoryFile(uuid);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(null);
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfBodyIsEmpty() {
-        final EomFile eomFile = createEomStoryFile(uuid);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn("");
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfTransformedBodyIsBlank() {
-        final EomFile eomFile = createEomStoryFile(uuid);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn("<body> \n \n \n </body>");
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = InvalidMethodeContentException.class)
     public void shouldThrowExceptionIfTransformedBodyIsEmpty() {
-        final EomFile eomFile = createEomStoryFile(uuid);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(EMPTY_BODY);
         eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
     }
 
     @Test
     public void thatPreviewEmptyTransformedBodyIsAllowed() {
-        final EomFile eomFile = createEomStoryFile(uuid);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(EMPTY_BODY);
         InternalComponents actual = eomFileProcessor.map(eomFile, TRANSACTION_ID, new Date(), true);
         assertThat(actual.getBodyXML(), is(equalTo(EMPTY_BODY)));
@@ -323,15 +325,8 @@ public class InternalComponentsMapperBodyProcessingTest {
         assertThat(actual.getBodyXML(), is(equalTo(EMPTY_BODY)));
     }
 
-    private EomFile createEomFileWithRandomContentPackage() {
-        return createStandardEomFileWithContentPackage(
-                uuid,
-                "<a href=\"/FT/Content/Content%20Package/Live/content-package-test.dwc?uuid=" + UUID.randomUUID().toString() + "\"/>");
-    }
-
     @Test
     public void shouldAddPublishReferenceToTransformedBody() {
-
         final String reference = "some unstructured reference";
 
         final EomFile eomFile = new EomFile.Builder()
@@ -377,7 +372,7 @@ public class InternalComponentsMapperBodyProcessingTest {
     @Test
     public void testMainImageReferenceIsNotPutInBodyWhenMissing() throws Exception {
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).then(returnsFirstArg());
-        final EomFile eomFile = createStandardEomFile(uuid, InternalComponentsMapper.SourceCode.FT);
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
 
@@ -389,7 +384,6 @@ public class InternalComponentsMapperBodyProcessingTest {
 
     @Test(expected = InvalidMethodeContentException.class)
     public void thatTransformationFailsIfThereIsNoBody() throws Exception {
-
         String value = FileUtils.readFile("article/article_value_with_no_body.xml");
         final EomFile eomFile = new EomFile.Builder()
                 .withValuesFrom(standardEomFile)
@@ -408,7 +402,8 @@ public class InternalComponentsMapperBodyProcessingTest {
                 + "</body>";
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(expectedBody);
 
-        EomFile eomFile = createStandardEomFileWithImageSet(IMAGE_SET_UUID);
+        attributesPlaceholdersValues.put(PLACEHOLDER_IMAGE_SET_UUID, IMAGE_SET_UUID);
+        EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
 
         assertThat(content.getBodyXML(), equalToIgnoringWhiteSpace(expectedBody));
@@ -423,93 +418,67 @@ public class InternalComponentsMapperBodyProcessingTest {
                 + "</body>";
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(expectedBody);
 
-        EomFile eomFile = createStandardEomFileWithImageSet(IMAGE_SET_UUID);
+        attributesPlaceholdersValues.put(PLACEHOLDER_IMAGE_SET_UUID, IMAGE_SET_UUID);
+        EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
         InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, new Date(), true);
 
         assertThat(content.getBodyXML(), equalToIgnoringWhiteSpace(expectedBody));
     }
 
-    private void testMainImageReferenceIsPutInBodyWithMetadataFlag(String articleImageMetadataFlag, String expectedTransformedBody) {
+    private void testMainImageReferenceIsPutInBodyWithMetadataFlag(String articleImagePlaceholderValue, String expectedTransformedBody) {
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).then(returnsFirstArg());
         final UUID imageUuid = UUID.randomUUID();
         final UUID expectedMainImageUuid = DeriveUUID.with(DeriveUUID.Salts.IMAGE_SET).from(imageUuid);
-        final EomFile eomFile = createStandardEomFileWithMainImage(uuid, imageUuid,
-                articleImageMetadataFlag);
-        InternalComponents content = eomFileProcessor
-                .map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
+
+        valuePlaceholdersValues.put(PLACEHOLDER_MAINIMAGE, imageUuid);
+        attributesPlaceholdersValues.put(PLACEHOLDER_ARTICLE_IMAGE, articleImagePlaceholderValue);
+
+        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
+        InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
 
         String expectedBody = String.format(expectedTransformedBody, expectedMainImageUuid);
         assertThat(content.getBodyXML(), equalToIgnoringWhiteSpace(expectedBody));
     }
 
-    private EomFile createEomStoryFile(UUID uuid) {
-        return createStandardEomFile(uuid, "EOM::Story", InternalComponentsMapper.SourceCode.FT, Collections.emptyMap());
+    private EomFile createEomFileWithRandomContentPackage() {
+        Map<String, Object> valuePlaceholdersValues = new HashMap<>();
+        valuePlaceholdersValues.put(PLACEHOLDER_CONTENT_PACKAGE, true);
+        valuePlaceholdersValues.put(PLACEHOLDER_CONTENT_PACKAGE_DESC, "cp");
+        valuePlaceholdersValues.put(PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF, "<a href=\"/FT/Content/Content%20Package/Live/content-package-test.dwc?uuid=" + UUID.randomUUID().toString() + "\"/>");
+        Map<String, Object> attributesPlaceholdersValues = new HashMap<>();
+        attributesPlaceholdersValues.put(PLACEHOLDER_SOURCE_CODE, InternalComponentsMapper.SourceCode.FT);
+        attributesPlaceholdersValues.put(PLACEHOLDER_IS_CONTENT_PACKAGE, "true");
+
+        return createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
     }
 
-    private EomFile createStandardEomFile(UUID uuid, String sourceCode) {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", sourceCode, Collections.emptyMap());
-    }
-
-    private EomFile createStandardEomFileWithContentPackage(UUID uuid, String contentPackageHref) {
-        Map<String, Object> templateValues = new HashMap<>();
-        templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE, Boolean.TRUE);
-        templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_DESC, "cp");
-        templateValues.put(TEMPLATE_PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF, contentPackageHref);
-        return new EomFile.Builder()
-                .withUuid(uuid.toString())
-                .withType("EOM::CompoundStory")
-                .withValue(buildEomFileValue(templateValues))
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{isContentPackage\\}\\}", "true")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
-                .withSystemAttributes(buildEomFileSystemAttributes("FTcom"))
-                .withWorkflowStatus("Stories/WebReady")
-                .withWebUrl(null)
-                .build();
-    }
-
-    private EomFile createStandardEomFileWithImageSet(String imageSetID) {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.FT,
-                Collections.singletonMap(TEMPLATE_PLACEHOLDER_IMAGE_SET_UUID, imageSetID));
-    }
-
-    private EomFile createStandardEomFileWithSummary() {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.FT,
-                Collections.singletonMap(SUMMARY, true));
-    }
-
-    private EomFile createContentPlaceholderEomFileWithSummary() {
-        return createStandardEomFile(uuid, "EOM::CompoundStory", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER,
-                Collections.singletonMap(SUMMARY, true));
-    }
-
-
-    private EomFile createStandardEomFile(UUID uuid, String eomType, String sourceCode, Map<String, Object> templateValues) {
+    private EomFile createStandardEomFile(UUID uuid, String eomType, Map<String, Object> valuePlaceholdersValues,
+                                          Map<String, Object> systemAttributesPlaceholdersValues,
+                                          Map<String, Object> attributesPlaceholdersValues) {
         return new EomFile.Builder()
                 .withUuid(uuid.toString())
                 .withType(eomType)
-                .withValue(buildEomFileValue(templateValues))
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{isContentPackage\\}\\}", "false")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", sourceCode))
-                .withSystemAttributes(buildEomFileSystemAttributes("FTcom"))
+                .withValue(buildEomFileValue(valuePlaceholdersValues))
+                .withSystemAttributes(buildEomFileSystemAttributes(systemAttributesPlaceholdersValues))
+                .withAttributes(buildEomFileAttributes(attributesPlaceholdersValues))
                 .withWorkflowStatus("Stories/WebReady")
                 .withWebUrl(null)
                 .build();
     }
 
-    private EomFile createContentPlacehloderEomFile(UUID uuid, String eomType, String sourceCode, Map<String, Object> templateValues) {
-        return new EomFile.Builder()
-                .withUuid(uuid.toString())
-                .withType(eomType)
-                .withValue(buildEomFileValue(templateValues))
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{isContentPackage\\}\\}", "false")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", sourceCode))
-                .withSystemAttributes(buildEomFileSystemAttributes("FTcom"))
-                .withWorkflowStatus("Stories/WebReady")
-                .withWebUrl(null)
-                .build();
+    private static byte[] buildEomFileValue(Map<String, Object> valuePlaceholdersValues) {
+        Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_TEMPLATE);
+        return mustache.execute(valuePlaceholdersValues).getBytes(UTF_8);
+    }
+
+    private static String buildEomFileSystemAttributes(Map<String, Object> systemAttributesPlaceholdersValues) {
+        Template mustache = Mustache.compiler().escapeHTML(false).compile(SYSTEM_ATTRIBUTES_TEMPLATE);
+        return mustache.execute(systemAttributesPlaceholdersValues);
+    }
+
+    private static String buildEomFileAttributes(Map<String, Object> attributesPlaceholdersValues) {
+        Template mustache = Mustache.compiler().escapeHTML(false).compile(ATTRIBUTES_TEMPLATE);
+        return mustache.execute(attributesPlaceholdersValues);
     }
 
     private InternalComponents createStandardExpectedContent() {
@@ -519,7 +488,7 @@ public class InternalComponentsMapperBodyProcessingTest {
                 .withTopper(new Topper("headline", "standfirst", "bgColor", "layout"))
                 .withLeadImages(Arrays.asList(new Image("img1", "type1"), new Image("img2", "type1"), new Image("img3", "type2")))
                 .withUnpublishedContentDescription("the next awesome article")
-                .withXMLBody("<body><p>some other random text</p></body>")
+                .withXMLBody(TRANSFORMED_BODY)
                 .withUuid(uuid.toString())
                 .withPublishReference(TRANSACTION_ID)
                 .withLastModified(LAST_MODIFIED)
