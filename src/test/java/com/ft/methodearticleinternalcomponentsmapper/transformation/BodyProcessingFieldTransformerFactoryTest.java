@@ -8,6 +8,7 @@ import com.ft.methodearticleinternalcomponentsmapper.clients.ConcordanceApiClien
 import com.ft.methodearticleinternalcomponentsmapper.clients.DocumentStoreApiClient;
 import com.ft.methodearticleinternalcomponentsmapper.model.Content;
 import com.ft.methodearticleinternalcomponentsmapper.model.concordance.Concordances;
+import com.ft.uuidutils.DeriveUUID;
 import com.ft.uuidutils.GenerateV3UUID;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.ft.methodetesting.xml.XmlMatcher.identicalXmlTo;
+import static com.ft.uuidutils.DeriveUUID.Salts.IMAGE_SET;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
@@ -1470,8 +1472,41 @@ public class BodyProcessingFieldTransformerFactoryTest {
         checkTransformation(originalContent, transformedContent);
     }
 
-    private void checkTransformation(String originalBody, String expectedTransformedBody) {
-        String actualTransformedBody = bodyTransformer.transform(originalBody, TRANSACTION_ID);
+    @Test
+    public void thatImagesAreExtractedFromParagraphs() {
+        String articleUuid = "edf0d3db-6497-406a-9d40-79176b0ffadb";
+        String imageSetId = "U32503569610592JkB";
+        String generatedUuid = GenerateV3UUID.singleDigested(articleUuid + imageSetId).toString();
+        String webInlinePictureUuid = "9b646f00-2045-11e8-a895-1ba1f72c2c11";
+        String inlineImageUuid = DeriveUUID.with(IMAGE_SET).from(UUID.fromString(webInlinePictureUuid)).toString();
+
+        String originalContent = "<body>" +
+                "<p><image-set id=\"" + imageSetId + "\"><image-small/><image-medium/><image-large/></image-set></p>" +
+                "<p><web-inline-picture fileref=\"/FT/Graphics/Online/Charts/2018/03/Italy_elections_provisional_results-column_chart-ft-web-thememed-700x500-1520234395_20180305071956.png?uuid=" + webInlinePictureUuid + "\" id=\"U32511615782384khF\"/></p>" +
+                "<p><img src=\"img1\"/></p>" +
+                "<p><img src=\"img2\"/>Lorem ipsum</p>" +
+                "<p><a href=\"\"><img src=\"img3\"/>" +
+                "<img src=\"img4\"/></a></p>" +
+                "<p><a href=\"http://www.url.com\">Lorem ipsum<img src=\"img5\"/></a></p>" +
+                "</body>";
+
+        String transformedContent = "<body>" +
+                "<ft-content data-embedded=\"true\" type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://" + apiHost + "/content/" + generatedUuid + "\"></ft-content>" +
+                "<ft-content type=\"http://www.ft.com/ontology/content/ImageSet\" url=\"http://" + apiHost + "/content/" + inlineImageUuid + "\" data-embedded=\"true\"></ft-content>" +
+                "<img src=\"img1\"/>" +
+                "<img src=\"img2\"/>" +
+                "<p>Lorem ipsum</p>" +
+                "<img src=\"img3\"/>" +
+                "<img src=\"img4\"/>" +
+                "<img src=\"img5\"/>" +
+                "<p><a href=\"http://www.url.com\">Lorem ipsum</a></p>" +
+                "</body>";
+
+        checkTransformation(originalContent, transformedContent, Maps.immutableEntry("uuid", articleUuid));
+    }
+
+    private void checkTransformation(String originalBody, String expectedTransformedBody, Map.Entry<String, Object>... contextData) {
+        String actualTransformedBody = bodyTransformer.transform(originalBody, TRANSACTION_ID, contextData);
 
         System.out.println("TRANSFORMED BODY:\n" + actualTransformedBody);
 
