@@ -7,8 +7,12 @@
             {{#articleImage}}
             <DIFTcomArticleImage>{{articleImage}}</DIFTcomArticleImage>
             {{/articleImage}}
-            <DesignTheme>Extra</DesignTheme>
-            <DesignLayout>Wide</DesignLayout>
+            {{#designTheme}}
+            <DesignTheme>{{designTheme}}</DesignTheme>
+            {{/designTheme}}
+            {{#designLayout}}
+            <DesignLayout>{{designLayout}}</DesignLayout>
+            {{/designLayout}}
             {{#pushNotificationsCohort}}
             <pushNotification>{{pushNotificationsCohort}}</pushNotification>
             {{/pushNotificationsCohort}}
@@ -22,8 +26,14 @@
         </Sources>
     </EditorialNotes>
     <WiresIndexing>
-    <category>blog</category>
-    <serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>
-    <ref_field>2193913</ref_field>
+    {{#category}}
+    <category>{{category}}</category>
+    {{/category}}
+    {{#serviceid}}
+    <serviceid>{{serviceid}}</serviceid>
+    {{/serviceid}}
+    {{#ref_field}}
+    <ref_field>{{ref_field}}</ref_field>
+    {{/ref_field}}
     </WiresIndexing>
 </ObjectMetadata>
