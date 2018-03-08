@@ -67,7 +67,6 @@ public class InternalComponentsMapperTest {
 
     private EomFile eomFile;
     private Map<String, Object> valuePlaceholdersValues;
-    private Map<String, Object> systemAttributesPlaceholdersValues;
     private Map<String, Object> attributesPlaceholdersValues;
 
     private FieldTransformer bodyTransformer;
@@ -83,9 +82,6 @@ public class InternalComponentsMapperTest {
         eomFile = mock(EomFile.class);
 
         valuePlaceholdersValues = new HashMap<>();
-
-        systemAttributesPlaceholdersValues = new HashMap<>();
-        systemAttributesPlaceholdersValues.put("channel", "FTcom");
 
         attributesPlaceholdersValues = new HashMap<>();
         attributesPlaceholdersValues.put("isContentPackage", "false");
