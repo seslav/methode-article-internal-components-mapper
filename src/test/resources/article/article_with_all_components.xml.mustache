@@ -2,17 +2,24 @@
 <!DOCTYPE doc SYSTEM "/SysConfig/Rules/ftpsi.dtd">
 <doc>
     <lead>
+        {{#promotioanlTitleVariant}}
         <web-index-headline-variant>
             <ln>{{promotioanlTitleVariant}}</ln>
         </web-index-headline-variant>
+        {{/promotioanlTitleVariant}}
+        {{#promotioanlStandfirstVariant}}
         <web-stand-first-variant>
             <p>{{promotioanlStandfirstVariant}}</p>
         </web-stand-first-variant>
+        {{/promotioanlStandfirstVariant}}
+        {{#skyboxHeadline}}
         <lead-headline>
             <skybox-headline>
                 {{skyboxHeadline}}
             </skybox-headline>
         </lead-headline>
+        {{/skyboxHeadline}}
+        {{#leadImageSet}}
         <lead-image-set>
                    <lead-image-square
                                 fileref="/FT/Graphics/Online/Z_Undefined/2017/01/lalaland_square.jpg?uuid={{squareImageUUID}}"
@@ -24,20 +31,39 @@
                                 fileref="/FT/Graphics/Online/Z_Undefined/2017/01/lalaland_letterbox.jpg?uuid={{wideImageUUID}}"
                                 xtransform=" scale(0.0471576 0.0471576)" tmx="4645 1548 219 73"/>
         </lead-image-set>
+        {{/leadImageSet}}
         <lead-components>
-            <content-package design-theme="{{designTheme}}" sequence="{{sequence}}" label="{{labelType}}">
+            {{#contentPackage}}
+            <content-package design-theme="{{oldDesignTheme}}" sequence="{{tableOfContentsSequence}}" label="{{tableOfContentsLabelType}}">
                 {{#contentPackageNext}}
                 <content-package-next>{{contentPackageNext}}</content-package-next>
                 {{/contentPackageNext}}
             </content-package>
-            <topper background-colour="{{backgroundColour}}" layout="{{layout}}">
+            {{/contentPackage}}
+            {{#topper}}
+            <topper background-colour="{{topperBackgroundColour}}" layout="{{topperLayout}}">
                 <topper-headline>
-                    <ln>{{headline}}</ln>
+                    <ln>{{topperHeadline}}</ln>
                 </topper-headline>
                 <topper-standfirst>
-                    <p>{{standfirst}}</p>
+                    <p>{{topperStandfirst}}</p>
                 </topper-standfirst>
             </topper>
+            {{/topper}}
+            {{#summary}}
+            <lead-summary display-position="{{displayPosition}}">
+                <p>Latest government paper aims to tackle one of thorniest issues of departure with <b>bold text</b> and <i>italics</i> too. Here?s a<a href="http://www.ft.com">hyperlink</a>as well.</p>
+                <ul>
+                   <li>?Strong? case for frictionless Irish border after Brexit</li>
+                   <li>
+                      <a href="https://www.ft.com/content/3e466f6b-f030-347f-9c29-ad0bf7e6f094">Pound stumbles to new low against euro (ext link)</a>
+                   </li>
+                   <li>
+                      <a dtxInsert="Summary Link" href="/FT/Content/World%20News/Stories/Live/Brexit%20papers.xml?uuid=ef943cc2-8266-11e7-b1b5-d77fe0865278">Britain?s Brexit papers aim to fast-track customs talks (int link)</a>
+                   </li>
+                </ul>
+            </lead-summary>
+            {{/summary}}
         </lead-components>
     </lead>
     <story>

@@ -34,7 +34,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.equalToIgnoringWhiteSpace;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.Matchers.any;
@@ -64,9 +63,9 @@ public class InternalComponentsMapperBodyProcessingTest {
     private static final String PLACEHOLDER_CONTENT_PACKAGE_LIST_HREF = "contentPackageListHref";
 
     private static final String PLACEHOLDER_SUMMARY = "summary";
+    private static final String PLACEHOLDER_SUMMARY_DISPLAY_POSITION = "displayPosition";
+    private static final String PLACEHOLDER_SUMMARY_DISPLAY_POSITION_AUTO = "auto";
     private static final String PLACEHOLDER_SOURCE_CODE = "sourceCode";
-
-    private static final String PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT = "pushNotificationsCohort";
 
     private static final String EOM_COMPOUND_STORY = "EOM::CompoundStory";
     private static final String EOM_STORY = "EOM::Story";
@@ -76,29 +75,23 @@ public class InternalComponentsMapperBodyProcessingTest {
     private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
     private static final String EMPTY_BODY = "<body></body>";
 
-    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK = "UK_breaking_news";
-    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK = "uk-breaking-news";
-    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "Global_breaking_news";
-    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "global-breaking-news";
-    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE = "None";
-    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_NONE = null;
-
     private static final String API_HOST = "test.api.ft.com";
     private static final String TRANSACTION_ID = "tid_test";
     private static final Date LAST_MODIFIED = new Date();
     private static final UUID uuid = UUID.randomUUID();
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
+    private EomFile standardEomFile;
     private Map<String, Object> valuePlaceholdersValues;
     private Map<String, Object> systemAttributesPlaceholdersValues;
     private Map<String, Object> attributesPlaceholdersValues;
-    private EomFile standardEomFile;
+
     private InternalComponents standardExpectedContent;
 
     private FieldTransformer bodyTransformer;
     private InternalComponentsMapper eomFileProcessor;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
@@ -150,6 +143,7 @@ public class InternalComponentsMapperBodyProcessingTest {
     @Test
     public void shouldTransformSummaryBodyToo() {
         valuePlaceholdersValues.put(PLACEHOLDER_SUMMARY, true);
+        valuePlaceholdersValues.put(PLACEHOLDER_SUMMARY_DISPLAY_POSITION, PLACEHOLDER_SUMMARY_DISPLAY_POSITION_AUTO);
         final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
         final InternalComponents expectedContent = InternalComponents.builder()
@@ -168,6 +162,7 @@ public class InternalComponentsMapperBodyProcessingTest {
     @Test
     public void shouldTransformSummaryBodyForContentPlaceholder() {
         valuePlaceholdersValues.put(PLACEHOLDER_SUMMARY, true);
+        valuePlaceholdersValues.put(PLACEHOLDER_SUMMARY_DISPLAY_POSITION, PLACEHOLDER_SUMMARY_DISPLAY_POSITION_AUTO);
         attributesPlaceholdersValues.put(PLACEHOLDER_SOURCE_CODE, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
         final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
 
@@ -196,44 +191,6 @@ public class InternalComponentsMapperBodyProcessingTest {
 
         verify(bodyTransformer, times(1)).transform(anyString(), eq(TRANSACTION_ID), eq(Maps.immutableEntry("uuid", eomFile.getUuid())));
         assertThat(content.getSummary().getBodyXML(), equalTo(expectedContent.getSummary().getBodyXML()));
-    }
-
-    @Test
-    public void shouldTransformPushNotificationsCohortUK() {
-        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK, EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK);
-    }
-
-    @Test
-    public void shouldTransformPushNotificationsCohortGlobal() {
-        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL, EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL);
-    }
-
-    @Test
-    public void shouldTransformPushNotificationsCohortNone() {
-        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE, EXPECTED_PUSH_NOTIFICATIONS_COHORT_NONE);
-    }
-
-    private void testPushNotificationsCohort(String attributePushNotificationsCohort, String expectedPushNotificationsCohort) {
-        attributesPlaceholdersValues.put(PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT, attributePushNotificationsCohort);
-        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
-
-        final InternalComponents expectedContent = InternalComponents.builder()
-                .withValuesFrom(standardExpectedContent)
-                .withXMLBody(TRANSFORMED_BODY)
-                .withPushNotificationsCohort(expectedPushNotificationsCohort)
-                .build();
-
-        InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
-        assertThat(content.getPushNotificationsCohort(), equalTo(expectedContent.getPushNotificationsCohort()));
-    }
-
-    @Test
-    public void thatExceptionIsThrownIfContentPlaceholder() {
-        attributesPlaceholdersValues.put(PLACEHOLDER_SOURCE_CODE, InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
-        final EomFile eomFile = createStandardEomFile(uuid, EOM_COMPOUND_STORY, valuePlaceholdersValues, systemAttributesPlaceholdersValues, attributesPlaceholdersValues);
-
-        InternalComponents content = eomFileProcessor.map(eomFile, TRANSACTION_ID, LAST_MODIFIED, false);
-        assertNull(content.getBodyXML());
     }
 
     @Test

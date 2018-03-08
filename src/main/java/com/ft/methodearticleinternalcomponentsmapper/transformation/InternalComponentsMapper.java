@@ -152,6 +152,7 @@ public class InternalComponentsMapper {
             final AlternativeStandfirsts alternativeStandfirsts = AlternativeStandfirsts.builder()
                     .withPromotionalStandfirstVariant(Strings.nullToEmpty(xpath.evaluate(PROMOTIONAL_STANDFIRST_VARIANT_TAG_XPATH, valueDocument)).trim())
                     .build();
+            final Summary summary = extractSummary(xpath, valueDocument, transactionId, uuid.toString());
             final String pushNotificationsCohort = extractPushNotificationsCohort(xpath, attributesDocument);
 
             InternalComponents.Builder internalComponentsBuilder = InternalComponents.builder()
@@ -165,13 +166,8 @@ public class InternalComponentsMapper {
                     .withUnpublishedContentDescription(unpublishedContentDescription)
                     .withAlternativeTitles(alternativeTitles)
                     .withAlternativeStandfirsts(alternativeStandfirsts)
+                    .withSummary(summary)
                     .withPushNotificationsCohort(pushNotificationsCohort);
-
-            String sourceSummaryXML = retrieveField(xpath, SUMMARY_TAG_XPATH, valueDocument);
-            if (!sourceSummaryXML.isEmpty()) {
-                final String transformedSummaryXML = transformField("<body>" + sourceSummaryXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid.toString()));
-                internalComponentsBuilder.withSummary(Summary.builder().withBodyXML(transformedSummaryXML).build());
-            }
 
             if (SourceCode.CONTENT_PLACEHOLDER.equals(sourceCode)) {
                 if (isWordpressBlogContentPlaceholder(eomFile, xpath)) {
@@ -473,5 +469,16 @@ public class InternalComponentsMapper {
         }
 
         return pushNotificationsCohort.toLowerCase().replace("_", "-");
+    }
+
+    private Summary extractSummary(XPath xpath, Document eomFile, String transactionId, String uuid) throws XPathExpressionException {
+        final String bodyXML = Strings.nullToEmpty(xpath.evaluate(SUMMARY_TAG_XPATH, eomFile)).trim();
+        if (Strings.isNullOrEmpty(bodyXML)) {
+            return null;
+        }
+        final String transformedBodyXML = transformField("<body>" + bodyXML + "</body>", bodyTransformer, transactionId, Maps.immutableEntry("uuid", uuid));
+        String displayPosition = Strings.emptyToNull(xpath.evaluate(SUMMARY_TAG_XPATH + "/@display-position", eomFile).trim());
+
+        return Summary.builder().withBodyXML(transformedBodyXML).withDisplayPosition(displayPosition).build();
     }
 }

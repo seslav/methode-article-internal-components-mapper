@@ -1,18 +1,15 @@
 package com.ft.methodearticleinternalcomponentsmapper.transformation;
 
 import com.ft.bodyprocessing.html.Html5SelfClosingTagBodyProcessor;
+import com.ft.common.FileUtils;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleMarkedDeletedException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeArticleNotEligibleForPublishException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.MethodeMissingFieldException;
 import com.ft.methodearticleinternalcomponentsmapper.exception.UuidResolverException;
-import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeStandfirsts;
-import com.ft.methodearticleinternalcomponentsmapper.model.AlternativeTitles;
 import com.ft.methodearticleinternalcomponentsmapper.model.Design;
 import com.ft.methodearticleinternalcomponentsmapper.model.EomFile;
 import com.ft.methodearticleinternalcomponentsmapper.model.Image;
 import com.ft.methodearticleinternalcomponentsmapper.model.InternalComponents;
-import com.ft.methodearticleinternalcomponentsmapper.model.TableOfContents;
-import com.ft.methodearticleinternalcomponentsmapper.model.Topper;
 import com.ft.methodearticleinternalcomponentsmapper.validation.MethodeArticleValidator;
 import com.ft.methodearticleinternalcomponentsmapper.validation.PublishingStatus;
 import com.samskivert.mustache.Mustache;
@@ -22,12 +19,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -39,12 +30,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyVararg;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -54,42 +45,30 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class InternalComponentsMapperTest {
 
+    private static final String ATTRIBUTES_TEMPLATE = FileUtils.readFile("article/article_attributes.xml.mustache");
+    private static final String ARTICLE_WITH_ALL_COMPONENTS = FileUtils.readFile("article/article_with_all_components.xml.mustache");
+
+    private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
+    private static final String EOM_TYPE_COMPOUND_STORY = "EOM::CompoundStory";
+
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK = "UK_breaking_news";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK = "uk-breaking-news";
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "Global_breaking_news";
+    private static final String EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL = "global-breaking-news";
+    private static final String ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE = "None";
+
+    private static final String PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT = "pushNotificationsCohort";
+
     private static final String API_HOST = "test.api.ft.com";
     private static final String ARTICLE_UUID = UUID.randomUUID().toString();
+    private static final String BLOG_UUID = UUID.randomUUID().toString();
     private static final String TX_ID = "tid_test";
     private static final Date LAST_MODIFIED = new Date();
 
-    private static final String ARTICLE_WITH_ALL_COMPONENTS = readFile("article/article_with_all_components.xml.mustache");
-    private static final String ARTICLE_WITH_TOPPER = readFile("article/article_with_topper.xml.mustache");
-
-    private static final String TRANSFORMED_BODY = "<body><p>some other random text</p></body>";
-
-    private static String ATTRIBUTES = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-            "<!DOCTYPE ObjectMetadata SYSTEM \"/SysConfig/Classify/FTStories/classify.dtd\">" +
-            "<ObjectMetadata>" +
-            "    <OutputChannels>" +
-            "        <DIFTcom>" +
-            "            <isContentPackage>{{isContentPackage}}</isContentPackage>" +
-            "            <DIFTcomArticleImage>{{articleImage}}</DIFTcomArticleImage>" +
-            "            <DesignTheme>{{designTheme}}</DesignTheme>" +
-            "            <DesignLayout>{{designLayout}}</DesignLayout>" +
-            "        </DIFTcom>" +
-            "    </OutputChannels>" +
-            "    <EditorialNotes>" +
-            "        <Sources>" +
-            "           <Source>" +
-            "               <SourceCode>{{sourceCode}}</SourceCode>" +
-            "           </Source>" +
-            "        </Sources>" +
-            "    </EditorialNotes>" +
-            "    <WiresIndexing>" +
-            "    {{serviceid}}" +
-            "    {{ref_field}}" +
-            "    {{category}}" +
-            "    </WiresIndexing>" +
-            "</ObjectMetadata>";
-
     private EomFile eomFile;
+    private Map<String, Object> valuePlaceholdersValues;
+    private Map<String, Object> attributesPlaceholdersValues;
+
     private FieldTransformer bodyTransformer;
     private BlogUuidResolver blogUuidResolver;
 
@@ -101,16 +80,20 @@ public class InternalComponentsMapperTest {
     @Before
     public void setUp() {
         eomFile = mock(EomFile.class);
-        when(eomFile.getUuid()).thenReturn(ARTICLE_UUID);
-        when(eomFile.getAttributes()).thenReturn(ATTRIBUTES
-                .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-        );
+
+        valuePlaceholdersValues = new HashMap<>();
+
+        attributesPlaceholdersValues = new HashMap<>();
+        attributesPlaceholdersValues.put("isContentPackage", "false");
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.FT);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
 
         bodyTransformer = mock(FieldTransformer.class);
         when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
 
         blogUuidResolver = mock(BlogUuidResolver.class);
+        when(blogUuidResolver.resolveUuid("http://ftalphaville.ft.com/?p=2193913", "2193913", TX_ID)).thenReturn(BLOG_UUID);
 
         Html5SelfClosingTagBodyProcessor htmlFieldProcessor = spy(new Html5SelfClosingTagBodyProcessor());
 
@@ -127,387 +110,14 @@ public class InternalComponentsMapperTest {
     }
 
     @Test
-    public void thatValidArticleWithTopperIsMappedCorrectly() throws Exception {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String headline = "foobar headline";
-        String standfirst = "foobar standfirst";
-
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-                        .replaceFirst("<DesignTheme>\\{\\{designTheme\\}\\}</DesignTheme>", "basic")
-                        .replaceFirst("<DesignLayout>\\{\\{designLayout\\}\\}</DesignLayout>", "default")
-                )
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, headline, standfirst))
-                .build();
-
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-
-        assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
-        assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
-        assertThat(actual.getPublishReference(), equalTo(TX_ID));
-
-        assertThat(actual.getTopper().getBackgroundColour(), equalTo(backgroundColour));
-        assertThat(actual.getTopper().getLayout(), equalTo(layout));
-        assertThat(actual.getTopper().getStandfirst(), equalTo(standfirst));
-        assertThat(actual.getTopper().getHeadline(), equalTo(headline));
-    }
-
-    @Test
-    public void thatValidArticleWithTopperButEmptyStandfirstAndHeadlineIsMappedCorrectly() throws Exception {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-                        .replaceFirst("<DesignTheme>\\{\\{designTheme\\}\\}</DesignTheme>", "basic")
-                        .replaceFirst("<DesignLayout>\\{\\{designLayout\\}\\}</DesignLayout>", "default")
-                )
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-
-        assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
-        assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
-        assertThat(actual.getPublishReference(), equalTo(TX_ID));
-
-        assertThat(actual.getTopper().getBackgroundColour(), equalTo(backgroundColour));
-        assertThat(actual.getTopper().getLayout(), equalTo(layout));
-        assertThat(actual.getTopper().getStandfirst(), equalTo(""));
-        assertThat(actual.getTopper().getHeadline(), equalTo(""));
-    }
-
-    @Test(expected = MethodeArticleMarkedDeletedException.class)
-    public void thatArticleMarkedAsDeletedThrowsException() throws Exception {
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.DELETED);
-
-        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-    }
-
-    @Test(expected = MethodeArticleNotEligibleForPublishException.class)
-    public void thatArticleIneligibleForPublishThrowsException() throws Exception {
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean()))
-                .thenReturn(PublishingStatus.INELIGIBLE);
-
-        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-    }
-
-    @Test
-    public void testValidArticleWithAllComponentsIsMappedCorrectly() {
-        final String squareImg = UUID.randomUUID().toString();
-        final String standardImg = UUID.randomUUID().toString();
-        final String wideImg = UUID.randomUUID().toString();
-        final String expectedDesignTheme = "extra";
-        final String expectedDesignLayout = "wide";
-        final String sequence = "exact-order";
-        final String labelType = "part-number";
-        final String backgroundColour = "auto";
-        final String layout = "split-text-left";
-        final String headline = "Topper headline";
-        final String standfirst = "Topper standfirst";
-        final String contentPackageNext = "<p>Content package coming next text</p>";
-        final String skyboxHeadline = "sample skybox headline";
-        final String promotioanlTitleVariant = "promotional title variant";
-        final String promotioanlStandfirstVariant = "promotional standfirst variant";
-
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-                        .replaceFirst("\\{\\{designTheme\\}\\}", expectedDesignTheme)
-                        .replaceFirst("\\{\\{designLayout\\}\\}", expectedDesignLayout)
-                )
-                .withValue(buildEomFileValue(squareImg, standardImg, wideImg, expectedDesignTheme, sequence,
-                        labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline,
-                        promotioanlTitleVariant, promotioanlStandfirstVariant))
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-
-        assertThat(actual, is(notNullValue()));
-        assertThat(actual.getUuid(), is(ARTICLE_UUID));
-        assertThat(actual.getLastModified(), is(LAST_MODIFIED));
-        assertThat(actual.getPublishReference(), is(TX_ID));
-
-        final Design design = actual.getDesign();
-        assertThat(design, is(notNullValue()));
-        assertThat(design.getTheme(), is(expectedDesignTheme));
-        assertThat(design.getLayout(), is(expectedDesignLayout));
-
-        final TableOfContents tableOfContents = actual.getTableOfContents();
-        assertThat(tableOfContents, is(notNullValue()));
-        assertThat(tableOfContents.getSequence(), is(sequence));
-        assertThat(tableOfContents.getLabelType(), is(labelType));
-
-        final List<Image> leadImages = actual.getLeadImages();
-        assertThat(leadImages, is(notNullValue()));
-        assertThat(leadImages.size(), is(3));
-        assertThat(leadImages.get(0).getId(), is(squareImg));
-        assertThat(leadImages.get(1).getId(), is(standardImg));
-        assertThat(leadImages.get(2).getId(), is(wideImg));
-
-        final Topper topper = actual.getTopper();
-        assertThat(topper, is(notNullValue()));
-        assertThat(topper.getLayout(), is(layout));
-        assertThat(topper.getBackgroundColour(), is(backgroundColour));
-        assertThat(topper.getHeadline(), is(headline));
-        assertThat(topper.getStandfirst(), is(standfirst));
-
-        final AlternativeTitles alternativeTitles = actual.getAlternativeTitles();
-        assertThat(alternativeTitles.getShortTeaser(), is(skyboxHeadline));
-        assertThat(alternativeTitles.getPromotionalTitleVariant(), is(promotioanlTitleVariant));
-
-        final AlternativeStandfirsts alternativeStandfirsts = actual.getAlternativeStandfirsts();
-        assertThat(alternativeStandfirsts.getPromotionalStandfirstVariant(), is(promotioanlStandfirstVariant));
-
-        assertThat(actual.getUnpublishedContentDescription(), is(contentPackageNext));
-    }
-
-    @Test
-    public void testDesignThemeFromOldSource() {
-        final String squareImg = UUID.randomUUID().toString();
-        final String standardImg = UUID.randomUUID().toString();
-        final String wideImg = UUID.randomUUID().toString();
-        final String oldDesignTheme = "extra";
-        final String sequence = "exact-order";
-        final String labelType = "part-number";
-        final String backgroundColour = "auto";
-        final String layout = "split-text-left";
-        final String headline = "Topper headline";
-        final String standfirst = "Topper standfirst";
-        final String contentPackageNext = "<p>Content package coming next text</p>";
-        final String skyboxHeadline = "sample skybox headline";
-        final String promotioanlTitleVariant = "promotional title variant";
-        final String promotioanlStandfirstVariant = "promotional standfirst variant";
-
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-                        .replaceFirst("<DesignTheme>\\{\\{designTheme\\}\\}</DesignTheme>", "")
-                        .replaceFirst("<DesignLayout>\\{\\{designLayout\\}\\}</DesignLayout>", "")
-                )
-                .withValue(buildEomFileValue(squareImg, standardImg, wideImg, oldDesignTheme, sequence,
-                        labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline,
-                        promotioanlTitleVariant, promotioanlStandfirstVariant))
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-
-        final Design design = actual.getDesign();
-        assertThat(design, is(notNullValue()));
-        assertThat(design.getTheme(), is(oldDesignTheme));
-    }
-
-    @Test
-    public void testDesignThemeFromNoSource() throws UnsupportedEncodingException {
-        final String squareImg = UUID.randomUUID().toString();
-        final String standardImg = UUID.randomUUID().toString();
-        final String wideImg = UUID.randomUUID().toString();
-        final String sequence = "exact-order";
-        final String labelType = "part-number";
-        final String backgroundColour = "auto";
-        final String layout = "split-text-left";
-        final String headline = "Topper headline";
-        final String standfirst = "Topper standfirst";
-        final String contentPackageNext = "<p>Content package coming next text</p>";
-        final String skyboxHeadline = "sample skybox headline";
-        final String promotioanlTitleVariant = "promotional title variant";
-        final String promotioanlStandfirstVariant = "promotional standfirst variant";
-
-        byte[] value = buildEomFileValue(squareImg, standardImg, wideImg, "toremove", sequence,
-                labelType, backgroundColour, layout, headline, standfirst, contentPackageNext, skyboxHeadline,
-                promotioanlTitleVariant, promotioanlStandfirstVariant);
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-                        .replaceFirst("<DesignTheme>\\{\\{designTheme\\}\\}</DesignTheme>", "")
-                        .replaceFirst("<DesignLayout>\\{\\{designLayout\\}\\}</DesignLayout>", "")
-                )
-                .withValue(new String(value, Charset.forName("UTF-8")).replaceFirst("design-theme=\"toremove\"", "").getBytes("UTF-8"))
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-
-        final Design design = actual.getDesign();
-        assertThat(design, is(notNullValue()));
-        assertThat(design.getTheme(), is("basic"));
-        assertThat(design.getLayout(), is("default"));
-    }
-
-    @Test
-    public void testValidArticleWithMissingTopperLayoutWillHaveNoTopper() {
-        final String squareImg = UUID.randomUUID().toString();
-        final String standardImg = UUID.randomUUID().toString();
-        final String wideImg = UUID.randomUUID().toString();
-        final String expectedDesignTheme = "extra";
-        final String expectedDesignLayout = "wide";
-        final String sequence = "exact-order";
-        final String labelType = "part-number";
-
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT)
-                        .replaceFirst("\\{\\{designTheme\\}\\}", expectedDesignTheme)
-                        .replaceFirst("\\{\\{designLayout\\}\\}", expectedDesignLayout)
-                )
-                .withValue(buildEomFileValue(squareImg, standardImg, wideImg, expectedDesignTheme, sequence,
-                        labelType, "auto", "", "Topper Headline", "Topper standfirst", null, "", "", ""))
-                .build();
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-
-        assertThat(actual, is(notNullValue()));
-        assertThat(actual.getUuid(), is(ARTICLE_UUID));
-        assertThat(actual.getLastModified(), is(LAST_MODIFIED));
-        assertThat(actual.getPublishReference(), is(TX_ID));
-
-        final Design design = actual.getDesign();
-        assertThat(design, is(notNullValue()));
-        assertThat(design.getTheme(), is(expectedDesignTheme));
-        assertThat(design.getLayout(), is(expectedDesignLayout));
-
-        final TableOfContents tableOfContents = actual.getTableOfContents();
-        assertThat(tableOfContents, is(notNullValue()));
-        assertThat(tableOfContents.getSequence(), is(sequence));
-        assertThat(tableOfContents.getLabelType(), is(labelType));
-
-        final List<Image> leadImages = actual.getLeadImages();
-        assertThat(leadImages, is(notNullValue()));
-        assertThat(leadImages.size(), is(3));
-        assertThat(leadImages.get(0).getId(), is(squareImg));
-        assertThat(leadImages.get(1).getId(), is(standardImg));
-        assertThat(leadImages.get(2).getId(), is(wideImg));
-
-        assertThat(actual.getTopper(), is(nullValue()));
-    }
-
-    @Test
-    public void testNullContentPackageNextIsNullUpcomingDesc() throws Exception {
-        eomFile = buildEomFileWithContentPackageNext(null);
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
-    }
-
-    @Test
-    public void testEmptyContentPackageNextIsNullUpcomingDesc() throws Exception {
-        eomFile = buildEomFileWithContentPackageNext("");
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
-    }
-
-    @Test
-    public void testBlankContentPackageNextIsNullUpcomingDesc() throws Exception {
-        eomFile = buildEomFileWithContentPackageNext("\t \r");
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
-    }
-
-    @Test
-    public void testDummyContentPackageNextIsNullUpcomingDesc() throws Exception {
-        eomFile = buildEomFileWithContentPackageNext("<?EM-dummyText ... coming next ... ?>");
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
-    }
-
-    @Test
-    public void testUnformattedContentPackageNextIsTrimmed() throws Exception {
-        final String unformattedContentPackageNext = " This is a unformatted description of the upcoming content ";
-        eomFile = buildEomFileWithContentPackageNext(unformattedContentPackageNext);
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-        assertThat(actual.getUnpublishedContentDescription(), is(unformattedContentPackageNext.trim()));
-    }
-
-    @Test
-    public void testFormattedContentPackageNextIsPreserved() throws Exception {
-        final String formattedContentPackageNext = "<p>This is a unformatted <em>description</em> of the upcoming content</p>";
-        eomFile = buildEomFileWithContentPackageNext(formattedContentPackageNext);
-
-        when(methodeArticleValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), anyBoolean())).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
-        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
-        assertThat(actual.getUnpublishedContentDescription(), is(formattedContentPackageNext.trim()));
-    }
-
-    @Test
     public void thatContentPlaceholderUuidWithMissingCategoryDoesntGetResolved() throws Exception {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
-        String ref_field = "<ref_field>2193913</ref_field>";
+        String serviceId = "http://ftalphaville.ft.com/?p=2193913";
+        String ref_field = "2193913";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
 
-        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
         assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
@@ -518,27 +128,15 @@ public class InternalComponentsMapperTest {
 
     @Test
     public void thatContentPlaceholderUuidWithNonBlogCategoryDoesntGetResolved() throws Exception {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
-        String ref_field = "<ref_field>2193913</ref_field>";
-        String category = "<category>notblog</category>";
+        String serviceId = "http://ftalphaville.ft.com/?p=2193913";
+        String ref_field = "2193913";
+        String category = "notblog";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field)
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
+        attributesPlaceholdersValues.put("category", category);
 
-        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
         assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
@@ -573,263 +171,469 @@ public class InternalComponentsMapperTest {
     }
 
     private void contentPlaceholderWithBlogCategory(String blogCategory) {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
-        String ref_field = "<ref_field>2193913</ref_field>";
-        String category = "<category>" + blogCategory +"</category>";
+        String serviceId = "http://ftalphaville.ft.com/?p=2193913";
+        String ref_field = "2193913";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field)
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
+        attributesPlaceholdersValues.put("category", blogCategory);
 
-        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
-        when(blogUuidResolver.resolveUuid(anyString(), anyString(), anyString())).thenReturn("resolved_uuid");
-
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
 
-        assertThat(actual.getUuid(), equalTo("resolved_uuid"));
+        assertThat(actual.getUuid(), equalTo(BLOG_UUID));
         assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
         assertThat(actual.getPublishReference(), equalTo(TX_ID));
+        verify(blogUuidResolver, times(1)).resolveUuid(anyString(), anyString(), anyString());
     }
 
     @Test(expected = UuidResolverException.class)
     public void thatExceptionIsThrownWhenContentPlaceholderUuidCantBeResolved() {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
-        String ref_field = "<ref_field>2193913</ref_field>";
-        String category = "<category>blog</category>";
+        String serviceId = "http://ftalphaville.ft.com/?p=2193913";
+        String ref_field = "2193913";
+        String category = "blog";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field)
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
+        attributesPlaceholdersValues.put("category", category);
 
         when(blogUuidResolver.resolveUuid(anyString(), anyString(), anyString())).thenThrow(new UuidResolverException("Can't resolve uuid"));
 
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = MethodeMissingFieldException.class)
     public void thatExceptionIsThrownForContentPlaceholderWhenRefFieldIsEmpty() {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
-        String ref_field = "<ref_field></ref_field>";
-        String category = "<category>blog</category>";
+        String serviceId = "http://ftalphaville.ft.com/?p=2193913";
+        String ref_field = "";
+        String category = "blog";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field)
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
+        attributesPlaceholdersValues.put("category", category);
 
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = MethodeMissingFieldException.class)
     public void thatExceptionIsThrownForContentPlaceholderWhenRefFieldIsMissing() {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid>http://ftalphaville.ft.com/?p=2193913</serviceid>";
-        String category = "<category>blog</category>";
+        String serviceId = "http://ftalphaville.ft.com/?p=2193913";
+        String category = "blog";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", "")
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("category", category);
 
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = MethodeMissingFieldException.class)
     public void thatExceptionIsThrownForContentPlaceholderWhenServiceIdIsEmpty() {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String serviceId = "<serviceid></serviceid>";
-        String ref_field = "<ref_field>2193913</ref_field>";
-        String category = "<category>blog</category>";
+        String serviceId = "";
+        String ref_field = "2193913";
+        String category = "blog";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", serviceId)
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field)
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        attributesPlaceholdersValues.put("serviceid", serviceId);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
+        attributesPlaceholdersValues.put("category", category);
 
+        when(blogUuidResolver.resolveUuid(anyString(), anyString(), anyString())).thenThrow(new UuidResolverException("Can't resolve uuid"));
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = MethodeMissingFieldException.class)
     public void thatExceptionIsThrownForContentPlaceholderWhenServiceIdIsMissing() {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-        String ref_field = "<ref_field>2193913</ref_field>";
-        String category = "<category>blog</category>";
+        String ref_field = "2193913";
+        String category = "blog";
 
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER)
-                        .replaceFirst("\\{\\{serviceid\\}\\}", "")
-                        .replaceFirst("\\{\\{ref_field\\}\\}", ref_field)
-                        .replaceFirst("\\{\\{category\\}\\}", category))
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        attributesPlaceholdersValues.put("ref_field", ref_field);
+        attributesPlaceholdersValues.put("category", category);
+
+        when(blogUuidResolver.resolveUuid(anyString(), anyString(), anyString())).thenThrow(new UuidResolverException("Can't resolve uuid"));
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+    }
+
+    @Test
+    public void thatMapsContentPlaceholders() {
+        attributesPlaceholdersValues.put("sourceCode", InternalComponentsMapper.SourceCode.CONTENT_PLACEHOLDER);
+        final EomFile eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        InternalComponents content = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertNull(content.getBodyXML());
+    }
+
+    @Test(expected = MethodeArticleNotEligibleForPublishException.class)
+    public void thatExceptionIsThrownWhenSourceCodeNotFTOrContentPlaceholder() throws Exception {
+        attributesPlaceholdersValues.put("sourceCode", "THIS_IS_NOT_A_GOOD_SOURCE_CODE");
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
 
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
     @Test(expected = MethodeArticleNotEligibleForPublishException.class)
-    public void thatExceptionIsThrownWhenSourceCodeNotFTOrContentPlaceholder() throws Exception {
-        String backgroundColour = "fooBackground";
-        String layout = "barColor";
-
-        eomFile = new EomFile.Builder()
-                .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", "FastFT")
-                        .replaceFirst("<DesignTheme>\\{\\{designTheme\\}\\}</DesignTheme>", "basic")
-                        .replaceFirst("<DesignLayout>\\{\\{designLayout\\}\\}</DesignLayout>", "default")
-                )
-                .withValue(buildTopperOnlyEomFileValue(backgroundColour, layout, "", ""))
-                .build();
-
-        when(methodeContentPlaceholderValidator.getPublishingStatus(eq(eomFile), eq(TX_ID), eq(Boolean.FALSE))).thenReturn(PublishingStatus.VALID);
-        when(bodyTransformer.transform(anyString(), anyString(), anyVararg())).thenReturn(TRANSFORMED_BODY);
+    public void thatArticleIneligibleForPublishThrowsException() throws Exception {
+        when(methodeArticleValidator.getPublishingStatus(any(), any(), anyBoolean()))
+                .thenReturn(PublishingStatus.INELIGIBLE);
 
         internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
-    private byte[] buildTopperOnlyEomFileValue(
-            String backgroundColour,
-            String layout,
-            String headline,
-            String standfirst) {
+    @Test(expected = MethodeArticleMarkedDeletedException.class)
+    public void thatArticleMarkedAsDeletedThrowsException() throws Exception {
+        when(methodeArticleValidator.getPublishingStatus(any(), any(), anyBoolean()))
+                .thenReturn(PublishingStatus.DELETED);
 
-        Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_WITH_TOPPER);
-
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("backgroundColour", backgroundColour);
-        attributes.put("layout", layout);
-        attributes.put("headline", headline);
-        attributes.put("standfirst", standfirst);
-
-        return mustache.execute(attributes).getBytes(UTF_8);
+        internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
     }
 
-    private EomFile buildEomFileWithContentPackageNext(String contentPackageNext) {
+    @Test
+    public void testDesignThemeFromOldSource() {
+        final String oldDesignTheme = "extra";
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", oldDesignTheme);
+        valuePlaceholdersValues.put("tableOfContentsSequence", "tableOfContentsSequence");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "tableOfContentsLabelType");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final Design design = actual.getDesign();
+        assertThat(design, is(notNullValue()));
+        assertThat(design.getTheme(), is(oldDesignTheme));
+    }
+
+    @Test
+    public void testDesignThemeFromNewSourcePrioritisedOverOldOne() {
+        final String oldDesignTheme = "extra";
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", oldDesignTheme);
+        valuePlaceholdersValues.put("tableOfContentsSequence", "tableOfContentsSequence");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "tableOfContentsLabelType");
+
+        final String designTheme = "extra";
+        attributesPlaceholdersValues.put("designTheme", designTheme);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final Design design = actual.getDesign();
+        assertThat(design, is(notNullValue()));
+        assertThat(design.getTheme(), is(designTheme));
+    }
+
+    @Test
+    public void testDesignThemeFromNoSource() {
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final Design design = actual.getDesign();
+        assertThat(design, is(notNullValue()));
+        assertThat(design.getTheme(), is("basic"));
+    }
+
+    @Test
+    public void testDesignLayout() {
+        final String designLayout = "wide";
+        attributesPlaceholdersValues.put("designLayout", designLayout);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final Design design = actual.getDesign();
+        assertThat(design, is(notNullValue()));
+        assertThat(design.getLayout(), is(designLayout));
+    }
+
+    @Test
+    public void testDesignLayoutFromNoSource() {
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final Design design = actual.getDesign();
+        assertThat(design, is(notNullValue()));
+        assertThat(design.getLayout(), is("default"));
+    }
+
+    @Test
+    public void testTableOfContents() {
+        final String tableOfContentsSequence = "exact-order";
+        final String tableOfContentsLabelType = "part-number";
+
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "oldDesignTheme");
+        valuePlaceholdersValues.put("tableOfContentsSequence", tableOfContentsSequence);
+        valuePlaceholdersValues.put("tableOfContentsLabelType", tableOfContentsLabelType);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getTableOfContents(), is(notNullValue()));
+        assertThat(actual.getTableOfContents().getSequence(), is(tableOfContentsSequence));
+        assertThat(actual.getTableOfContents().getLabelType(), is(tableOfContentsLabelType));
+    }
+
+    @Test
+    public void testTableOfContentsNullIfBothSequenceAndLabelEmpty() {
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "oldDesignTheme");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getTableOfContents(), is(nullValue()));
+    }
+
+    @Test
+    public void testLeadImages() {
+        final String squareImageUUID = UUID.randomUUID().toString();
+        final String standardImageUUID = UUID.randomUUID().toString();
+        final String wideImageUUID = UUID.randomUUID().toString();
+
+        valuePlaceholdersValues.put("leadImageSet", true);
+        valuePlaceholdersValues.put("squareImageUUID", squareImageUUID);
+        valuePlaceholdersValues.put("standardImageUUID", standardImageUUID);
+        valuePlaceholdersValues.put("wideImageUUID", wideImageUUID);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        final List<Image> leadImages = actual.getLeadImages();
+        assertThat(leadImages, is(notNullValue()));
+        assertThat(leadImages.size(), is(3));
+        assertThat(leadImages.get(0).getId(), is(squareImageUUID));
+        assertThat(leadImages.get(1).getId(), is(standardImageUUID));
+        assertThat(leadImages.get(2).getId(), is(wideImageUUID));
+    }
+
+    @Test
+    public void thatValidArticleWithTopperIsMappedCorrectly() throws Exception {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+        String headline = "foobar headline";
+        String standfirst = "foobar standfirst";
+
+        valuePlaceholdersValues.put("topper", true);
+        valuePlaceholdersValues.put("topperBackgroundColour", backgroundColour);
+        valuePlaceholdersValues.put("topperLayout", layout);
+        valuePlaceholdersValues.put("topperHeadline", headline);
+        valuePlaceholdersValues.put("topperStandfirst", standfirst);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
+        assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
+        assertThat(actual.getPublishReference(), equalTo(TX_ID));
+
+        assertThat(actual.getTopper().getBackgroundColour(), equalTo(backgroundColour));
+        assertThat(actual.getTopper().getLayout(), equalTo(layout));
+        assertThat(actual.getTopper().getStandfirst(), equalTo(standfirst));
+        assertThat(actual.getTopper().getHeadline(), equalTo(headline));
+    }
+
+    @Test
+    public void thatValidArticleWithTopperButEmptyStandfirstAndHeadlineIsMappedCorrectly() throws Exception {
+        String backgroundColour = "fooBackground";
+        String layout = "barColor";
+
+        valuePlaceholdersValues.put("topper", true);
+        valuePlaceholdersValues.put("topperBackgroundColour", backgroundColour);
+        valuePlaceholdersValues.put("topperLayout", layout);
+        valuePlaceholdersValues.put("topperHeadline", "");
+        valuePlaceholdersValues.put("topperStandfirst", "");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getUuid(), equalTo(ARTICLE_UUID));
+        assertThat(actual.getLastModified(), equalTo(LAST_MODIFIED));
+        assertThat(actual.getPublishReference(), equalTo(TX_ID));
+
+        assertThat(actual.getTopper().getBackgroundColour(), equalTo(backgroundColour));
+        assertThat(actual.getTopper().getLayout(), equalTo(layout));
+        assertThat(actual.getTopper().getStandfirst(), equalTo(""));
+        assertThat(actual.getTopper().getHeadline(), equalTo(""));
+    }
+
+    @Test
+    public void testValidArticleWithMissingTopperLayoutWillHaveNoTopper() {
+        String backgroundColour = "fooBackground";
+
+        valuePlaceholdersValues.put("topper", true);
+        valuePlaceholdersValues.put("topperBackgroundColour", backgroundColour);
+        valuePlaceholdersValues.put("topperLayout", "");
+        valuePlaceholdersValues.put("topperHeadline", "");
+        valuePlaceholdersValues.put("topperStandfirst", "");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getTopper(), is(nullValue()));
+    }
+
+    @Test
+    public void testNullContentPackageNextIsNullUpcomingDesc() throws Exception {
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+        valuePlaceholdersValues.put("contentPackageNext", null);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
+    }
+
+    @Test
+    public void testEmptyContentPackageNextIsNullUpcomingDesc() throws Exception {
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+        valuePlaceholdersValues.put("contentPackageNext", "");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
+    }
+
+    @Test
+    public void testBlankContentPackageNextIsNullUpcomingDesc() throws Exception {
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+        valuePlaceholdersValues.put("contentPackageNext", "\t \r");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
+    }
+
+    @Test
+    public void testDummyContentPackageNextIsNullUpcomingDesc() throws Exception {
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+        valuePlaceholdersValues.put("contentPackageNext", "<?EM-dummyText ... coming next ... ?>");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(nullValue()));
+    }
+
+    @Test
+    public void testUnformattedContentPackageNextIsTrimmed() throws Exception {
+        final String unformattedContentPackageNext = " This is a unformatted description of the upcoming content ";
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+        valuePlaceholdersValues.put("contentPackageNext", unformattedContentPackageNext);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(unformattedContentPackageNext.trim()));
+    }
+
+    @Test
+    public void testFormattedContentPackageNextIsPreserved() throws Exception {
+        final String formattedContentPackageNext = "<p>This is a unformatted <em>description</em> of the upcoming content</p>";
+        valuePlaceholdersValues.put("contentPackage", true);
+        valuePlaceholdersValues.put("oldDesignTheme", "");
+        valuePlaceholdersValues.put("tableOfContentsSequence", "");
+        valuePlaceholdersValues.put("tableOfContentsLabelType", "");
+        valuePlaceholdersValues.put("contentPackageNext", formattedContentPackageNext);
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getUnpublishedContentDescription(), is(formattedContentPackageNext.trim()));
+    }
+
+    @Test
+    public void testSummaryDisplayPosition() {
+        final String displayPosition = "auto";
+        valuePlaceholdersValues.put("summary", true);
+        valuePlaceholdersValues.put("displayPosition", displayPosition);
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getSummary().getDisplayPosition(), equalTo(displayPosition));
+    }
+
+    @Test
+    public void testSummaryDisplayPositionEmptyGiveNull() {
+        valuePlaceholdersValues.put("summary", true);
+        valuePlaceholdersValues.put("displayPosition", "");
+
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+        final InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+
+        assertThat(actual.getSummary().getDisplayPosition(), equalTo(null));
+    }
+
+    @Test
+    public void shouldTransformPushNotificationsCohortUK() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_UK, EXPECTED_PUSH_NOTIFICATIONS_COHORT_UK);
+    }
+
+    @Test
+    public void shouldTransformPushNotificationsCohortGlobal() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_GLOBAL, EXPECTED_PUSH_NOTIFICATIONS_COHORT_GLOBAL);
+    }
+
+    @Test
+    public void shouldTransformPushNotificationsCohortNone() {
+        testPushNotificationsCohort(ATTRIBUTE_PUSH_NOTIFICATIONS_COHORT_NONE, null);
+    }
+
+    private void testPushNotificationsCohort(String attributePushNotificationsCohort, String expectedPushNotificationsCohort) {
+        attributesPlaceholdersValues.put(PLACEHOLDER_PUSH_NOTIFICATIONS_COHORT, attributePushNotificationsCohort);
+        eomFile = createEomFile(valuePlaceholdersValues, attributesPlaceholdersValues);
+
+        InternalComponents actual = internalComponentsMapper.map(eomFile, TX_ID, LAST_MODIFIED, false);
+        assertThat(actual.getPushNotificationsCohort(), equalTo(expectedPushNotificationsCohort));
+    }
+
+    private EomFile createEomFile(Map<String, Object> valuePlaceholdersValues,
+                                  Map<String, Object> attributesPlaceholdersValues) {
         return new EomFile.Builder()
                 .withUuid(ARTICLE_UUID)
-                .withType("EOM::CompoundStory")
-                .withAttributes(ATTRIBUTES
-                        .replaceFirst("\\{\\{articleImage\\}\\}", "Article size")
-                        .replaceFirst("\\{\\{sourceCode\\}\\}", InternalComponentsMapper.SourceCode.FT))
-                .withValue(buildEomFileValue(
-                        "squareId",
-                        "standardId",
-                        "wideId",
-                        "designTheme",
-                        "seq",
-                        "lblType",
-                        "colour",
-                        "layout",
-                        "headline",
-                        "standfirst",
-                        contentPackageNext,
-                        "skyboxHeadline",
-                        "promotionalTitleVariant",
-                        "promotionalStandfirstVariant"))
+                .withType(EOM_TYPE_COMPOUND_STORY)
+                .withValue(buildEomFileValue(valuePlaceholdersValues))
+                .withAttributes(buildEomFileAttributes(attributesPlaceholdersValues))
+                .withWorkflowStatus("Stories/WebReady")
+                .withWebUrl(null)
                 .build();
     }
 
-    private byte[] buildEomFileValue(
-            String squareImg,
-            String standardImg,
-            String wideImg,
-            String designTheme,
-            String sequence,
-            String labelType,
-            String backgroundColour,
-            String layout,
-            String headline,
-            String standfirst,
-            String contentPackageNext,
-            String skyboxHeadline,
-            String promotioanlTitleVariant,
-            String promotioanlStandfirstVariant) {
+    private static byte[] buildEomFileValue(Map<String, Object> valuePlaceholdersValues) {
         Template mustache = Mustache.compiler().escapeHTML(false).compile(ARTICLE_WITH_ALL_COMPONENTS);
-
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("squareImageUUID", squareImg);
-        attributes.put("standardImageUUID", standardImg);
-        attributes.put("wideImageUUID", wideImg);
-        attributes.put("backgroundColour", backgroundColour);
-        attributes.put("designTheme", designTheme);
-        attributes.put("sequence", sequence);
-        attributes.put("labelType", labelType);
-        attributes.put("backgroundColour", backgroundColour);
-        attributes.put("layout", layout);
-        attributes.put("headline", headline);
-        attributes.put("standfirst", standfirst);
-        attributes.put("contentPackageNext", contentPackageNext);
-        attributes.put("skyboxHeadline", skyboxHeadline);
-        attributes.put("promotioanlTitleVariant", promotioanlTitleVariant);
-        attributes.put("promotioanlStandfirstVariant", promotioanlStandfirstVariant);
-
-        return mustache.execute(attributes).getBytes(UTF_8);
+        return mustache.execute(valuePlaceholdersValues).getBytes(UTF_8);
     }
 
-    private static String readFile(final String path) {
-        try {
-            return new String(Files.readAllBytes(Paths.get(
-                    InternalComponentsMapperTest.class
-                            .getClassLoader()
-                            .getResource(path)
-                            .toURI())),
-                    "UTF-8"
-            );
-        } catch (IOException | URISyntaxException ex) {
-            throw new RuntimeException(ex);
-        }
+    private static String buildEomFileAttributes(Map<String, Object> attributesPlaceholdersValues) {
+        Template mustache = Mustache.compiler().escapeHTML(false).compile(ATTRIBUTES_TEMPLATE);
+        return mustache.execute(attributesPlaceholdersValues);
     }
 }
