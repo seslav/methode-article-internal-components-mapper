@@ -11,7 +11,6 @@ import static org.junit.Assert.assertThat;
 public class ImageExtractorBodyProcessorTest {
 
     private BodyProcessingContext bodyProcessingContext;
-
     private ImageExtractorBodyProcessor imageExtractorBodyProcessor;
 
     @Before
