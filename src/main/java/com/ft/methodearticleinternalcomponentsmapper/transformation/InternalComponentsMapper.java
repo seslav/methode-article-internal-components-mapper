@@ -471,8 +471,8 @@ public class InternalComponentsMapper {
         return pushNotificationsCohort.toLowerCase().replace("_", "-");
     }
 
-    private Summary extractSummary(XPath xpath, Document eomFile, String transactionId, String uuid) throws XPathExpressionException {
-        final String bodyXML = Strings.nullToEmpty(xpath.evaluate(SUMMARY_TAG_XPATH, eomFile)).trim();
+    private Summary extractSummary(XPath xpath, Document eomFile, String transactionId, String uuid) throws TransformerException, XPathExpressionException {
+        final String bodyXML = retrieveField(xpath, SUMMARY_TAG_XPATH, eomFile);
         if (Strings.isNullOrEmpty(bodyXML)) {
             return null;
         }
