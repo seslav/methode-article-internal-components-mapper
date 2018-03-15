@@ -1505,6 +1505,7 @@ public class BodyProcessingFieldTransformerFactoryTest {
         checkTransformation(originalContent, transformedContent, Maps.immutableEntry("uuid", articleUuid));
     }
 
+    @Test
     public void thatPromoBoxesAreExtractedFromParagraphs() {
         String originalContent="<body>" +
                 "<p><b>" +
