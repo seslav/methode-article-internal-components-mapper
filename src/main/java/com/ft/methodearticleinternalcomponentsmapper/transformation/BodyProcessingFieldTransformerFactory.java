@@ -56,6 +56,10 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
     private List<BodyProcessor> bodyProcessors() {
         return asList(
                 stripByAttributesAndValuesBodyProcessor(),
+                new RegexRemoverBodyProcessor("<em>\\s*</em>"),
+                new RegexRemoverBodyProcessor("<strong>\\s*</strong>"),
+                new RegexRemoverBodyProcessor("<span>\\s*</span>"),
+                new RegexRemoverBodyProcessor("<b>\\s*</b>"),
                 new RegexRemoverBodyProcessor("<(p|li|h[1-6])[^/>]*>(\\s|(<br\\s*/>))*</(p|li|h[1-6])>"),
                 new RegexRemoverBodyProcessor("<ul[^/]*>\\s*</ul>"),
                 new DOMTransformingBodyProcessor(xpathHandlers),
@@ -65,6 +69,10 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
                 new MethodeLinksBodyProcessor(documentStoreApiClient),
                 new ModularXsltBodyProcessor(xslts()),
                 ftTagsLinksRewriteBodyProcessor(),
+                new RegexReplacerBodyProcessor("\\.\\s*\\.\\s*\\.\\s*", "\u2026"),
+                new RegexReplacerBodyProcessor("---", "\u2014"),
+                new RegexReplacerBodyProcessor("--", "\u2013"),
+                new RegexReplacerBodyProcessor("</p>(\\s*<br\\s*/>\\s*)*<p>", "</p><p>"),
                 new RegexRemoverBodyProcessor("(<p>)(\\s|(<br\\s*/>))*(</p>)"),
                 new RegexReplacerBodyProcessor("</p>(\\r?\\n)+<p>", "</p>" + System.lineSeparator() + "<p>"),
                 new RegexReplacerBodyProcessor("</p> +<p>", "</p><p>"),
