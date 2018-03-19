@@ -1507,7 +1507,7 @@ public class BodyProcessingFieldTransformerFactoryTest {
 
     @Test
     public void thatPromoBoxesAreExtractedFromParagraphs() {
-        String originalContent="<body>" +
+        String originalContent = "<body>" +
                 "<p><b>" +
                 "<promo-box align=\"left\">&lt;" +
                 "<table width=\"170px\" align=\"left\" cellpadding=\"6px\">" +
@@ -1539,13 +1539,13 @@ public class BodyProcessingFieldTransformerFactoryTest {
                 "<p><strong></strong> lorem ipsum</p>" +
                 "<p><strong> </strong></p>" +
                 "<p><b></b><b></b>doler sit amet</p>" +
-                "<p></p>" + 
+                "<p></p>" +
                 "<em></em>" +
                 "<span> </span>" +
                 "</body>";
-		String transformedContent = "<body>" + 
+        String transformedContent = "<body>" +
                 "<p> lorem ipsum</p>" +
-                "<p>doler sit amet</p>" + 
+                "<p>doler sit amet</p>" +
                 "</body>";
         checkTransformation(originalContent, transformedContent);
     }
@@ -1556,7 +1556,7 @@ public class BodyProcessingFieldTransformerFactoryTest {
                 "<p>lorem ipsum</p>" +
                 "<br />" +
                 "<br/>" +
-                " <br/> " + 
+                " <br/> " +
                 "<p>doler sit amet</p>" +
                 "<p>doler sit amet</p>" +
                 "</body>";
@@ -1573,7 +1573,7 @@ public class BodyProcessingFieldTransformerFactoryTest {
     @Test
     public void shouldReplaceThreeDots() {
         String originalContent = "<body>Here is a text with three dots...</body>";
-        String transformedContent="<body>Here is a text with three dots\u2026</body>";
+        String transformedContent = "<body>Here is a text with three dots\u2026</body>";
 
         checkTransformation(originalContent, transformedContent);
     }
@@ -1581,24 +1581,91 @@ public class BodyProcessingFieldTransformerFactoryTest {
     @Test
     public void shouldReplaceThreeInterSpacedDots() {
         String originalContent = "<body>Here is a text with three dots. . .</body>";
-        String transformedContent="<body>Here is a text with three dots\u2026</body>";
+        String transformedContent = "<body>Here is a text with three dots\u2026</body>";
 
         checkTransformation(originalContent, transformedContent);
     }
 
     @Test
-    public void shouldReplaceTwoConsecutiveHyphens(){
+    public void shouldReplaceTwoConsecutiveHyphens() {
         String originalContent = "<body>Here is a text with two consecutive -- hyphens</body>";
-        String transformedContent="<body>Here is a text with two consecutive \u2013 hyphens</body>";
+        String transformedContent = "<body>Here is a text with two consecutive \u2013 hyphens</body>";
 
         checkTransformation(originalContent, transformedContent);
     }
 
     @Test
-    public void shouldReplaceThreeConsecutiveHyphens(){
+    public void shouldReplaceThreeConsecutiveHyphens() {
         String originalContent = "<body>Here is a text with three consecutive --- hyphens</body>";
-        String transformedContent="<body>Here is a text with three consecutive \u2014 hyphens</body>";
+        String transformedContent = "<body>Here is a text with three consecutive \u2014 hyphens</body>";
 
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformPodcastPromoWithBothTitleAndDescription() {
+        String originalContent = "<body><podcast-promo episode-uuid=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<h2>Both title and description fields populated</h2>\n" +
+                "<p>Description here</p>\n" +
+                "</podcast-promo></body>";
+        String transformedContent = "<body><podcast-promo id=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<h2>Both title and description fields populated</h2>" +
+                "<p>Description here</p>" +
+                "</podcast-promo></body>";
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformPodcastPromoWithTitleButNoDescription() {
+        String originalContent = "<body><podcast-promo episode-uuid=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<h2>Title but no description variant</h2>\n" +
+                "<p><?EM-dummyText Podcast promo description (optional)?></p>\n" +
+                "</podcast-promo></body>";
+        String transformedContent = "<body><podcast-promo id=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<h2>Title but no description variant</h2>" +
+                "</podcast-promo></body>";
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformPodcastPromoWithDescriptionButNoTitle() {
+        String originalContent = "<body><podcast-promo episode-uuid=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<h2><?EM-dummyText Podcast promo title (optional)?></h2>\n" +
+                "<p>Description but no title variant</p>\n" +
+                "</podcast-promo></body>";
+        String transformedContent = "<body><podcast-promo id=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<p>Description but no title variant</p>" +
+                "</podcast-promo></body>";
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
+    public void shouldTransformPodcastPromoWithNoTitleAndNoDescription() {
+        String originalContent = "<body><podcast-promo episode-uuid=\"16ec6a72-d5db-4322-96c6-314b051eb978\">" +
+                "<h2><?EM-dummyText Podcast promo title (optional)?></h2>\n" +
+                "<p><?EM-dummyText Podcast promo description (optional)?></p>\n" +
+                "</podcast-promo></body>";
+        String transformedContent = "<body><podcast-promo id=\"16ec6a72-d5db-4322-96c6-314b051eb978\"></podcast-promo></body>";
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
+    public void shouldSkipTransformationForPodcastPromoWithInvalidEpisodeUuid() {
+        String originalContent = "<body><podcast-promo episode-uuid=\"16ec6a72-d5db-4322-96c6314051eb\">" +
+                "<h2>Podcast promo with an invalid episode uuid</h2>\n" +
+                "<p><?EM-dummyText Podcast promo description (optional)?></p>\n" +
+                "</podcast-promo></body>";
+        String transformedContent = "<body></body>";
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
+    public void shouldSkipTransformationForPodcastPromoWithMissingEpisodeUuid() {
+        String originalContent = "<body><podcast-promo>" +
+                "<h2>Podcast promo with no episode uuid</h2>\n" +
+                "<p><?EM-dummyText Podcast promo description (optional)?></p>\n" +
+                "</podcast-promo></body>";
+        String transformedContent = "<body></body>";
         checkTransformation(originalContent, transformedContent);
     }
 
