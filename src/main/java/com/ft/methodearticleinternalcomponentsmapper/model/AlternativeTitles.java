@@ -9,14 +9,18 @@ public class AlternativeTitles {
 
     private final String shortTeaser;
     private final String promotionalTitleVariant;
+    private final String htmlTitle;
 
     public static Builder builder() {
         return new Builder();
     }
 
-    private AlternativeTitles(@JsonProperty("shortTeaser") String shortTeaser, @JsonProperty("promotionalTitleVariant") String promotionalTitleVariant) {
+    private AlternativeTitles(@JsonProperty("shortTeaser") String shortTeaser,
+                              @JsonProperty("promotionalTitleVariant") String promotionalTitleVariant,
+                              @JsonProperty("htmlTitle") String htmlTitle) {
         this.shortTeaser = shortTeaser;
         this.promotionalTitleVariant = promotionalTitleVariant;
+        this.htmlTitle = htmlTitle;
     }
 
     public String getShortTeaser() {
@@ -25,6 +29,10 @@ public class AlternativeTitles {
 
     public String getPromotionalTitleVariant() {
         return promotionalTitleVariant;
+    }
+
+    public String getHtmlTitle() {
+        return htmlTitle;
     }
 
     @Override
@@ -52,6 +60,7 @@ public class AlternativeTitles {
 
         private String shortTeaser;
         private String promotionalTitleVariant;
+        private String htmlTitle;
 
         public Builder withShortTeaser(String title) {
             this.shortTeaser = title;
@@ -63,12 +72,19 @@ public class AlternativeTitles {
             return this;
         }
 
+        public Builder withHtmlTitle(String htmlTitle) {
+            this.htmlTitle = htmlTitle;
+            return this;
+        }
+
         public Builder withValuesFrom(AlternativeTitles titles) {
-            return withShortTeaser(titles.getShortTeaser()).withPromotionalTitleVariant(titles.getPromotionalTitleVariant());
+            return withShortTeaser(titles.getShortTeaser())
+                    .withPromotionalTitleVariant(titles.getPromotionalTitleVariant())
+                    .withHtmlTitle(titles.getHtmlTitle());
         }
 
         public AlternativeTitles build() {
-            return new AlternativeTitles(shortTeaser, promotionalTitleVariant);
+            return new AlternativeTitles(shortTeaser, promotionalTitleVariant, htmlTitle);
         }
     }
 }
