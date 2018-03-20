@@ -98,6 +98,7 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
                 "h1", "h2", "h3", "h4", "h5", "h6",
                 "ol", "ul", "li", "p", "hr"
         );
+        registerStartAndEndElementEventHandler(new PodcastPromoXmlEventHandler(new PodcastPromoXMLParser()), "podcast-promo");
 
         // Handle slideshows, i.e. where have <a type="slideshow">
         // For these elements if the attribute is missing use the fallback handler
