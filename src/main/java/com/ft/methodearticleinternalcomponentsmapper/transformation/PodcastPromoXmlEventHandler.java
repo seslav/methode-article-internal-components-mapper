@@ -49,6 +49,7 @@ public class PodcastPromoXmlEventHandler extends BaseXMLEventHandler {
             writeDescription(podcastPromoData, eventWriter);
             eventWriter.writeEndTag(PODCAST_PROMO_TAG);
         } catch (IllegalArgumentException e) {
+            LOGGER.warn("Skipping transformation of {}. Mandatory " + PODCAST_PROMO_INPUT_UUID_ATTRIBUTE + " attribute has an invalid uuid.", event.getName().getLocalPart());
             skipUntilMatchingEndTag(event.getName().getLocalPart(), xmlEventReader);
         }
     }
@@ -56,7 +57,7 @@ public class PodcastPromoXmlEventHandler extends BaseXMLEventHandler {
     private String getUUID(StartElement event) {
         Attribute uuidAttribute = event.getAttributeByName(new QName(PODCAST_PROMO_INPUT_UUID_ATTRIBUTE));
         if (uuidAttribute == null) {
-            LOGGER.warn("Tag podcast-promo skipped from transformation. Mandatory " + PODCAST_PROMO_INPUT_UUID_ATTRIBUTE + " attribute was missing for {}", event.getName().getLocalPart());
+            LOGGER.warn("Skipping transformation of {}. Mandatory " + PODCAST_PROMO_INPUT_UUID_ATTRIBUTE + " attribute was missing.", event.getName().getLocalPart());
             return null;
         }
 
