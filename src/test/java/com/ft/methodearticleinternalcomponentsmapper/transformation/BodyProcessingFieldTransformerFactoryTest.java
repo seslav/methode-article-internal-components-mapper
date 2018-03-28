@@ -1417,6 +1417,14 @@ public class BodyProcessingFieldTransformerFactoryTest {
     }
 
     @Test
+    public void shouldKeepAsideTag(){
+        String originalContent = "<body><p>Here some text</p><aside>Aside keep<h2>This is the title</h2><p>This is the description</p><p>blah blah blah</p></aside></body>";
+        String transformedContent ="<body><p>Here some text</p><aside>Aside keep<h2>This is the title</h2><p>This is the description</p><p>blah blah blah</p></aside></body>";
+
+        checkTransformation(originalContent, transformedContent);
+    }
+
+    @Test
     public void shouldRemoveCiteTagOutsideBlockquote() {
         String originalContent = "<body><blockquote><p>Quoted text</p></blockquote><cite>Cite text</cite></body>";
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
@@ -1471,6 +1479,8 @@ public class BodyProcessingFieldTransformerFactoryTest {
         String transformedContent = "<body><blockquote><p>Quoted text</p></blockquote></body>";
         checkTransformation(originalContent, transformedContent);
     }
+
+
 
     @Test
     public void thatImagesAreExtractedFromParagraphs() {
