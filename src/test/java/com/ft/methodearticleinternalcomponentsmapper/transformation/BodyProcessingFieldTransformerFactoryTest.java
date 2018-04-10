@@ -1166,6 +1166,7 @@ public class BodyProcessingFieldTransformerFactoryTest {
         checkTransformation(contentWithAnnotation, transformedContent);
     }
 
+
     @Test
     public void shouldStripAllNotesFromContent() throws Exception {
         String contentWithNotes = "<body><p><span class=\"@notes\">Test notes</span>This text should remain</p></body>";
