@@ -96,7 +96,8 @@ public class MethodeBodyTransformationXMLEventHandlerRegistry extends XMLEventHa
         registerStartAndEndElementEventHandler(new RetainWithoutAttributesXMLEventHandler(),
                 "strong", "em", "sub", "sup", "br",
                 "h1", "h2", "h3", "h4", "h5", "h6",
-                "ol", "ul", "li", "p", "hr", "aside"
+                "ol", "ul", "li", "p", "hr", "aside",
+                "s"
         );
         registerStartAndEndElementEventHandler(new PodcastPromoXmlEventHandler(new PodcastPromoXMLParser()), "podcast-promo");
 
