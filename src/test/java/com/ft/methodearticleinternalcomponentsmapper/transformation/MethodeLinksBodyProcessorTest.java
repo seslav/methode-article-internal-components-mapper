@@ -330,8 +330,8 @@ public class MethodeLinksBodyProcessorTest {
     
     @Test
 	public void thatSpaceNotModifiedWhenExistingBeforeAfterLinkText() {
-		when(clientResponse.getStatus()).thenReturn(200);
-		when(documentStoreApiClient.getContentForUuids(anyCollectionOf(String.class), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
+        when(clientResponse.getStatus()).thenReturn(200);
+        when(documentStoreApiClient.getContentForUuids(anyCollectionOf(String.class), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
 		String body = "<body><p>The last time <a href=\"" + uuid + "\">China</a> was the world&#x2019;s largest economy</p></body>";
 		String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
@@ -341,8 +341,8 @@ public class MethodeLinksBodyProcessorTest {
 		assertThat(processedBody, is(identicalXmlTo(expectedBody)));
 	}
 
-	@Test
-	public void thatPunctuationIsExtractedOutsideATag() {
+    @Test
+    public void thatPunctuationIsExtractedOutsideATag() {
 		when(clientResponse.getStatus()).thenReturn(200);
 		when(documentStoreApiClient.getContentForUuids(anyCollectionOf(String.class), anyString())).thenReturn(Collections.singletonList(new Content(uuid,"Article")));
 
