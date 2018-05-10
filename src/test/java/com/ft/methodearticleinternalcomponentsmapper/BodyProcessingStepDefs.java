@@ -72,6 +72,7 @@ public class BodyProcessingStepDefs {
     private static final ConvertParameters CONVERT_PARAMETERS = new ConvertParameters(CONVERT_FROM_PARAMETER, CONVERTED_TO_PARAMETER, CONVERSION_TEMPLATE);
     private static final List<ConvertParameters> CONVERT_PARAMETERS_LIST = ImmutableList.of(CONVERT_PARAMETERS);
 
+    private static final String CANONICAL_URL_TEMPLATE = "https://www.ft.com/content/%s";
     private final static String TME_AUTHORITY = "http://api.ft.com/system/FT-TME";
     private static final String TME_ID_CONCORDED = "TnN0ZWluX09OX0ZvcnR1bmVDb21wYW55X0M=-T04=";
     private static final String TME_ID_NOT_CONCORDED = "notconcorded";
@@ -122,7 +123,7 @@ public class BodyProcessingStepDefs {
         ConcordanceApiClient concordanceApiClient = mock(ConcordanceApiClient.class);
         VideoMatcher videoMatcher = new VideoMatcher(VIDEO_CONFIGS);
         InteractiveGraphicsMatcher interactiveGraphicsMatcher = new InteractiveGraphicsMatcher(INTERACTIVE_GRAPHICS_RULES);
-        registry = new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher);
+        registry = new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher, CANONICAL_URL_TEMPLATE);
         Concordance concordance = new Concordance(concept, identifier);
         Concordances concordancesResponse = new Concordances(Collections.singletonList(concordance));
         Concordances concordancesEmpty = new Concordances(new ArrayList<>());
@@ -156,7 +157,9 @@ public class BodyProcessingStepDefs {
         List<Content> content = Collections.singletonList(new Content(CONTENT_STORE_UUID, "Article"));
         when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(content);
 
-        bodyTransformer = new BodyProcessingFieldTransformerFactory(documentStoreApiClient, videoMatcher, interactiveGraphicsMatcher, contentTypeTemplates, API_HOST, concordanceApiClient).newInstance();
+        bodyTransformer = new BodyProcessingFieldTransformerFactory(documentStoreApiClient, videoMatcher,
+                interactiveGraphicsMatcher, contentTypeTemplates, API_HOST, concordanceApiClient,
+                CANONICAL_URL_TEMPLATE).newInstance();
     }
 
     @Given("^the Methode body contains (.+) the transformer will (.+) and the replacement tag will be (.+)$")

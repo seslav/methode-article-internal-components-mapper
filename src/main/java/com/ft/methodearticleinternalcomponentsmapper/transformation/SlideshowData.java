@@ -6,7 +6,6 @@ import java.util.List;
 
 public class SlideshowData {
     private String uuid;
-    private List<String> queryParams;
     private String title;
 
     public String getUuid() {
@@ -23,14 +22,6 @@ public class SlideshowData {
 
     protected boolean containsValidData(String data) {
         return !StringUtils.isBlank(data);
-    }
-
-    public void setQueryParams(List<String> queryParams) {
-        this.queryParams = queryParams;
-    }
-
-    public List<String> getQueryParams() {
-        return queryParams;
     }
 
     public String getTitle() {

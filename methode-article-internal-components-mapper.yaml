@@ -195,3 +195,5 @@ validationConfiguration:
 appInfo:
     systemCode: "MethodeArticleInternalComponentsMapperApplication"
     description: "A Dropwizard application, consumes Kafka events and maps raw Methode articles to internal content components. The transformed content components are put back to Kafka"
+
+canonicalUrlTemplate: "https://www.ft.com/content/%s"

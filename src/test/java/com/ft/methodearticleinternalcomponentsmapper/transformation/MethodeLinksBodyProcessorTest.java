@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 public class MethodeLinksBodyProcessorTest {
 
     private static final String TRANSACTION_ID = "tid_test";
+    private static final String CANONICAL_URL_TEMPLATE = "https://www.ft.com/content/%s";
 
     @Mock
     private DocumentStoreApiClient documentStoreApiClient;
@@ -44,8 +45,8 @@ public class MethodeLinksBodyProcessorTest {
 
     @Before
     @SuppressWarnings("unchecked")
-    public void setup() throws Exception {
-        bodyProcessor = new MethodeLinksBodyProcessor(documentStoreApiClient);
+    public void setup() {
+        bodyProcessor = new MethodeLinksBodyProcessor(documentStoreApiClient, CANONICAL_URL_TEMPLATE);
         when(documentStoreApiClient.getContentForUuids(anyCollection(), anyString())).thenReturn(Collections.emptyList());
     }
 
@@ -181,15 +182,15 @@ public class MethodeLinksBodyProcessorTest {
         String body = "<body><a href=\"http://www.ft.com/cms/s/" + uuid + ".html\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
 
-        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"http://www.ft.com/cms/s/" + uuid + ".html\" title=\"Some absurd text here\"> Link Text</a></body>")));
+        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"https://www.ft.com/content/" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>")));
     }
 
     @Test
-    public void shouldStripIntlFromHrefValueWhenItsALinkThatWillNotBeInTheDocumentStore() {
+    public void shouldReplaceHrefWithCanonicalUrlTemplateWhenItsALinkThatWillNotBeInTheDocumentStore() {
         String body = "<body><a href=\"http://www.ft.com/intl/cms/s/" + uuid + ".html\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
 
-        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"http://www.ft.com/cms/s/" + uuid + ".html\" title=\"Some absurd text here\"> Link Text</a></body>")));
+        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"https://www.ft.com/content/" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>")));
     }
 
     @Test
@@ -197,7 +198,7 @@ public class MethodeLinksBodyProcessorTest {
         String body = "<body><a href=\"/FT Production/Slideshows/gallery.xml;uuid=" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
 
-        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"http://www.ft.com/cms/s/" + uuid + ".html\" title=\"Some absurd text here\"> Link Text</a></body>")));
+        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"https://www.ft.com/content/" + uuid + "\" title=\"Some absurd text here\"> Link Text</a></body>")));
     }
 
     @Test
@@ -220,19 +221,11 @@ public class MethodeLinksBodyProcessorTest {
     }
 
     @Test
-    public void shouldPreserveSlideshowLinksAndStripTypeAttribute() {
-        String body = "<body><a href=\"http://www.ft.com/content" + uuid + "\" type=\"slideshow\"> Link Text</a></body>";
-        String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
-
-        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"http://www.ft.com/content" + uuid + "\"> Link Text</a></body>")));
-    }
-
-    @Test
     public void shouldRemoveTypeAttributeFromInternalLinks() {
         String body = "<body><a href=\"http://www.ft.com/content/" + uuid + "\" type=\"some-type\"> Link Text</a></body>";
         String processedBody = bodyProcessor.process(body, new DefaultTransactionIdBodyProcessingContext(TRANSACTION_ID));
 
-        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"http://www.ft.com/content/" + uuid + "\"> Link Text</a></body>")));
+        assertThat(processedBody, is(identicalXmlTo("<body><a href=\"https://www.ft.com/content/" + uuid + "\"> Link Text</a></body>")));
     }
 
     @Test
