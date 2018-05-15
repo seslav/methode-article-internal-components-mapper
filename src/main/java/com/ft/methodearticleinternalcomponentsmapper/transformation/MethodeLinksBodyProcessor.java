@@ -31,7 +31,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,9 +61,11 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
     private static final Pattern STRING_ENDS_WITH_PUNCTUATION_REGEX_PATTERN = Pattern.compile(STRING_ENDS_WITH_PUNCTUATION_REGEX);
 
     private DocumentStoreApiClient documentStoreApiClient;
+    private String canonicalUrlTemplate;
 
-    public MethodeLinksBodyProcessor(DocumentStoreApiClient documentStoreApiClient) {
+    public MethodeLinksBodyProcessor(DocumentStoreApiClient documentStoreApiClient, String canonicalUrlTemplate) {
         this.documentStoreApiClient = documentStoreApiClient;
+        this.canonicalUrlTemplate = canonicalUrlTemplate;
     }
 
     @Override
@@ -311,45 +312,18 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
             return true;
         } else if (href.startsWith("/")) { // i.e. it's a relative path in Methode with a UUID param
             matcher = UUID_PARAM_REGEX_PATTERN.matcher(href);
-            if (matcher.matches()) {
-                return true;
-            }
+            return matcher.matches();
         }
         return false;
     }
 
     private void transformLinkToAssetOnFtCom(Node aTag, String uuid) {
-        String oldHref = getHref(aTag);
-        String newHref;
-
-        Matcher matcher = FT_COM_URL_REGEX_PATTERN.matcher(oldHref);
-        if (matcher.matches()) {
-            URI ftAssetUri = URI.create(oldHref);
-            String path = ftAssetUri.getPath();
-
-            if (path.startsWith("/intl")) {
-                newHref = ftAssetUri.resolve(path.substring(5)).toString();
-            } else {
-                if (isSlideshowUrl(aTag)) {
-                    newHref = oldHref;
-                } else {
-                    // do this to get rid of query params and fragment identifiers from the url
-                    newHref = ftAssetUri.resolve(path).toString();
-                }
-            }
-        } else {
-            newHref = "http://www.ft.com/cms/s/" + uuid + ".html";
-        }
-
+        String newHref = String.format(canonicalUrlTemplate, uuid);
         getAttribute(aTag, "href").setNodeValue(newHref);
 
         // We might have added a type attribute to identify the type of content this links to.
         // If so, it should be removed, because it is not HTML5 compliant.
         removeTypeAttributeIfPresent(aTag);
-    }
-
-    private boolean isSlideshowUrl(Node aTag) {
-        return getAttribute(aTag, TYPE) != null && getAttribute(aTag, TYPE).getNodeValue().equals("slideshow");
     }
 
     private void removeTypeAttributeIfPresent(Node aTag) {

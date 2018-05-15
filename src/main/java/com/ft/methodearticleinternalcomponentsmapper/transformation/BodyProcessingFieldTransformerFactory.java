@@ -32,19 +32,22 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
     private final Map<String, XPathHandler> xpathHandlers;
     private final Map<String, String> contentTypeTemplates;
     private final String apiHost;
+    private String canonicalUrlTemplate;
 
     public BodyProcessingFieldTransformerFactory(final DocumentStoreApiClient documentStoreApiClient,
                                                  final VideoMatcher videoMatcher,
                                                  final InteractiveGraphicsMatcher interactiveGraphicsMatcher,
                                                  final Map<String, String> contentTypeTemplates,
                                                  final String apiHost,
-                                                 ConcordanceApiClient concordanceApiClient) {
+                                                 ConcordanceApiClient concordanceApiClient,
+                                                 String canonicalUrlTemplate) {
         this.documentStoreApiClient = documentStoreApiClient;
         this.videoMatcher = videoMatcher;
         this.interactiveGraphicsMatcher = interactiveGraphicsMatcher;
         this.contentTypeTemplates = contentTypeTemplates;
         this.apiHost = apiHost;
         xpathHandlers = ImmutableMap.of("//company", new TearSheetLinksTransformer(concordanceApiClient));
+        this.canonicalUrlTemplate = canonicalUrlTemplate;
     }
 
     @Override
@@ -66,7 +69,7 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
                 new ImageExtractorBodyProcessor(),
                 new PromoBoxExtractorBodyProcessor(),
                 stAXTransformingBodyProcessor(),
-                new MethodeLinksBodyProcessor(documentStoreApiClient),
+                new MethodeLinksBodyProcessor(documentStoreApiClient, canonicalUrlTemplate),
                 new ModularXsltBodyProcessor(xslts()),
                 ftTagsLinksRewriteBodyProcessor(),
                 new RegexReplacerBodyProcessor("\\.\\s*\\.\\s*\\.\\s*", "\u2026"),
@@ -95,7 +98,7 @@ public class BodyProcessingFieldTransformerFactory implements FieldTransformerFa
 
     private BodyProcessor stAXTransformingBodyProcessor() {
         return new StAXTransformingBodyProcessor(
-                new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher)
+                new MethodeBodyTransformationXMLEventHandlerRegistry(videoMatcher, interactiveGraphicsMatcher, canonicalUrlTemplate)
         );
     }
 

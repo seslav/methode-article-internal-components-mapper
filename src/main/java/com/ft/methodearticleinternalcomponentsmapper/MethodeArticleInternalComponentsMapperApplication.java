@@ -122,7 +122,8 @@ public class MethodeArticleInternalComponentsMapperApplication extends Applicati
                         new InteractiveGraphicsMatcher(configuration.getInteractiveGraphicsWhitelist()),
                         configuration.getContentTypeTemplates(),
                         configuration.getApiHost(),
-                        concordanceApiClient
+                        concordanceApiClient,
+                        configuration.getCanonicalUrlTemplate()
                 ).newInstance(),
                 new Html5SelfClosingTagBodyProcessor(),
                 blogUuidResolver,

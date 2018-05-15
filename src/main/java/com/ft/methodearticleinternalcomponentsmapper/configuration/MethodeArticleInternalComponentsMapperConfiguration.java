@@ -27,6 +27,7 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     private final String contentUriPrefix;
     private final Map<String, String> contentTypeTemplates;
     private final String apiHost;
+    private final String canonicalUrlTemplate;
 
     public MethodeArticleInternalComponentsMapperConfiguration(@JsonProperty("consumer") ConsumerConfiguration consumerConfiguration,
                                                                @JsonProperty("producer") ProducerConfiguration producerConfiguration,
@@ -39,7 +40,8 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
                                                                @JsonProperty("validationConfiguration") ValidationConfiguration validationConfiguration,
                                                                @JsonProperty("contentUriPrefix") String contentUriPrefix,
                                                                @JsonProperty("contentTypeTemplates") Map<String, String> contentTypeTemplates,
-                                                               @JsonProperty("apiHost") String apiHost) {
+                                                               @JsonProperty("apiHost") String apiHost,
+                                                               @JsonProperty("canonicalUrlTemplate") String canonicalUrlTemplate) {
         this.consumerConfiguration = consumerConfiguration;
         this.producerConfiguration = producerConfiguration;
         this.documentStoreApiConfiguration = documentStoreApiConfiguration;
@@ -52,6 +54,7 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
         this.contentUriPrefix = contentUriPrefix;
         this.contentTypeTemplates = contentTypeTemplates;
         this.apiHost = apiHost;
+        this.canonicalUrlTemplate = canonicalUrlTemplate;
     }
 
     @JsonProperty
@@ -118,6 +121,10 @@ public class MethodeArticleInternalComponentsMapperConfiguration extends Configu
     @NotNull
     public String getApiHost() {
         return apiHost;
+    }
+
+    public String getCanonicalUrlTemplate() {
+        return canonicalUrlTemplate;
     }
 
     @Override
