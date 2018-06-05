@@ -8,7 +8,6 @@ import com.ft.methodearticleinternalcomponentsmapper.clients.DocumentStoreApiCli
 import com.ft.methodearticleinternalcomponentsmapper.exception.TransformationException;
 import com.ft.methodearticleinternalcomponentsmapper.model.Content;
 import com.google.common.base.Strings;
-
 import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -31,6 +30,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -318,7 +318,23 @@ public class MethodeLinksBodyProcessor implements BodyProcessor {
     }
 
     private void transformLinkToAssetOnFtCom(Node aTag, String uuid) {
-        String newHref = String.format(canonicalUrlTemplate, uuid);
+        String oldHref = getHref(aTag);
+        String newHref;
+
+        Matcher matcher = FT_COM_URL_REGEX_PATTERN.matcher(oldHref);
+        if (matcher.matches()) {
+            URI ftAssetUri = URI.create(oldHref);
+            String path = ftAssetUri.getPath();
+
+            if (path.startsWith("/intl") || path.startsWith("/cms/s") || path.startsWith("/video") || path.startsWith("/content")) {
+                newHref = String.format(canonicalUrlTemplate, uuid);
+            } else {
+                newHref = oldHref;
+            }
+        } else {
+            newHref = String.format(canonicalUrlTemplate, uuid);
+        }
+
         getAttribute(aTag, "href").setNodeValue(newHref);
 
         // We might have added a type attribute to identify the type of content this links to.
